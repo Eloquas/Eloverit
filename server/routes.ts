@@ -7,6 +7,7 @@ import OpenAI from "openai";
 import multer from "multer";
 import csv from "csv-parser";
 import { Readable } from "stream";
+import * as XLSX from "xlsx";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -102,52 +103,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload CSV prospects
+  // Upload CSV/Excel prospects
   app.post("/api/prospects/upload", upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      const prospects: any[] = [];
-      const stream = Readable.from(req.file.buffer.toString());
-      
-      await new Promise((resolve, reject) => {
-        stream
-          .pipe(csv())
-          .on('data', (data) => prospects.push(data))
-          .on('end', resolve)
-          .on('error', reject);
-      });
+      let prospects: any[] = [];
+      const fileName = req.file.originalname.toLowerCase();
 
-      // Validate each prospect - handle Apollo.io format
-      const validatedProspects = prospects.map((prospect, index) => {
+      // Handle Excel files
+      if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+        const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        prospects = XLSX.utils.sheet_to_json(worksheet);
+      } 
+      // Handle CSV files
+      else if (fileName.endsWith('.csv')) {
+        const stream = Readable.from(req.file.buffer.toString());
+        
+        await new Promise((resolve, reject) => {
+          stream
+            .pipe(csv())
+            .on('data', (data) => prospects.push(data))
+            .on('end', resolve)
+            .on('error', reject);
+        });
+      } else {
+        return res.status(400).json({ message: "Unsupported file format. Please upload CSV or Excel files." });
+      }
+
+      // Validate and process prospects with flexible field mapping
+      const validatedProspects: any[] = [];
+      const skippedRows: string[] = [];
+
+      prospects.forEach((prospect, index) => {
         try {
-          // Handle Apollo.io CSV format
-          const firstName = prospect['First Name'] || prospect.firstName || prospect.name || prospect.Name;
-          const lastName = prospect['Last Name'] || prospect.lastName || '';
-          const fullName = lastName ? `${firstName} ${lastName}` : firstName;
+          // Flexible field mapping for different data sources
+          const firstName = prospect['First Name'] || prospect.firstName || prospect['first_name'] || '';
+          const lastName = prospect['Last Name'] || prospect.lastName || prospect['last_name'] || '';
+          const fullName = firstName && lastName ? `${firstName} ${lastName}` : 
+                          firstName || lastName || prospect.name || prospect.Name || prospect['Full Name'];
           
-          return csvUploadSchema.parse({
-            name: fullName,
-            email: prospect.Email || prospect.email,
-            company: prospect.Company || prospect['Company Name for Emails'] || prospect.company,
-            position: prospect.Title || prospect.position || prospect.Position,
-            additionalInfo: prospect.Industry || prospect.Keywords || prospect.additionalInfo || prospect['Additional Info'] || prospect.notes || prospect.Notes || ''
+          const email = prospect.Email || prospect.email || prospect['Email 1'] || prospect['email_address'] || prospect['Email Address'];
+          const company = prospect.Company || prospect.company || prospect['Company Name for Emails'] || prospect.organization || prospect.Organization;
+          const position = prospect.Title || prospect.title || prospect.position || prospect.Position || prospect.role || prospect.Role;
+
+          // Skip rows with missing essential data
+          if (!fullName || !email || !company || !position) {
+            skippedRows.push(`Row ${index + 2}: Missing required fields (${!fullName ? 'name ' : ''}${!email ? 'email ' : ''}${!company ? 'company ' : ''}${!position ? 'position' : ''})`);
+            return;
+          }
+
+          // Additional info from various possible sources
+          const additionalInfo = prospect.Industry || prospect.industry || prospect.Keywords || prospect.keywords || 
+                                prospect.additionalInfo || prospect['Additional Info'] || prospect.notes || prospect.Notes || 
+                                prospect.Description || prospect.description || '';
+
+          const validatedProspect = csvUploadSchema.parse({
+            name: fullName.trim(),
+            email: email.trim(),
+            company: company.trim(),
+            position: position.trim(),
+            additionalInfo: additionalInfo ? additionalInfo.substring(0, 500) : '' // Limit length
           });
+
+          validatedProspects.push(validatedProspect);
         } catch (error) {
-          throw new Error(`Invalid data for prospect at row ${index + 2}: Missing required fields (name, email, company, or position)`);
+          skippedRows.push(`Row ${index + 2}: Validation error`);
         }
       });
 
+      if (validatedProspects.length === 0) {
+        return res.status(400).json({ 
+          message: "No valid prospects found in the file. Please check that your file contains Name, Email, Company, and Position columns.",
+          skipped: skippedRows
+        });
+      }
+
       const createdProspects = await storage.createProspects(validatedProspects);
+      
+      let message = `Successfully uploaded ${createdProspects.length} prospects`;
+      if (skippedRows.length > 0) {
+        message += `. Skipped ${skippedRows.length} rows due to missing data.`;
+      }
+
       res.status(201).json({ 
-        message: `Successfully uploaded ${createdProspects.length} prospects`,
-        prospects: createdProspects
+        message,
+        prospects: createdProspects,
+        skipped: skippedRows.length > 0 ? skippedRows : undefined
       });
     } catch (error) {
+      console.error("Upload error:", error);
       res.status(400).json({ 
-        message: error instanceof Error ? error.message : "Failed to process CSV file"
+        message: error instanceof Error ? error.message : "Failed to process file"
       });
     }
   });
@@ -337,6 +388,73 @@ ${context ? `Additional Context: ${context}` : ''}`;
     } catch (error) {
       console.error("Export error:", error);
       res.status(500).json({ message: "Failed to export generated content" });
+    }
+  });
+
+  // Export prospects with generated content for workflow (Excel format)
+  app.get("/api/export/workflow", async (req, res) => {
+    try {
+      const prospects = await storage.getProspects();
+      const allContent = await storage.getGeneratedContent();
+      
+      if (prospects.length === 0) {
+        return res.status(404).json({ message: "No prospects to export" });
+      }
+
+      // Create workbook with prospect data and generated content columns
+      const workbook = XLSX.utils.book_new();
+      
+      const worksheetData = prospects.map(prospect => {
+        // Find generated content for this prospect
+        const emailContent = allContent.find(c => c.prospectId === prospect.id && c.type === 'email');
+        const linkedinContent = allContent.find(c => c.prospectId === prospect.id && c.type === 'linkedin');
+        
+        return {
+          'Name': prospect.name,
+          'Email': prospect.email,
+          'Company': prospect.company,
+          'Position': prospect.position,
+          'Status': prospect.status,
+          'Additional Info': prospect.additionalInfo || '',
+          'Email Subject': emailContent?.subject || '',
+          'Email 1': emailContent?.content || '',
+          'LinkedIn Message': linkedinContent?.content || '',
+          'Email Generated': emailContent ? 'Yes' : 'No',
+          'LinkedIn Generated': linkedinContent ? 'Yes' : 'No',
+          'Last Updated': new Date().toISOString().split('T')[0]
+        };
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+      
+      // Auto-size columns
+      const colWidths = [
+        { wch: 20 }, // Name
+        { wch: 25 }, // Email
+        { wch: 20 }, // Company
+        { wch: 20 }, // Position
+        { wch: 10 }, // Status
+        { wch: 30 }, // Additional Info
+        { wch: 40 }, // Email Subject
+        { wch: 60 }, // Email Content
+        { wch: 60 }, // LinkedIn Message
+        { wch: 15 }, // Email Generated
+        { wch: 18 }, // LinkedIn Generated
+        { wch: 15 }  // Last Updated
+      ];
+      worksheet['!cols'] = colWidths;
+
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Prospects with Content');
+      
+      // Generate Excel buffer
+      const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename="prospects-with-content.xlsx"');
+      res.send(excelBuffer);
+    } catch (error) {
+      console.error("Workflow export error:", error);
+      res.status(500).json({ message: "Failed to export workflow data" });
     }
   });
 

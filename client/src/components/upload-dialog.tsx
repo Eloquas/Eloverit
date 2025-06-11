@@ -55,10 +55,13 @@ export default function UploadDialog({ open, onOpenChange }: UploadDialogProps) 
   });
 
   const handleFileSelect = (selectedFile: File) => {
-    if (selectedFile.type !== 'text/csv' && !selectedFile.name.endsWith('.csv')) {
+    const fileName = selectedFile.name.toLowerCase();
+    const validTypes = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+    
+    if (!validTypes.includes(selectedFile.type) && !fileName.endsWith('.csv') && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
       toast({
         title: "Invalid file type",
-        description: "Please select a CSV file",
+        description: "Please select a CSV or Excel file",
         variant: "destructive",
       });
       return;
@@ -87,7 +90,7 @@ export default function UploadDialog({ open, onOpenChange }: UploadDialogProps) 
         <DialogHeader>
           <DialogTitle>Upload Prospects</DialogTitle>
           <DialogDescription>
-            Upload a CSV file containing your prospect data. The file should include columns for Name, Email, Company, Position, and optionally Additional Info.
+            Upload a CSV or Excel file containing your prospect data. The file should include columns for Name, Email, Company, Position, and optionally Additional Info.
           </DialogDescription>
         </DialogHeader>
         
@@ -116,8 +119,8 @@ export default function UploadDialog({ open, onOpenChange }: UploadDialogProps) 
             ) : (
               <div>
                 <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-2">Drop your CSV file here, or click to browse</p>
-                <p className="text-sm text-gray-500">CSV files only, up to 10MB</p>
+                <p className="text-gray-600 mb-2">Drop your CSV or Excel file here, or click to browse</p>
+                <p className="text-sm text-gray-500">CSV, Excel files, up to 10MB</p>
               </div>
             )}
           </div>
@@ -127,7 +130,7 @@ export default function UploadDialog({ open, onOpenChange }: UploadDialogProps) 
             <Input
               id="file-input"
               type="file"
-              accept=".csv"
+              accept=".csv,.xlsx,.xls"
               onChange={(e) => {
                 const selectedFile = e.target.files?.[0];
                 if (selectedFile) {
