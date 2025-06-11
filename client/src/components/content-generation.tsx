@@ -13,6 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { contentGenerationSchema, type ContentGenerationRequest } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo } from "react";
+import { Link } from "wouter";
 import LoadingModal from "./loading-modal";
 import ContentPreviewModal from "./content-preview-modal";
 import ToneSelector from "./tone-selector";
@@ -380,7 +381,11 @@ export default function ContentGeneration({ selectedProspects }: ContentGenerati
               )}
             </div>
             {recentContent.length > 5 && (
-              <Button variant="ghost" className="w-full mt-4 text-sm text-primary hover:text-primary-dark font-medium">
+              <Button 
+                variant="ghost" 
+                className="w-full mt-4 text-sm text-primary hover:text-primary-dark font-medium"
+                onClick={() => window.location.href = '/content'}
+              >
                 View All Generated Content →
               </Button>
             )}

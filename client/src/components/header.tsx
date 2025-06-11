@@ -87,9 +87,9 @@ export default function Header() {
                 <h1 className="text-2xl font-bold text-primary">ProspectCopy</h1>
               </div>
               <nav className="hidden md:ml-8 md:flex md:space-x-8">
-                <a href="#" className="text-primary border-b-2 border-primary px-1 pb-4 text-sm font-medium">Dashboard</a>
-                <a href="#" className="text-gray-500 hover:text-secondary px-1 pb-4 text-sm font-medium">Prospects</a>
-                <a href="#" className="text-gray-500 hover:text-secondary px-1 pb-4 text-sm font-medium">Generated Copy</a>
+                <a href="/" className="text-primary border-b-2 border-primary px-1 pb-4 text-sm font-medium">Dashboard</a>
+                <a href="/" className="text-gray-500 hover:text-secondary px-1 pb-4 text-sm font-medium">Prospects</a>
+                <a href="/content" className="text-gray-500 hover:text-secondary px-1 pb-4 text-sm font-medium">Generated Content</a>
                 <a href="#" className="text-gray-500 hover:text-secondary px-1 pb-4 text-sm font-medium">Settings</a>
               </nav>
             </div>
