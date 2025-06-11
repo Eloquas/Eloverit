@@ -48,7 +48,11 @@ export class MemStorage implements IStorage {
 
   async createProspect(insertProspect: InsertProspect): Promise<Prospect> {
     const id = this.currentProspectId++;
-    const prospect: Prospect = { ...insertProspect, id };
+    const prospect: Prospect = { 
+      ...insertProspect, 
+      id,
+      status: insertProspect.status || "active"
+    };
     this.prospects.set(id, prospect);
     return prospect;
   }

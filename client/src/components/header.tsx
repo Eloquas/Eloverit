@@ -57,6 +57,26 @@ export default function Header() {
     }
   };
 
+  const handleExportWorkflow = async () => {
+    try {
+      const response = await fetch("/api/export/workflow");
+      
+      if (!response.ok) {
+        throw new Error("Failed to export workflow data");
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "prospects-with-content.xlsx";
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Workflow export failed:", error);
+    }
+  };
+
   return (
     <>
       <header className="bg-white shadow-sm border-b border-gray-200">
@@ -86,11 +106,11 @@ export default function Header() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleExportGeneratedContent}
+                onClick={handleExportWorkflow}
                 className="inline-flex items-center bg-accent text-white hover:bg-green-700 border-accent"
               >
                 <Download className="w-4 h-4 mr-2" />
-                Export Generated Copy
+                Export Workflow Spreadsheet
               </Button>
               <Button
                 size="sm"
