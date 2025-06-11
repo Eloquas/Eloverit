@@ -8,6 +8,7 @@ import multer from "multer";
 import csv from "csv-parser";
 import { Readable } from "stream";
 import * as XLSX from "xlsx";
+import { avoKnowledgeBase, qaMarketIntelligence, getPersonalizedAvoInsights } from "./avo-knowledge";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -243,7 +244,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const prospect = await storage.getProspect(prospectId);
         if (!prospect) continue;
 
-        // Create advanced tone-specific prompt based on prospect data
+        // Get personalized Avo Automation insights for this prospect
+        const avoInsights = getPersonalizedAvoInsights(prospect);
+        
+        // Create advanced tone-specific prompt with Avo Automation knowledge
         const getToneInstructions = (tone: string) => {
           const instructions: Record<string, string> = {
             professional: "Use formal language, respectful salutations, and business-focused messaging. Emphasize credentials and proven results.",
@@ -260,34 +264,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return instructions[tone] || "Maintain a balanced and appropriate tone for the business context.";
         };
 
-        const systemPrompt = `You are an expert sales copywriter specializing in ${tone} communication. Generate personalized ${type === 'email' ? 'email' : 'LinkedIn message'} copy.
+        const systemPrompt = `You are John White from Avo Automation (AvoAutomation.ai), representing our AI-powered QA automation platform. You MUST write as a sales representative FROM Avo Automation selling our QA testing solution.
 
-Tone Guidelines for ${tone}: ${getToneInstructions(tone)}
+CRITICAL: This message MUST be about software testing and QA automation. Do NOT write about any other topic.
 
-Requirements:
-- Personalize using prospect's name, company, and position
-- Apply the ${tone} tone consistently throughout
-- Include the specified call to action naturally
-- Keep it concise and engaging (${type === 'email' ? '150-200 words' : 'under 300 characters'})
-- Make it feel authentic and human-written
-- ${type === 'email' ? 'Create a compelling subject line that matches the tone' : 'Optimize for LinkedIn mobile viewing'}
+ABOUT AVO AUTOMATION (YOU REPRESENT THIS COMPANY):
+- Company: Avo Automation (AvoAutomation.ai)
+- Product: AI-powered software testing and QA automation platform
+- Your role: Sales representative/Business Development
+- Key metrics: 80% reduction in manual testing time, 60% faster releases, 40% fewer post-release bugs
+- Specialties: AI test generation, cross-browser testing, CI/CD integration, visual regression testing
+- Target customers: Software development teams, QA teams, DevOps engineers
 
-Respond with JSON in this format:
+INDUSTRY CONTEXT:
+${avoInsights.industryInsights}
+
+PROSPECT-SPECIFIC VALUE:
+${avoInsights.roleSpecificValue}
+
+TONE GUIDELINES (${tone}): ${getToneInstructions(tone)}
+
+MANDATORY REQUIREMENTS:
+1. You MUST mention "Avo Automation" as your company
+2. You MUST discuss software testing/QA automation challenges
+3. You MUST include specific metrics (80% testing time reduction, 60% faster releases, etc.)
+4. You MUST position this as a QA automation solution
+5. Focus on software testing pain points like manual testing bottlenecks, test coverage, CI/CD integration
+6. Use ${tone} tone throughout
+7. Include prospect's name and company for personalization
+8. End with the specified call to action
+
+CONTENT FOCUS: Software testing automation, not financial systems or other topics.
+
+Generate a ${type === 'email' ? 'professional email' : 'LinkedIn message'} that follows these requirements exactly.
+
+JSON Response Format:
 {
-  ${type === 'email' ? '"subject": "subject line matching the tone",' : ''}
-  "content": "the ${type} message content with ${tone} tone"
+  ${type === 'email' ? '"subject": "Avo Automation + [prospect benefit/topic]",' : ''}
+  "content": "Message content representing Avo Automation's QA platform"
 }`;
 
-        const userPrompt = `Generate a ${tone} ${type} message for this prospect:
+        const userPrompt = `Generate a ${tone} ${type} message for this prospect. You MUST represent Avo Automation and include specific QA automation benefits:
 
+PROSPECT DETAILS:
 Name: ${prospect.name}
 Company: ${prospect.company}
 Position: ${prospect.position}
 Email: ${prospect.email}
 ${prospect.additionalInfo ? `Additional Info: ${prospect.additionalInfo}` : ''}
 
+REQUIRED ELEMENTS TO INCLUDE:
+1. Mention "Avo Automation" as the company you represent
+2. Reference specific QA automation pain points relevant to their role/industry
+3. Include at least 1-2 specific metrics (80% reduction in testing time, 60% faster releases, etc.)
+4. Position Avo's AI-powered approach as the solution
+5. Make it clear this is about software testing/QA automation
+
 Call to Action: ${cta}
-${context ? `Additional Context: ${context}` : ''}`;
+${context ? `Additional Context: ${context}` : ''}
+
+EXAMPLE ELEMENTS TO INCORPORATE:
+- "At Avo Automation, we help companies like ${prospect.company}..."
+- "Our AI-powered QA platform has helped similar organizations reduce manual testing time by 80%..."
+- "I noticed ${prospect.company} likely faces challenges with [specific QA pain point]..."
+- Reference relevant case studies or industry-specific benefits`;
 
         try {
           const response = await openai.chat.completions.create({
