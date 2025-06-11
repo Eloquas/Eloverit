@@ -141,15 +141,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       prospects.forEach((prospect, index) => {
         try {
-          // Flexible field mapping for different data sources
-          const firstName = prospect['First Name'] || prospect.firstName || prospect['first_name'] || '';
-          const lastName = prospect['Last Name'] || prospect.lastName || prospect['last_name'] || '';
-          const fullName = firstName && lastName ? `${firstName} ${lastName}` : 
-                          firstName || lastName || prospect.name || prospect.Name || prospect['Full Name'];
+          // Enhanced flexible field mapping for various spreadsheet formats
+          const firstName = prospect['First Name'] || prospect.firstName || prospect['first_name'] || 
+                           prospect['First'] || prospect.first || prospect['FIRST NAME'] || '';
+          const lastName = prospect['Last Name'] || prospect.lastName || prospect['last_name'] || 
+                          prospect['Last'] || prospect.last || prospect['LAST NAME'] || '';
           
-          const email = prospect.Email || prospect.email || prospect['Email 1'] || prospect['email_address'] || prospect['Email Address'];
-          const company = prospect.Company || prospect.company || prospect['Company Name for Emails'] || prospect.organization || prospect.Organization;
-          const position = prospect.Title || prospect.title || prospect.position || prospect.Position || prospect.role || prospect.Role;
+          // Construct full name from parts or use existing full name field
+          let fullName = '';
+          if (firstName && lastName) {
+            fullName = `${firstName.trim()} ${lastName.trim()}`;
+          } else if (firstName) {
+            fullName = firstName.trim();
+          } else if (lastName) {
+            fullName = lastName.trim();
+          } else {
+            fullName = prospect.name || prospect.Name || prospect['Full Name'] || prospect['FULL NAME'] || 
+                      prospect['Contact Name'] || prospect.contact_name || '';
+          }
+          
+          const email = prospect.Email || prospect.email || prospect['Email 1'] || prospect['email_address'] || 
+                       prospect['Email Address'] || prospect['EMAIL'] || prospect['Email 1:'] || prospect.Email1 || 
+                       prospect['Work Email'] || prospect.work_email || '';
+          
+          const company = prospect.Company || prospect.company || prospect['Company Name for Emails'] || 
+                         prospect.organization || prospect.Organization || prospect['COMPANY'] || 
+                         prospect['Company Name'] || prospect.company_name || prospect['Account Name'] || 
+                         prospect.account_name || '';
+          
+          const position = prospect.Title || prospect.title || prospect.position || prospect.Position || 
+                          prospect.role || prospect.Role || prospect['Job Title'] || prospect.job_title || 
+                          prospect['POSITION'] || prospect['TITLE'] || prospect.designation || '';
 
           // Skip rows with missing essential data
           if (!fullName || !email || !company || !position) {
@@ -178,8 +200,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (validatedProspects.length === 0) {
         return res.status(400).json({ 
-          message: "No valid prospects found in the file. Please check that your file contains Name, Email, Company, and Position columns.",
-          skipped: skippedRows
+          message: "No valid prospects found in the file. Please ensure your spreadsheet contains columns for: First Name & Last Name (or Full Name), Email, Company, and Position/Title.",
+          skipped: skippedRows,
+          supportedColumns: {
+            name: ["First Name + Last Name", "Full Name", "Contact Name", "Name"],
+            email: ["Email", "Email 1", "Email Address", "Work Email"],
+            company: ["Company", "Company Name", "Organization", "Account Name"],
+            position: ["Position", "Title", "Job Title", "Role"]
+          }
         });
       }
 
