@@ -66,10 +66,12 @@ export default function ContentGeneration({ selectedProspects }: ContentGenerati
   });
 
   const onSubmit = (data: ContentGenerationRequest) => {
+    console.log("Form submitted:", data, "Selected prospects:", selectedProspects);
+    
     if (selectedProspects.length === 0) {
       toast({
         title: "No prospects selected",
-        description: "Please select at least one prospect to generate content for",
+        description: "Please select prospects from the table above first, then try generating content",
         variant: "destructive",
       });
       return;
@@ -83,10 +85,12 @@ export default function ContentGeneration({ selectedProspects }: ContentGenerati
   };
 
   const handleQuickGenerate = (type: "email" | "linkedin") => {
+    console.log("Quick generate clicked:", type, "Selected prospects:", selectedProspects);
+    
     if (selectedProspects.length === 0) {
       toast({
         title: "No prospects selected",
-        description: "Please select at least one prospect to generate content for",
+        description: "Please select prospects from the table above first, then try generating content",
         variant: "destructive",
       });
       return;
@@ -136,6 +140,20 @@ export default function ContentGeneration({ selectedProspects }: ContentGenerati
         <Card className="border-gray-100">
           <CardHeader>
             <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
+            {selectedProspects.length === 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-2">
+                <p className="text-sm text-amber-800">
+                  <strong>Step 1:</strong> Select prospects from the table on the left first
+                </p>
+              </div>
+            )}
+            {selectedProspects.length > 0 && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-2">
+                <p className="text-sm text-green-800">
+                  <strong>Ready!</strong> {selectedProspects.length} prospect{selectedProspects.length !== 1 ? 's' : ''} selected
+                </p>
+              </div>
+            )}
           </CardHeader>
           <CardContent className="space-y-3">
             <Button 
