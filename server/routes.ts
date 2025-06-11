@@ -120,18 +120,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .on('error', reject);
       });
 
-      // Validate each prospect
-      const validatedProspects = prospects.map(prospect => {
+      // Validate each prospect - handle Apollo.io format
+      const validatedProspects = prospects.map((prospect, index) => {
         try {
+          // Handle Apollo.io CSV format
+          const firstName = prospect['First Name'] || prospect.firstName || prospect.name || prospect.Name;
+          const lastName = prospect['Last Name'] || prospect.lastName || '';
+          const fullName = lastName ? `${firstName} ${lastName}` : firstName;
+          
           return csvUploadSchema.parse({
-            name: prospect.name || prospect.Name,
-            email: prospect.email || prospect.Email,
-            company: prospect.company || prospect.Company,
-            position: prospect.position || prospect.Position,
-            additionalInfo: prospect.additionalInfo || prospect['Additional Info'] || prospect.notes || prospect.Notes
+            name: fullName,
+            email: prospect.Email || prospect.email,
+            company: prospect.Company || prospect['Company Name for Emails'] || prospect.company,
+            position: prospect.Title || prospect.position || prospect.Position,
+            additionalInfo: prospect.Industry || prospect.Keywords || prospect.additionalInfo || prospect['Additional Info'] || prospect.notes || prospect.Notes || ''
           });
         } catch (error) {
-          throw new Error(`Invalid data for prospect: ${JSON.stringify(prospect)}`);
+          throw new Error(`Invalid data for prospect at row ${index + 2}: Missing required fields (name, email, company, or position)`);
         }
       });
 
@@ -278,6 +283,60 @@ ${context ? `Additional Context: ${context}` : ''}`;
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // Export generated content as CSV
+  app.get("/api/export/generated-content", async (req, res) => {
+    try {
+      const content = await storage.getGeneratedContent();
+      
+      if (content.length === 0) {
+        return res.status(404).json({ message: "No generated content to export" });
+      }
+
+      // Create CSV headers
+      const csvHeaders = [
+        "Prospect Name",
+        "Company", 
+        "Content Type",
+        "Subject",
+        "Content",
+        "Tone",
+        "Call to Action",
+        "Context",
+        "Created At"
+      ];
+
+      // Convert content to CSV rows
+      const csvRows = content.map(item => [
+        item.prospectName,
+        item.prospectCompany,
+        item.type,
+        item.subject || "",
+        `"${item.content.replace(/"/g, '""')}"`, // Escape quotes in content
+        item.tone,
+        item.cta || "",
+        item.context || "",
+        new Date(item.createdAt).toISOString()
+      ]);
+
+      // Combine headers and rows
+      const csvContent = [
+        csvHeaders.join(","),
+        ...csvRows.map(row => row.map(field => 
+          typeof field === 'string' && field.includes(',') && !field.startsWith('"') 
+            ? `"${field}"` 
+            : field
+        ).join(","))
+      ].join("\n");
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="generated-content-export.csv"');
+      res.send(csvContent);
+    } catch (error) {
+      console.error("Export error:", error);
+      res.status(500).json({ message: "Failed to export generated content" });
     }
   });
 

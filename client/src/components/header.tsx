@@ -6,7 +6,7 @@ import { useState } from "react";
 export default function Header() {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
 
-  const handleExport = async () => {
+  const handleExportProspects = async () => {
     try {
       const response = await fetch("/api/prospects");
       const prospects = await response.json();
@@ -37,6 +37,26 @@ export default function Header() {
     }
   };
 
+  const handleExportGeneratedContent = async () => {
+    try {
+      const response = await fetch("/api/export/generated-content");
+      
+      if (!response.ok) {
+        throw new Error("Failed to export generated content");
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "generated-content-export.csv";
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Export failed:", error);
+    }
+  };
+
   return (
     <>
       <header className="bg-white shadow-sm border-b border-gray-200">
@@ -57,11 +77,20 @@ export default function Header() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleExport}
+                onClick={handleExportProspects}
                 className="inline-flex items-center"
               >
                 <Download className="w-4 h-4 mr-2" />
-                Export Data
+                Export Prospects
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportGeneratedContent}
+                className="inline-flex items-center bg-accent text-white hover:bg-green-700 border-accent"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export Generated Copy
               </Button>
               <Button
                 size="sm"
