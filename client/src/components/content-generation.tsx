@@ -12,9 +12,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { contentGenerationSchema, type ContentGenerationRequest } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import LoadingModal from "./loading-modal";
 import ContentPreviewModal from "./content-preview-modal";
+import ToneSelector from "./tone-selector";
 
 interface ContentGenerationProps {
   selectedProspects: number[];
@@ -28,6 +29,17 @@ export default function ContentGeneration({ selectedProspects }: ContentGenerati
   const { data: recentContent = [] } = useQuery({
     queryKey: ["/api/generated-content"],
   });
+
+  const { data: allProspects = [] } = useQuery({
+    queryKey: ["/api/prospects"],
+  });
+
+  // Get positions of selected prospects for AI recommendations
+  const selectedProspectPositions = useMemo(() => {
+    return selectedProspects
+      .map(id => allProspects.find((p: any) => p.id === id)?.position)
+      .filter(Boolean);
+  }, [selectedProspects, allProspects]);
 
   const form = useForm<ContentGenerationRequest>({
     resolver: zodResolver(contentGenerationSchema),
@@ -201,6 +213,13 @@ export default function ContentGeneration({ selectedProspects }: ContentGenerati
           </CardContent>
         </Card>
 
+        {/* AI-Powered Tone Selector */}
+        <ToneSelector
+          selectedTone={form.watch("tone")}
+          onToneChange={(tone) => form.setValue("tone", tone as any)}
+          prospectPositions={selectedProspectPositions}
+        />
+
         {/* Content Generation Form */}
         <Card className="border-gray-100">
           <CardHeader>
@@ -224,30 +243,6 @@ export default function ContentGeneration({ selectedProspects }: ContentGenerati
                         <SelectContent>
                           <SelectItem value="email">Email Copy</SelectItem>
                           <SelectItem value="linkedin">LinkedIn Message</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="tone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tone</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select tone" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="professional">Professional</SelectItem>
-                          <SelectItem value="friendly">Friendly</SelectItem>
-                          <SelectItem value="casual">Casual</SelectItem>
-                          <SelectItem value="urgent">Urgent</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

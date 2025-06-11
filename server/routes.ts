@@ -243,20 +243,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const prospect = await storage.getProspect(prospectId);
         if (!prospect) continue;
 
-        // Create personalized prompt based on prospect data
-        const systemPrompt = `You are an expert sales copywriter. Generate personalized ${type === 'email' ? 'email' : 'LinkedIn message'} copy that is ${tone} in tone.
+        // Create advanced tone-specific prompt based on prospect data
+        const getToneInstructions = (tone: string) => {
+          const instructions = {
+            professional: "Use formal language, respectful salutations, and business-focused messaging. Emphasize credentials and proven results.",
+            friendly: "Use warm, approachable language that builds rapport. Include personal touches and conversational elements.",
+            consultative: "Position yourself as an advisor. Ask thoughtful questions and focus on problem-solving rather than selling.",
+            confident: "Use assertive language with strong value propositions. Include specific metrics and competitive advantages.",
+            empathetic: "Acknowledge pain points with understanding. Use language that shows you relate to their challenges.",
+            "data-driven": "Include specific statistics, metrics, and quantifiable benefits. Use fact-based arguments.",
+            storytelling: "Use narrative elements, case studies, and real examples. Create a compelling story arc.",
+            direct: "Be concise and straight to the point. Avoid fluff and get to the value proposition quickly.",
+            urgent: "Create appropriate urgency without being pushy. Use time-sensitive language and clear deadlines.",
+            casual: "Use relaxed, conversational language like talking to a colleague. Include modern expressions and informal greetings."
+          };
+          return instructions[tone] || "Maintain a balanced and appropriate tone for the business context.";
+        };
+
+        const systemPrompt = `You are an expert sales copywriter specializing in ${tone} communication. Generate personalized ${type === 'email' ? 'email' : 'LinkedIn message'} copy.
+
+Tone Guidelines for ${tone}: ${getToneInstructions(tone)}
 
 Requirements:
-- Personalize the message using the prospect's information
-- Include the specified call to action
-- Keep it concise and engaging
-- Make it feel natural and not overly salesy
-- ${type === 'email' ? 'Include a compelling subject line' : 'Keep it under 300 characters for LinkedIn'}
+- Personalize using prospect's name, company, and position
+- Apply the ${tone} tone consistently throughout
+- Include the specified call to action naturally
+- Keep it concise and engaging (${type === 'email' ? '150-200 words' : 'under 300 characters'})
+- Make it feel authentic and human-written
+- ${type === 'email' ? 'Create a compelling subject line that matches the tone' : 'Optimize for LinkedIn mobile viewing'}
 
 Respond with JSON in this format:
 {
-  ${type === 'email' ? '"subject": "email subject line",' : ''}
-  "content": "the ${type} message content"
+  ${type === 'email' ? '"subject": "subject line matching the tone",' : ''}
+  "content": "the ${type} message content with ${tone} tone"
 }`;
 
         const userPrompt = `Generate a ${tone} ${type} message for this prospect:

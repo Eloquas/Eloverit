@@ -18,7 +18,20 @@ export const generatedContent = pgTable("generated_content", {
   type: text("type").notNull(), // email, linkedin
   subject: text("subject"),
   content: text("content").notNull(),
-  tone: text("tone").notNull(),
+  tone: text("tone", { 
+    enum: [
+      "professional", 
+      "friendly", 
+      "casual", 
+      "urgent", 
+      "consultative", 
+      "confident", 
+      "empathetic", 
+      "direct", 
+      "storytelling",
+      "data-driven"
+    ] 
+  }).notNull(),
   cta: text("cta"),
   context: text("context"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -41,7 +54,18 @@ export type GeneratedContent = typeof generatedContent.$inferSelect;
 // Form schemas for validation
 export const contentGenerationSchema = z.object({
   type: z.enum(["email", "linkedin"]),
-  tone: z.enum(["professional", "friendly", "casual", "urgent"]),
+  tone: z.enum([
+    "professional", 
+    "friendly", 
+    "casual", 
+    "urgent", 
+    "consultative", 
+    "confident", 
+    "empathetic", 
+    "direct", 
+    "storytelling",
+    "data-driven"
+  ]),
   cta: z.string().min(1, "Call to action is required"),
   context: z.string().optional(),
   prospectIds: z.array(z.number()).min(1, "At least one prospect must be selected"),
