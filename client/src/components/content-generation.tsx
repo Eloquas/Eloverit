@@ -115,6 +115,22 @@ export default function ContentGeneration({ selectedProspects }: ContentGenerati
 
   return (
     <>
+      {/* Enhanced Loading Overlay */}
+      {generateContentMutation.isPending && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md mx-4 text-center">
+            <div className="w-16 h-16 border-4 border-green-200 border-t-green-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Generating Content...</h3>
+            <p className="text-gray-600">
+              Creating personalized content for {selectedProspects.length} prospect{selectedProspects.length !== 1 ? 's' : ''}
+            </p>
+            <div className="mt-4 text-sm text-gray-500">
+              This usually takes 3-5 seconds per prospect
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="space-y-6">
         {/* Quick Actions Card */}
         <Card className="border-gray-100">
@@ -125,18 +141,36 @@ export default function ContentGeneration({ selectedProspects }: ContentGenerati
             <Button 
               className="w-full bg-primary hover:bg-primary-dark"
               onClick={() => handleQuickGenerate("email")}
-              disabled={selectedProspects.length === 0}
+              disabled={selectedProspects.length === 0 || generateContentMutation.isPending}
             >
-              <Mail className="w-4 h-4 mr-2" />
-              Generate Email Copy
+              {generateContentMutation.isPending ? (
+                <>
+                  <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Generating Email...
+                </>
+              ) : (
+                <>
+                  <Mail className="w-4 h-4 mr-2" />
+                  Generate Email Copy
+                </>
+              )}
             </Button>
             <Button 
               className="w-full bg-blue-600 hover:bg-blue-700"
               onClick={() => handleQuickGenerate("linkedin")}
-              disabled={selectedProspects.length === 0}
+              disabled={selectedProspects.length === 0 || generateContentMutation.isPending}
             >
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Generate LinkedIn Messages
+              {generateContentMutation.isPending ? (
+                <>
+                  <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Generating LinkedIn...
+                </>
+              ) : (
+                <>
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Generate LinkedIn Messages
+                </>
+              )}
             </Button>
             <Button 
               variant="outline" 
@@ -241,8 +275,17 @@ export default function ContentGeneration({ selectedProspects }: ContentGenerati
                   className="w-full bg-accent hover:bg-green-700"
                   disabled={generateContentMutation.isPending || selectedProspects.length === 0}
                 >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Content ({selectedProspects.length} prospects)
+                  {generateContentMutation.isPending ? (
+                    <>
+                      <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Generating Content...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Generate Content ({selectedProspects.length} prospects)
+                    </>
+                  )}
                 </Button>
               </form>
             </Form>
