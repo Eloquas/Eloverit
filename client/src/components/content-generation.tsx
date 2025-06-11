@@ -16,6 +16,7 @@ import { useState, useMemo } from "react";
 import LoadingModal from "./loading-modal";
 import ContentPreviewModal from "./content-preview-modal";
 import ToneSelector from "./tone-selector";
+import ToneAnalytics from "./tone-analytics";
 
 interface ContentGenerationProps {
   selectedProspects: number[];
@@ -304,6 +305,9 @@ export default function ContentGeneration({ selectedProspects }: ContentGenerati
             </Form>
           </CardContent>
         </Card>
+
+        {/* Tone Analytics */}
+        <ToneAnalytics />
 
         {/* Recent Generated Content */}
         <Card className="border-gray-100">

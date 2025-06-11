@@ -245,7 +245,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Create advanced tone-specific prompt based on prospect data
         const getToneInstructions = (tone: string) => {
-          const instructions = {
+          const instructions: Record<string, string> = {
             professional: "Use formal language, respectful salutations, and business-focused messaging. Emphasize credentials and proven results.",
             friendly: "Use warm, approachable language that builds rapport. Include personal touches and conversational elements.",
             consultative: "Position yourself as an advisor. Ask thoughtful questions and focus on problem-solving rather than selling.",
