@@ -130,7 +130,7 @@ export class DatabaseStorage implements IStorage {
     linkedinMessages: number;
     successRate: number;
   }> {
-    const [prospectCount] = await db.select({ count: prospects.id }).from(prospects);
+    const [prospectCount] = await db.select({ count: count() }).from(prospects);
     const allContent = await db.select().from(generatedContent);
     
     const totalProspects = prospectCount?.count || 0;
