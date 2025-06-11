@@ -109,10 +109,24 @@ export default function ContentGeneration({ selectedProspects }: ContentGenerati
       return;
     }
 
-    form.setValue("type", type);
-    form.setValue("cta", type === "email" ? "Schedule a 15-minute call" : "Let's connect and discuss");
-    form.setValue("tone", "professional");
-    form.handleSubmit(onSubmit)();
+    // Show immediate feedback
+    toast({
+      title: "Generation started!",
+      description: `Creating ${type} content for ${selectedProspects.length} prospect${selectedProspects.length !== 1 ? 's' : ''}...`,
+    });
+
+    // Show loading immediately
+    setIsGenerating(true);
+    
+    const formData = {
+      type,
+      cta: type === "email" ? "Schedule a 15-minute call" : "Let's connect and discuss",
+      tone: "professional" as const,
+      context: "",
+      prospectIds: selectedProspects,
+    };
+
+    generateContentMutation.mutate(formData);
   };
 
   const handlePreviewContent = (content: any) => {
@@ -133,15 +147,18 @@ export default function ContentGeneration({ selectedProspects }: ContentGenerati
   return (
     <>
       {/* Enhanced Loading Overlay */}
-      {generateContentMutation.isPending && (
+      {(generateContentMutation.isPending || isGenerating) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md mx-4 text-center">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md mx-4 text-center shadow-xl">
             <div className="w-16 h-16 border-4 border-green-200 border-t-green-600 rounded-full animate-spin mx-auto mb-4"></div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Generating Content...</h3>
-            <p className="text-gray-600">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Generating Content...</h3>
+            <p className="text-gray-600 dark:text-gray-300">
               Creating personalized content for {selectedProspects.length} prospect{selectedProspects.length !== 1 ? 's' : ''}
             </p>
-            <div className="mt-4 text-sm text-gray-500">
+            <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+              AI is analyzing prospect data and crafting personalized messages
+            </div>
+            <div className="mt-2 text-xs text-gray-400 dark:text-gray-500">
               This usually takes 3-5 seconds per prospect
             </div>
           </div>
