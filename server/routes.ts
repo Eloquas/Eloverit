@@ -330,7 +330,8 @@ EXAMPLE ELEMENTS TO INCORPORATE:
 - Reference relevant case studies or industry-specific benefits`;
 
         try {
-          const response = await openai.chat.completions.create({
+          // First attempt to generate content
+          let response = await openai.chat.completions.create({
             model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
             messages: [
               { role: "system", content: systemPrompt },
@@ -340,7 +341,39 @@ EXAMPLE ELEMENTS TO INCORPORATE:
             temperature: 0.7,
           });
 
-          const generated = JSON.parse(response.choices[0].message.content || '{}');
+          let generated = JSON.parse(response.choices[0].message.content || '{}');
+          
+          // Validate that content includes Avo Automation
+          const content = generated.content || '';
+          const avoMentioned = content.toLowerCase().includes('avo automation') || content.toLowerCase().includes('avoautomation');
+          
+          // If Avo Automation is not mentioned, regenerate with stricter prompt
+          if (!avoMentioned) {
+            const stricterPrompt = `You are John White from Avo Automation. Write a ${tone} ${type} about QA automation.
+
+CRITICAL REQUIREMENTS:
+- Start with: "Hi ${prospect.name}, I'm John from Avo Automation..."
+- Mention specific QA testing challenges at ${prospect.company}
+- Include metrics: "80% reduction in testing time" or "60% faster releases"
+- Focus on software testing automation only
+- End with: "${cta}"
+
+Prospect: ${prospect.name}, ${prospect.position} at ${prospect.company}
+
+Write as Avo Automation's sales representative selling QA automation platform.`;
+
+            response = await openai.chat.completions.create({
+              model: "gpt-4o",
+              messages: [
+                { role: "system", content: "You are a sales rep from Avo Automation selling QA automation software. Always mention the company name and focus on testing automation." },
+                { role: "user", content: stricterPrompt }
+              ],
+              response_format: { type: "json_object" },
+              temperature: 0.5,
+            });
+
+            generated = JSON.parse(response.choices[0].message.content || '{}');
+          }
           
           const contentData = {
             prospectId,
