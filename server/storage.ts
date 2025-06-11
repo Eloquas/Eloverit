@@ -51,7 +51,8 @@ export class MemStorage implements IStorage {
     const prospect: Prospect = { 
       ...insertProspect, 
       id,
-      status: insertProspect.status || "active"
+      status: insertProspect.status || "active",
+      additionalInfo: insertProspect.additionalInfo || null
     };
     this.prospects.set(id, prospect);
     return prospect;
@@ -112,7 +113,10 @@ export class MemStorage implements IStorage {
     const content: GeneratedContent = { 
       ...insertContent, 
       id,
-      createdAt: new Date()
+      createdAt: new Date(),
+      cta: insertContent.cta || null,
+      context: insertContent.context || null,
+      subject: insertContent.subject || null
     };
     this.generatedContent.set(id, content);
     return content;
