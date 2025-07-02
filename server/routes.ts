@@ -10,6 +10,7 @@ import { Readable } from "stream";
 import * as XLSX from "xlsx";
 import { avoKnowledgeBase, qaMarketIntelligence, getPersonalizedAvoInsights } from "./avo-knowledge";
 import { enterpriseSystemsKnowledge, categorizeJobTitle, determineSeniorityLevel, identifySystemsExperience, getPersonalizedEnterpriseInsights } from "./enterprise-knowledge";
+import { buildSCIPABFramework, generateCadenceContent, type SCIPABContext } from "./scipab-framework";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -723,6 +724,206 @@ Provide structured JSON response with:
       res.json(cadence);
     } catch (error) {
       res.status(500).json({ message: "Failed to update email cadence" });
+    }
+  });
+
+  // 5-Step Research Flow with SCIPAB Framework
+  app.post("/api/research-and-generate-cadence", async (req, res) => {
+    try {
+      const { prospectIds } = req.body;
+      
+      if (!prospectIds || !Array.isArray(prospectIds) || prospectIds.length === 0) {
+        return res.status(400).json({ message: "Prospect IDs are required" });
+      }
+
+      const results = [];
+      const companiesProcessed = new Set();
+
+      // Step 1: Process prospects by company for account-level research
+      for (const prospectId of prospectIds) {
+        const prospect = await storage.getProspect(prospectId);
+        if (!prospect) continue;
+
+        // Step 1: Account-level research (do once per company)
+        let accountResearch = await storage.getAccountResearchByCompany(prospect.company);
+        
+        if (!accountResearch && !companiesProcessed.has(prospect.company)) {
+          companiesProcessed.add(prospect.company);
+          
+          const researchPrompt = `Research ${prospect.company} for enterprise systems and QA automation opportunities.
+
+Focus on:
+1. Current initiatives: SDLC improvements, testing modernization, delivery acceleration, QA automation, SAP migrations, D365 implementations, Oracle upgrades
+2. Recent job postings: QA Manager, Business Systems Analyst, Enterprise Systems roles, CRM Admin, ERP Specialist, etc.
+3. System landscape: What enterprise systems they likely use (SAP, D365, Oracle, Salesforce, custom apps)
+4. Pain points: Testing bottlenecks, integration challenges, manual processes, compliance requirements
+5. Hiring patterns: Are they expanding QA, systems teams? What skills are they seeking?
+
+Provide detailed JSON response:
+{
+  "initiatives": ["SAP S/4HANA migration planned Q2", "QA automation initiative", "D365 implementation"],
+  "systemsInUse": ["SAP ERP", "Dynamics 365", "Salesforce"],
+  "hiringPatterns": ["QA Manager - test automation focus", "D365 Developer - integration testing"],
+  "painPoints": ["Manual regression testing", "Integration test complexity", "Release delays"],
+  "industry": "Manufacturing/Healthcare/Financial Services",
+  "companySize": "Mid-market/Enterprise",
+  "researchQuality": "excellent"
+}`;
+
+          try {
+            const response = await openai.chat.completions.create({
+              model: "gpt-4o",
+              messages: [
+                { 
+                  role: "system", 
+                  content: "You are a B2B research analyst specializing in enterprise systems and QA automation. Provide detailed, specific research focusing on testing, quality assurance, and enterprise systems initiatives." 
+                },
+                { role: "user", content: researchPrompt }
+              ],
+              response_format: { type: "json_object" },
+              temperature: 0.3,
+            });
+
+            const researchData = JSON.parse(response.choices[0].message.content || '{}');
+            
+            accountResearch = await storage.createAccountResearch({
+              companyName: prospect.company,
+              industry: researchData.industry || null,
+              companySize: researchData.companySize || null,
+              currentSystems: JSON.stringify(researchData.systemsInUse || []),
+              recentJobPostings: JSON.stringify(researchData.hiringPatterns || []),
+              initiatives: JSON.stringify(researchData.initiatives || []),
+              painPoints: JSON.stringify(researchData.painPoints || []),
+              decisionMakers: JSON.stringify(["QA Manager", "IT Director", "Systems Manager"]),
+              researchQuality: researchData.researchQuality || "good"
+            });
+          } catch (error) {
+            console.error(`Account research failed for ${prospect.company}:`, error);
+            continue;
+          }
+        }
+
+        if (!accountResearch) continue;
+
+        // Step 2: Analyze contact role and seniority
+        const roleCategory = categorizeJobTitle(prospect.position);
+        const seniorityLevel = determineSeniorityLevel(prospect.position);
+        
+        // Only target manager+ level roles in relevant departments
+        const targetRoles = ['qa', 'crm', 'erp', 'd365', 'sap', 'oracle', 'enterprise_systems'];
+        const targetSeniority = ['manager', 'director', 'vp', 'cxo'];
+        
+        if (!targetRoles.includes(roleCategory) || !targetSeniority.includes(seniorityLevel)) {
+          console.log(`Skipping ${prospect.name} - role/seniority not in target profile`);
+          continue;
+        }
+
+        // Step 3: Build SCIPAB framework
+        const scipabContext: SCIPABContext = {
+          prospect: {
+            name: prospect.name,
+            position: prospect.position,
+            company: prospect.company,
+            seniority: seniorityLevel,
+            department: roleCategory
+          },
+          accountResearch: {
+            initiatives: JSON.parse(accountResearch.initiatives || '[]'),
+            systemsInUse: JSON.parse(accountResearch.currentSystems || '[]'),
+            hiringPatterns: JSON.parse(accountResearch.recentJobPostings || '[]'),
+            painPoints: JSON.parse(accountResearch.painPoints || '[]'),
+            industry: accountResearch.industry || 'Technology',
+            companySize: accountResearch.companySize || 'Mid-market'
+          },
+          cadenceStep: 1
+        };
+
+        const scipabFramework = buildSCIPABFramework(scipabContext);
+
+        // Step 4 & 5: Generate 6-email cadence with scaling
+        const cadenceEmails = [];
+        
+        for (let step = 1; step <= 6; step++) {
+          const cadenceContent = generateCadenceContent(scipabFramework, step);
+          
+          // Personalize the email template
+          const personalizedEmail = cadenceContent.emailBody
+            .replace(/\[Name\]/g, prospect.name)
+            .replace(/\[Company\]/g, prospect.company)
+            .replace(/\[System\]/g, scipabContext.accountResearch.systemsInUse[0] || 'enterprise systems');
+
+          const emailData = {
+            prospectId: prospect.id,
+            type: "email" as const,
+            subject: cadenceContent.subject,
+            content: personalizedEmail,
+            tone: "consultative" as const,
+            cta: cadenceContent.cta,
+            cadenceStep: step,
+            contentPurpose: step <= 3 ? "Brand awareness + soft CTA" : step <= 5 ? "Value demonstration + strong CTA" : "Breakup email",
+            resourceOffered: step <= 3 ? "Industry insight document" : null
+          };
+
+          try {
+            const savedEmail = await storage.createGeneratedContent(emailData);
+            cadenceEmails.push(savedEmail);
+          } catch (error) {
+            console.error(`Failed to save email ${step} for ${prospect.name}:`, error);
+          }
+        }
+
+        // Create email cadence record
+        try {
+          const cadence = await storage.createEmailCadence({
+            prospectId: prospect.id,
+            cadenceName: `${roleCategory.toUpperCase()} SCIPAB Sequence - ${prospect.name}`,
+            cadenceType: "scipab_consultative",
+            totalSteps: 6,
+            nextSendDate: new Date(Date.now() + 24 * 60 * 60 * 1000)
+          });
+
+          results.push({
+            prospect: {
+              id: prospect.id,
+              name: prospect.name,
+              company: prospect.company,
+              position: prospect.position,
+              roleCategory,
+              seniorityLevel
+            },
+            accountResearch: {
+              company: prospect.company,
+              initiatives: scipabContext.accountResearch.initiatives,
+              systems: scipabContext.accountResearch.systemsInUse,
+              painPoints: scipabContext.accountResearch.painPoints
+            },
+            scipabFramework: {
+              thoughtProvokingQuestion: scipabFramework.thoughtProvokingQuestion,
+              situation: scipabFramework.situation,
+              complication: scipabFramework.complication,
+              position: scipabFramework.position
+            },
+            cadence: {
+              id: cadence.id,
+              name: cadence.cadenceName,
+              emailsGenerated: cadenceEmails.length
+            }
+          });
+        } catch (error) {
+          console.error(`Failed to create cadence for ${prospect.name}:`, error);
+        }
+      }
+
+      res.json({
+        message: `Successfully generated SCIPAB cadences for ${results.length} prospects across ${companiesProcessed.size} companies`,
+        companiesResearched: companiesProcessed.size,
+        cadencesGenerated: results.length,
+        results
+      });
+
+    } catch (error) {
+      console.error("SCIPAB research flow error:", error);
+      res.status(500).json({ message: "Failed to complete research and cadence generation" });
     }
   });
 
