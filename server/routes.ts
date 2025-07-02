@@ -9,6 +9,7 @@ import csv from "csv-parser";
 import { Readable } from "stream";
 import * as XLSX from "xlsx";
 import { avoKnowledgeBase, qaMarketIntelligence, getPersonalizedAvoInsights } from "./avo-knowledge";
+import { enterpriseSystemsKnowledge, categorizeJobTitle, determineSeniorityLevel, identifySystemsExperience, getPersonalizedEnterpriseInsights } from "./enterprise-knowledge";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -575,6 +576,251 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
     } catch (error) {
       console.error("Workflow export error:", error);
       res.status(500).json({ message: "Failed to export workflow data" });
+    }
+  });
+
+  // Account Research API Routes
+  app.get("/api/account-research", async (req, res) => {
+    try {
+      const research = await storage.getAccountResearch();
+      res.json(research);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch account research" });
+    }
+  });
+
+  app.post("/api/account-research/generate", async (req, res) => {
+    try {
+      const { companyName } = req.body;
+      
+      if (!companyName) {
+        return res.status(400).json({ message: "Company name is required" });
+      }
+
+      // Enhanced AI-powered account research using enterprise knowledge
+      const researchPrompt = `Generate comprehensive account research for ${companyName}. Focus on enterprise systems, QA automation opportunities, and decision makers.
+
+Research Requirements:
+1. Current enterprise systems (D365, SAP, Oracle, Salesforce, etc.)
+2. Recent job postings for QA, IT systems, enterprise applications roles
+3. Technology initiatives and system migrations
+4. Key decision makers in IT, QA, and enterprise systems
+5. Pain points related to software testing and quality assurance
+
+Provide structured JSON response with:
+{
+  "currentSystems": ["system1", "system2"],
+  "recentJobPostings": ["QA Manager - focus on test automation", "D365 Administrator - seeking testing expertise"],
+  "initiatives": ["SAP S/4HANA migration", "Quality assurance modernization"],
+  "painPoints": ["Manual testing bottlenecks", "Integration testing challenges"],
+  "decisionMakers": ["IT Director", "QA Manager", "Enterprise Systems Manager"],
+  "industry": "Manufacturing/Healthcare/Finance",
+  "companySize": "Mid-market (500-2000 employees)",
+  "researchQuality": "excellent"
+}`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { 
+            role: "system", 
+            content: `You are a B2B research analyst specializing in enterprise systems and QA automation. Generate detailed, actionable research for ${companyName} focusing on software testing and enterprise systems opportunities.` 
+          },
+          { role: "user", content: researchPrompt }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+      });
+
+      const researchData = JSON.parse(response.choices[0].message.content || '{}');
+      
+      const research = await storage.createAccountResearch({
+        companyName,
+        industry: researchData.industry || null,
+        companySize: researchData.companySize || null,
+        currentSystems: JSON.stringify(researchData.currentSystems || []),
+        recentJobPostings: JSON.stringify(researchData.recentJobPostings || []),
+        initiatives: JSON.stringify(researchData.initiatives || []),
+        painPoints: JSON.stringify(researchData.painPoints || []),
+        decisionMakers: JSON.stringify(researchData.decisionMakers || []),
+        researchQuality: researchData.researchQuality || "good"
+      });
+
+      res.json({ message: "Account research generated successfully", companyName, research });
+    } catch (error) {
+      console.error("Account research error:", error);
+      res.status(500).json({ message: "Failed to generate account research" });
+    }
+  });
+
+  // Email Cadences API Routes
+  app.get("/api/email-cadences", async (req, res) => {
+    try {
+      const cadences = await storage.getEmailCadences();
+      res.json(cadences);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch email cadences" });
+    }
+  });
+
+  app.post("/api/email-cadences/create", async (req, res) => {
+    try {
+      const { prospectIds, cadenceType } = req.body;
+      
+      if (!prospectIds || !Array.isArray(prospectIds) || prospectIds.length === 0) {
+        return res.status(400).json({ message: "Prospect IDs are required" });
+      }
+
+      const cadences = [];
+      const cadenceTemplates = enterpriseSystemsKnowledge.emailCadence;
+
+      for (const prospectId of prospectIds) {
+        const prospect = await storage.getProspect(prospectId);
+        if (!prospect) continue;
+
+        // Create personalized cadence name based on prospect's systems experience
+        const insights = getPersonalizedEnterpriseInsights(prospect);
+        const primarySystem = insights.systems[0] || "Enterprise Systems";
+        const cadenceName = `${primarySystem} Brand Awareness - ${prospect.name}`;
+
+        const cadence = await storage.createEmailCadence({
+          prospectId,
+          cadenceName,
+          cadenceType: cadenceType || "brand_awareness",
+          totalSteps: 6,
+          nextSendDate: new Date(Date.now() + 24 * 60 * 60 * 1000) // Tomorrow
+        });
+
+        cadences.push(cadence);
+      }
+
+      res.json({ 
+        message: `Created ${cadences.length} email cadences`,
+        count: cadences.length,
+        cadences 
+      });
+    } catch (error) {
+      console.error("Cadence creation error:", error);
+      res.status(500).json({ message: "Failed to create email cadences" });
+    }
+  });
+
+  app.patch("/api/email-cadences/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status, currentStep } = req.body;
+      
+      const updateData: any = {};
+      if (status) updateData.status = status;
+      if (currentStep) updateData.currentStep = currentStep;
+      
+      const cadence = await storage.updateEmailCadence(id, updateData);
+      
+      if (!cadence) {
+        return res.status(404).json({ message: "Email cadence not found" });
+      }
+      
+      res.json(cadence);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update email cadence" });
+    }
+  });
+
+  // Enhanced content generation with enterprise systems focus
+  app.post("/api/generate-enterprise-content", async (req, res) => {
+    try {
+      const { prospectIds, cadenceStep, resourceOffered } = req.body;
+      
+      const generatedContents = [];
+
+      for (const prospectId of prospectIds) {
+        const prospect = await storage.getProspect(prospectId);
+        if (!prospect) continue;
+
+        // Get enterprise insights for prospect
+        const insights = getPersonalizedEnterpriseInsights(prospect);
+        const category = insights.category;
+        const systems = insights.systems;
+        const primarySystem = systems[0] || "Enterprise Systems";
+
+        // Generate cadence-specific content
+        const cadenceTemplate = enterpriseSystemsKnowledge.emailCadence.brandAwareness[`step${cadenceStep}` as keyof typeof enterpriseSystemsKnowledge.emailCadence.brandAwareness];
+        
+        if (cadenceTemplate) {
+          const systemPrompt = `You are John White from Avo Automation, creating step ${cadenceStep} of a 6-email brand awareness sequence for enterprise systems prospects.
+
+ENTERPRISE CONTEXT:
+- Prospect Category: ${category}
+- Primary System: ${primarySystem}
+- Systems Experience: ${systems.join(', ')}
+- Seniority: ${insights.seniority}
+
+CADENCE STEP ${cadenceStep} FOCUS: ${cadenceTemplate.focusArea}
+PURPOSE: ${cadenceTemplate.purpose}
+TONE: ${cadenceTemplate.tone}
+
+${resourceOffered ? `RESOURCE TO OFFER: ${resourceOffered}` : ''}
+
+AVO AUTOMATION POSITIONING:
+- Strong support system (24/7 dedicated success managers)
+- Non-line item pricing (30% lower TCO than competitors)
+- AI-enabled testing platform
+- Ease of use (no-code test creation)
+
+Generate email that represents Avo Automation and follows the step ${cadenceStep} strategy.`;
+
+          const userPrompt = `Create step ${cadenceStep} email for:
+Prospect: ${prospect.name}, ${prospect.position} at ${prospect.company}
+
+Requirements:
+1. Subject line: ${cadenceTemplate.subject.replace('{SYSTEM}', primarySystem).replace('{COMPANY_TYPE}', insights.category)}
+2. Focus on: ${cadenceTemplate.focusArea}
+3. Include relevant ${primarySystem} pain points and solutions
+4. Mention Avo Automation and QA automation benefits
+5. End with: ${cadenceTemplate.cta.replace('{SYSTEM}', primarySystem)}
+
+Make it specific to their ${primarySystem} experience and ${category} role.`;
+
+          try {
+            const response = await openai.chat.completions.create({
+              model: "gpt-4o",
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userPrompt }
+              ],
+              response_format: { type: "json_object" },
+              temperature: 0.7,
+            });
+
+            const generated = JSON.parse(response.choices[0].message.content || '{}');
+            
+            const contentData = {
+              prospectId,
+              type: "email",
+              subject: generated.subject,
+              content: generated.content,
+              tone: cadenceTemplate.tone,
+              cta: cadenceTemplate.cta.replace('{SYSTEM}', primarySystem),
+              cadenceStep,
+              contentPurpose: cadenceTemplate.purpose,
+              resourceOffered: resourceOffered || null
+            };
+
+            const savedContent = await storage.createGeneratedContent(contentData);
+            generatedContents.push(savedContent);
+          } catch (error) {
+            console.error(`Failed to generate enterprise content for prospect ${prospectId}:`, error);
+          }
+        }
+      }
+
+      res.json({
+        message: `Successfully generated ${generatedContents.length} enterprise-focused email(s)`,
+        content: generatedContents
+      });
+    } catch (error) {
+      console.error("Enterprise content generation error:", error);
+      res.status(500).json({ message: "Failed to generate enterprise content" });
     }
   });
 
