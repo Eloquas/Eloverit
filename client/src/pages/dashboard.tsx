@@ -2,6 +2,7 @@ import DashboardLayout from "@/components/dashboard-layout";
 import StatsGrid from "@/components/stats-grid";
 import AccountGroupedProspects from "@/components/account-grouped-prospects";
 import SCIPABGeneratorCard from "@/components/scipab-generator-card";
+import CompanyInsightsDashboard from "@/components/company-insights-dashboard";
 import { useState } from "react";
 
 export default function Dashboard() {
@@ -28,6 +29,11 @@ export default function Dashboard() {
       {/* Stats Grid */}
       <div className="mb-8">
         <StatsGrid />
+      </div>
+
+      {/* Company Insights Dashboard */}
+      <div className="mb-8">
+        <CompanyInsightsDashboard />
       </div>
 
       {/* Main Content Grid */}

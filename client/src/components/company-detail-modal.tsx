@@ -570,10 +570,25 @@ export default function CompanyDetailModal({ company, prospects, isOpen, onClose
                       <div key={idx} className="border-l-2 border-blue-300 pl-3">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h5 className="font-medium text-sm text-gray-800">{article.title}</h5>
+                            <a 
+                              href={article.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="font-medium text-sm text-gray-800 hover:text-primary transition-colors"
+                            >
+                              {article.title}
+                            </a>
                             <p className="text-xs text-gray-600 mt-1">{article.snippet}</p>
                             <div className="flex items-center gap-3 mt-2">
-                              <span className="text-xs text-gray-500">{article.source}</span>
+                              <a 
+                                href={article.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary hover:text-primary-dark flex items-center gap-1"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                {article.source}
+                              </a>
                               <span className="text-xs text-gray-500">
                                 {new Date(article.date).toLocaleDateString()}
                               </span>
