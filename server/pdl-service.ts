@@ -209,68 +209,155 @@ export class PDLService {
   private extractInitiatives(companyData: PDLCompanyData | null, jobPostings: any[]): string[] {
     const initiatives: string[] = [];
     
-    // Extract from job postings
-    const jobTitles = jobPostings.map(job => job.title.toLowerCase());
+    // Extract from job postings with enhanced detection
+    const allJobText = jobPostings.map(job => 
+      `${job.title} ${job.requirements?.join(' ')} ${job.department || ''}`
+    ).join(' ').toLowerCase();
     
-    if (jobTitles.some(title => title.includes('digital') || title.includes('transformation'))) {
-      initiatives.push('Digital transformation');
+    // Digital transformation initiatives
+    if (allJobText.includes('digital') || allJobText.includes('transformation')) {
+      initiatives.push('Digital transformation and modernization');
     }
-    if (jobTitles.some(title => title.includes('qa') || title.includes('quality') || title.includes('testing'))) {
-      initiatives.push('QA automation and testing improvement');
+    
+    // QA and testing initiatives
+    if (allJobText.includes('qa') || allJobText.includes('quality') || allJobText.includes('testing') || allJobText.includes('automation test')) {
+      initiatives.push('Test automation and QA process improvement');
     }
-    if (jobTitles.some(title => title.includes('erp') || title.includes('sap') || title.includes('oracle'))) {
-      initiatives.push('ERP system implementation/migration');
+    
+    // ERP initiatives with specific systems
+    if (allJobText.includes('sap') && (allJobText.includes('migration') || allJobText.includes('implementation') || allJobText.includes('upgrade'))) {
+      initiatives.push('SAP system migration/upgrade project');
     }
-    if (jobTitles.some(title => title.includes('crm') || title.includes('salesforce'))) {
-      initiatives.push('CRM system optimization');
+    if (allJobText.includes('oracle') && (allJobText.includes('fusion') || allJobText.includes('cloud') || allJobText.includes('migration'))) {
+      initiatives.push('Oracle Fusion Cloud migration');
     }
-    if (jobTitles.some(title => title.includes('cloud') || title.includes('aws') || title.includes('azure'))) {
-      initiatives.push('Cloud migration and modernization');
+    if (allJobText.includes('d365') || allJobText.includes('dynamics')) {
+      initiatives.push('Microsoft Dynamics 365 implementation');
     }
-    if (jobTitles.some(title => title.includes('devops') || title.includes('ci/cd') || title.includes('automation'))) {
-      initiatives.push('DevOps and automation implementation');
+    
+    // CRM initiatives
+    if (allJobText.includes('salesforce') && (allJobText.includes('implementation') || allJobText.includes('admin') || allJobText.includes('developer'))) {
+      initiatives.push('Salesforce CRM optimization and expansion');
+    }
+    
+    // Cloud initiatives
+    if (allJobText.includes('cloud') && (allJobText.includes('migration') || allJobText.includes('aws') || allJobText.includes('azure'))) {
+      initiatives.push('Enterprise cloud migration strategy');
+    }
+    
+    // DevOps and automation
+    if (allJobText.includes('devops') || allJobText.includes('ci/cd') || allJobText.includes('pipeline')) {
+      initiatives.push('DevOps pipeline automation and CI/CD implementation');
+    }
+    
+    // Data and analytics
+    if (allJobText.includes('data') && (allJobText.includes('analytics') || allJobText.includes('scientist') || allJobText.includes('engineer'))) {
+      initiatives.push('Data analytics and business intelligence modernization');
+    }
+    
+    // Cybersecurity
+    if (allJobText.includes('security') || allJobText.includes('cyber') || allJobText.includes('compliance')) {
+      initiatives.push('Cybersecurity and compliance enhancement');
+    }
+    
+    // Mobile and customer experience
+    if (allJobText.includes('mobile') || allJobText.includes('app') || allJobText.includes('customer experience')) {
+      initiatives.push('Mobile application and customer experience improvement');
     }
 
-    // Extract from company technologies
-    if (companyData?.technologies) {
-      const techs = companyData.technologies.map(t => t.toLowerCase());
-      if (techs.some(tech => tech.includes('kubernetes') || tech.includes('docker'))) {
-        initiatives.push('Containerization and orchestration');
+    // Industry-specific initiatives based on company data
+    if (companyData?.industry) {
+      const industry = companyData.industry.toLowerCase();
+      if (industry.includes('airline') || industry.includes('aviation') || industry.includes('transportation')) {
+        if (allJobText.includes('operational') || allJobText.includes('flight') || allJobText.includes('passenger')) {
+          initiatives.push('Operational efficiency and passenger experience technology');
+        }
       }
-      if (techs.some(tech => tech.includes('microservices') || tech.includes('api'))) {
-        initiatives.push('Microservices architecture adoption');
+      if (industry.includes('healthcare') || industry.includes('medical')) {
+        if (allJobText.includes('electronic health') || allJobText.includes('ehr') || allJobText.includes('patient')) {
+          initiatives.push('Electronic health records and patient data systems');
+        }
+      }
+      if (industry.includes('financial') || industry.includes('banking')) {
+        if (allJobText.includes('regulatory') || allJobText.includes('compliance') || allJobText.includes('risk')) {
+          initiatives.push('Financial regulatory compliance and risk management systems');
+        }
       }
     }
 
-    return initiatives.length > 0 ? initiatives : ['System modernization', 'Process automation'];
+    return initiatives.length > 0 ? initiatives : ['Technology modernization', 'Process automation'];
   }
 
   private extractSystems(companyData: PDLCompanyData | null, jobPostings: any[]): string[] {
     const systems: string[] = [];
     
-    // From job postings
+    // From job postings - more comprehensive search
     const allText = jobPostings.map(job => `${job.title} ${job.requirements?.join(' ')}`).join(' ').toLowerCase();
     
-    if (allText.includes('sap')) systems.push('SAP');
-    if (allText.includes('oracle')) systems.push('Oracle');
+    // ERP Systems
+    if (allText.includes('sap')) systems.push('SAP ERP');
+    if (allText.includes('oracle') && (allText.includes('erp') || allText.includes('fusion'))) systems.push('Oracle ERP');
     if (allText.includes('d365') || allText.includes('dynamics')) systems.push('Dynamics 365');
-    if (allText.includes('salesforce')) systems.push('Salesforce');
-    if (allText.includes('workday')) systems.push('Workday');
-    if (allText.includes('servicenow')) systems.push('ServiceNow');
+    if (allText.includes('netsuite')) systems.push('NetSuite');
+    
+    // CRM Systems
+    if (allText.includes('salesforce')) systems.push('Salesforce CRM');
+    if (allText.includes('hubspot')) systems.push('HubSpot');
+    if (allText.includes('pipedrive')) systems.push('Pipedrive');
+    
+    // HR Systems
+    if (allText.includes('workday')) systems.push('Workday HCM');
+    if (allText.includes('successfactors')) systems.push('SAP SuccessFactors');
+    if (allText.includes('bamboohr')) systems.push('BambooHR');
+    
+    // Testing & QA
+    if (allText.includes('selenium')) systems.push('Selenium Testing');
+    if (allText.includes('testcomplete')) systems.push('TestComplete');
+    if (allText.includes('katalon')) systems.push('Katalon Studio');
+    if (allText.includes('cypress')) systems.push('Cypress Testing');
+    
+    // DevOps & Project Management
     if (allText.includes('jira')) systems.push('Jira');
-    if (allText.includes('confluence')) systems.push('Confluence');
-    if (allText.includes('jenkins')) systems.push('Jenkins');
-    if (allText.includes('selenium')) systems.push('Selenium');
-
+    if (allText.includes('servicenow')) systems.push('ServiceNow');
+    if (allText.includes('jenkins')) systems.push('Jenkins CI/CD');
+    if (allText.includes('azure devops')) systems.push('Azure DevOps');
+    
     // From company technologies
     if (companyData?.technologies) {
       const techs = companyData.technologies.map(t => t.toLowerCase());
-      systems.push(...techs.filter(tech => 
-        ['sap', 'oracle', 'salesforce', 'workday', 'servicenow', 'jira', 'confluence'].includes(tech)
-      ));
+      
+      // Map technology names to business systems
+      const techMapping: Record<string, string> = {
+        'salesforce': 'Salesforce CRM',
+        'sap': 'SAP ERP',
+        'oracle': 'Oracle Database',
+        'workday': 'Workday HCM',
+        'servicenow': 'ServiceNow',
+        'jira': 'Jira',
+        'dynamics': 'Dynamics 365',
+        'netsuite': 'NetSuite ERP'
+      };
+      
+      techs.forEach(tech => {
+        Object.entries(techMapping).forEach(([key, value]) => {
+          if (tech.includes(key) && !systems.includes(value)) {
+            systems.push(value);
+          }
+        });
+      });
     }
 
-    return systems.length > 0 ? [...new Set(systems)] : ['Enterprise systems'];
+    // Remove generic "Systems" entries and return specific systems only
+    const specificSystems = systems.filter(system => 
+      !system.toLowerCase().includes('systems') || 
+      system.includes('ERP') || 
+      system.includes('CRM') || 
+      system.includes('HCM') ||
+      system.includes('Testing') ||
+      system.includes('CI/CD')
+    );
+
+    return specificSystems.length > 0 ? [...new Set(specificSystems)] : [];
   }
 
   private inferPainPoints(companyData: PDLCompanyData | null, jobPostings: any[]): string[] {

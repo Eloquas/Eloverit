@@ -58,9 +58,9 @@ export default function AccountGroupedProspects({
         existingAccount.managerPlusCount += 1;
       }
       
-      // Track target roles
+      // Track target roles (exclude generic "Other")
       const role = categorizeRole(prospect.position);
-      if (!existingAccount.targetRoles.includes(role)) {
+      if (role !== 'Other' && !existingAccount.targetRoles.includes(role)) {
         existingAccount.targetRoles.push(role);
       }
     } else {
@@ -69,12 +69,15 @@ export default function AccountGroupedProspects({
                            position.includes('vp') || position.includes('head') || 
                            position.includes('lead') || position.includes('cxo');
       
+      const role = categorizeRole(prospect.position);
+      const targetRoles = role !== 'Other' ? [role] : [];
+      
       acc.push({
         company: prospect.company,
         prospects: [prospect],
         totalContacts: 1,
         managerPlusCount: isManagerPlus ? 1 : 0,
-        targetRoles: [categorizeRole(prospect.position)]
+        targetRoles: targetRoles
       });
     }
     
@@ -92,7 +95,11 @@ export default function AccountGroupedProspects({
     if (pos.includes('oracle')) return 'Oracle';
     if (pos.includes('erp')) return 'ERP';
     if (pos.includes('crm')) return 'CRM';
-    if (pos.includes('system') || pos.includes('application')) return 'Systems';
+    if (pos.includes('workday') || pos.includes('hcm')) return 'HCM';
+    if (pos.includes('salesforce')) return 'Salesforce';
+    if (pos.includes('business analyst') || pos.includes('business systems')) return 'Business Systems';
+    if (pos.includes('devops') || pos.includes('automation')) return 'DevOps';
+    // Skip vague "Systems" category - only show specific roles
     return 'Other';
   }
 
@@ -232,7 +239,7 @@ export default function AccountGroupedProspects({
                           <div 
                             key={prospect.id}
                             className={`p-3 rounded-lg border transition-colors ${
-                              isSelected ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                              isSelected ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200 hover:bg-gray-50'
                             }`}
                           >
                             <div className="flex items-center justify-between">
