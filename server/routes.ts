@@ -948,39 +948,37 @@ Provide detailed JSON response:
         const cadenceTemplate = enterpriseSystemsKnowledge.emailCadence.brandAwareness[`step${cadenceStep}` as keyof typeof enterpriseSystemsKnowledge.emailCadence.brandAwareness];
         
         if (cadenceTemplate) {
-          const systemPrompt = `You are John White from Avo Automation, creating step ${cadenceStep} of a 6-email brand awareness sequence for enterprise systems prospects.
+          const systemPrompt = `You are John White from Avo Automation. Write a SHORT, human email (3 paragraphs max) using the SCIPAB framework.
 
-ENTERPRISE CONTEXT:
-- Prospect Category: ${category}
-- Primary System: ${primarySystem}
-- Systems Experience: ${systems.join(', ')}
-- Seniority: ${insights.seniority}
+SCIPAB EXAMPLE:
+Situation: ${prospect.company} is working on digital transformation with ${primarySystem}
+Complication: System migrations get stuck in testing due to lack of automation
+Implication: Missing deadlines risks jobs, revenue loss, customer dissatisfaction  
+Position: Automation speeds up transformations - like we did for JetBlue
+Ask: ${cadenceStep <= 3 ? 'Would you mind if I shared our' : 'Worth 15 minutes to discuss'} 
+Benefit: Learn what transportation/logistics firms do to improve transformation
 
-CADENCE STEP ${cadenceStep} FOCUS: ${cadenceTemplate.focusArea}
-PURPOSE: ${cadenceTemplate.purpose}
-TONE: ${cadenceTemplate.tone}
+CRITICAL REQUIREMENTS:
+- Maximum 3 short paragraphs
+- Conversational, not salesy
+- Include prospect's name and company
+- Reference ${primarySystem} challenges specific to their role
+- End with soft CTA for steps 1-3, stronger for 4-6
 
-${resourceOffered ? `RESOURCE TO OFFER: ${resourceOffered}` : ''}
+TONE: Warm, consultative, like a helpful colleague reaching out`;
 
-AVO AUTOMATION POSITIONING:
-- Strong support system (24/7 dedicated success managers)
-- Non-line item pricing (30% lower TCO than competitors)
-- AI-enabled testing platform
-- Ease of use (no-code test creation)
+          const userPrompt = `Write a short SCIPAB email for:
+${prospect.name}, ${prospect.position} at ${prospect.company}
 
-Generate email that represents Avo Automation and follows the step ${cadenceStep} strategy.`;
+Their context: Works with ${primarySystem}, likely faces testing bottlenecks during system updates/migrations.
 
-          const userPrompt = `Create step ${cadenceStep} email for:
-Prospect: ${prospect.name}, ${prospect.position} at ${prospect.company}
+Email should be:
+1. Maximum 3 paragraphs 
+2. Start with thoughtful question about their ${primarySystem} testing approach
+3. Brief SCIPAB structure (situation → complication → our position)
+4. End with: ${cadenceStep <= 3 ? 'Would you mind if I shared a brief insight document?' : 'Worth 15 minutes to discuss your initiatives?'}
 
-Requirements:
-1. Subject line: ${cadenceTemplate.subject.replace('{SYSTEM}', primarySystem).replace('{COMPANY_TYPE}', insights.category)}
-2. Focus on: ${cadenceTemplate.focusArea}
-3. Include relevant ${primarySystem} pain points and solutions
-4. Mention Avo Automation and QA automation benefits
-5. End with: ${cadenceTemplate.cta.replace('{SYSTEM}', primarySystem)}
-
-Make it specific to their ${primarySystem} experience and ${category} role.`;
+Keep it conversational and human - like one professional helping another.`;
 
           try {
             const response = await openai.chat.completions.create({

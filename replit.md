@@ -48,6 +48,13 @@ A comprehensive business communication automation platform that leverages AI to 
 
 ✅ **Team-Friendly Interface:** Simple dashboard with SCIPAB generator for easy team usage
 
+✅ **UI Improvements (Latest):** Clean, card-based interface with account grouping
+- Account tree structure grouping contacts by company
+- Manager+ role highlighting and targeting
+- Short, human-like emails (3 paragraphs max)
+- Simplified header navigation
+- Card-based SCIPAB generator with progress tracking
+
 ## Technical Notes
 - Uses database storage for persistence
 - AI system validates Avo Automation representation in all content

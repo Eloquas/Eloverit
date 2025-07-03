@@ -149,10 +149,10 @@ export function generateCadenceContent(scipab: SCIPABEmail, step: number): {
   const strategy = cadenceStrategy[`step${step}` as keyof typeof cadenceStrategy];
   
   const subjects = {
-    1: "Quick question about your testing approach",
-    2: "Insight on reducing testing overhead", 
-    3: "How others in your industry solved this",
-    4: "Worth 15 minutes to discuss your initiatives?",
+    1: "Quick question about [Company] testing approach",
+    2: "Reducing testing overhead at [Company]", 
+    3: "How [Industry] companies solved this",
+    4: "Worth 15 minutes to discuss [Company] initiatives?",
     5: "Before your next release cycle...",
     6: "Final thought + staying connected"
   };
@@ -163,51 +163,45 @@ export function generateCadenceContent(scipab: SCIPABEmail, step: number): {
   let cta = "";
 
   if (step <= 3) {
-    // Soft CTA emails - consultative approach
+    // Soft CTA emails - short and consultative
     emailBody = `Hi [Name],
 
 ${scipab.thoughtProvokingQuestion}
 
-${scipab.situation} ${scipab.complication}, which ${scipab.implication}
+${scipab.situation} ${scipab.complication}, which often means delays and quality risks.
 
-${scipab.position}
+${strategy.askOptions[0]} It shows how similar organizations reduced testing time by 80%.
 
-${strategy.askOptions[0]} It shows how similar organizations reduced testing overhead by 80% while improving quality.
-
-Best regards,
+Best,
 John White
 Avo Automation`;
 
     cta = strategy.askOptions[0];
   } else if (step <= 5) {
-    // Stronger CTA emails
+    // Stronger CTA emails - still concise
     emailBody = `Hi [Name],
 
-I've been thinking about our earlier conversation regarding ${scipab.complication}.
+${scipab.thoughtProvokingQuestion}
 
 ${scipab.position} Our clients typically see ${scipab.benefit}.
 
-Given your current initiatives, ${strategy.askOptions[0]}
+${strategy.askOptions[0]} I can show you how similar teams accelerated their initiatives.
 
-I can show you exactly how we've helped similar ${step === 5 ? 'teams meet their deadlines' : 'organizations'}.
-
-Best regards,
+Best,
 John White
 Avo Automation`;
 
     cta = strategy.askOptions[0];
   } else {
-    // Breakup email
+    // Breakup email - very short
     emailBody = `Hi [Name],
 
 I haven't heard back, so I'll assume this isn't a priority right now.
 
 If testing automation becomes relevant for your upcoming initiatives, I'm here to help.
 
-${strategy.askOptions[0]}
-
-Best regards,
-John White  
+Best,
+John White
 Avo Automation`;
 
     cta = strategy.askOptions[0];
