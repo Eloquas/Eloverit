@@ -321,7 +321,14 @@ export default function CompanyDetailModal({ company, prospects, isOpen, onClose
                       job.title?.toLowerCase().includes('test') ||
                       job.title?.toLowerCase().includes('quality')
                     );
-                    const hasTestingInitiatives = (companyResearch as any)?.initiatives?.some((init: string) => 
+                    const initiatives = (() => {
+                      try {
+                        return JSON.parse((companyResearch as any)?.initiatives || '[]');
+                      } catch {
+                        return [];
+                      }
+                    })();
+                    const hasTestingInitiatives = initiatives.some((init: string) => 
                       init.toLowerCase().includes('test') || 
                       init.toLowerCase().includes('quality') ||
                       init.toLowerCase().includes('automation')
@@ -345,7 +352,14 @@ export default function CompanyDetailModal({ company, prospects, isOpen, onClose
                             </span>
                           </div>
                         )}
-                        {(companyResearch as any)?.systemsInUse?.includes('Salesforce CRM') && (
+                        {(() => {
+                          try {
+                            const systems = JSON.parse((companyResearch as any)?.currentSystems || '[]');
+                            return systems.includes('Salesforce CRM');
+                          } catch {
+                            return false;
+                          }
+                        })() && (
                           <div className="flex items-start gap-2">
                             <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5" />
                             <span className="text-gray-700">
@@ -353,11 +367,18 @@ export default function CompanyDetailModal({ company, prospects, isOpen, onClose
                             </span>
                           </div>
                         )}
-                        {(companyResearch as any)?.painPoints?.some((pain: string) => 
-                          pain.toLowerCase().includes('release') || 
-                          pain.toLowerCase().includes('bug') ||
-                          pain.toLowerCase().includes('quality')
-                        ) && (
+                        {(() => {
+                          try {
+                            const painPoints = JSON.parse((companyResearch as any)?.painPoints || '[]');
+                            return painPoints.some((pain: string) => 
+                              pain.toLowerCase().includes('release') || 
+                              pain.toLowerCase().includes('bug') ||
+                              pain.toLowerCase().includes('quality')
+                            );
+                          } catch {
+                            return false;
+                          }
+                        })() && (
                           <div className="flex items-start gap-2">
                             <TrendingUp className="h-4 w-4 text-blue-600 mt-0.5" />
                             <span className="text-gray-700">
@@ -380,10 +401,34 @@ export default function CompanyDetailModal({ company, prospects, isOpen, onClose
                 <div className="space-y-3">
                   {(() => {
                     // Calculate intent score
-                    const jobPostings = (companyResearch as any)?.jobPostings || [];
-                    const initiatives = (companyResearch as any)?.initiatives || [];
-                    const painPoints = (companyResearch as any)?.painPoints || [];
-                    const systems = (companyResearch as any)?.systemsInUse || [];
+                    const jobPostings = (() => {
+                      try {
+                        return JSON.parse((companyResearch as any)?.recentJobPostings || '[]');
+                      } catch {
+                        return [];
+                      }
+                    })();
+                    const initiatives = (() => {
+                      try {
+                        return JSON.parse((companyResearch as any)?.initiatives || '[]');
+                      } catch {
+                        return [];
+                      }
+                    })();
+                    const painPoints = (() => {
+                      try {
+                        return JSON.parse((companyResearch as any)?.painPoints || '[]');
+                      } catch {
+                        return [];
+                      }
+                    })();
+                    const systems = (() => {
+                      try {
+                        return JSON.parse((companyResearch as any)?.currentSystems || '[]');
+                      } catch {
+                        return [];
+                      }
+                    })();
                     
                     let score = 0;
                     let factors = [];
@@ -567,16 +612,24 @@ export default function CompanyDetailModal({ company, prospects, isOpen, onClose
                     <h5 className="font-medium text-sm text-gray-700 mb-1">Situation</h5>
                     <p className="text-sm text-gray-600">
                       {company} is actively hiring for {(() => {
-                        const jobPostings = (companyResearch as any)?.jobPostings || [];
-                        const qaRelated = jobPostings.filter((job: any) => 
-                          job.title?.toLowerCase().includes('qa') || 
-                          job.title?.toLowerCase().includes('test') ||
-                          job.title?.toLowerCase().includes('quality')
-                        ).length;
-                        return qaRelated > 0 ? `${qaRelated} QA/testing roles` : 'software development roles';
+                        try {
+                          const jobPostings = JSON.parse((companyResearch as any)?.recentJobPostings || '[]');
+                          const qaRelated = jobPostings.filter((job: any) => 
+                            (typeof job === 'string' ? job : job.title)?.toLowerCase().includes('qa') || 
+                            (typeof job === 'string' ? job : job.title)?.toLowerCase().includes('test') ||
+                            (typeof job === 'string' ? job : job.title)?.toLowerCase().includes('quality')
+                          ).length;
+                          return qaRelated > 0 ? `${qaRelated} QA/testing roles` : 'software development roles';
+                        } catch {
+                          return 'software development roles';
+                        }
                       })()} while managing {(() => {
-                        const systems = (companyResearch as any)?.systemsInUse || [];
-                        return systems.length > 0 ? systems.slice(0, 2).join(' and ') : 'multiple enterprise systems';
+                        try {
+                          const systems = JSON.parse((companyResearch as any)?.currentSystems || '[]');
+                          return systems.length > 0 ? systems.slice(0, 2).join(' and ') : 'multiple enterprise systems';
+                        } catch {
+                          return 'multiple enterprise systems';
+                        }
                       })()}. Your QA team is balancing manual testing across these platforms with increasing release velocity demands. Industry data shows 73% of enterprises struggle with QA bottlenecks in multi-system environments.
                     </p>
                   </div>
@@ -585,12 +638,20 @@ export default function CompanyDetailModal({ company, prospects, isOpen, onClose
                     <h5 className="font-medium text-sm text-gray-700 mb-1">Complication</h5>
                     <p className="text-sm text-gray-600">
                       Manual testing across {(() => {
-                        const systems = (companyResearch as any)?.systemsInUse || [];
-                        return systems.includes('Salesforce CRM') || systems.includes('SAP ERP') ? 
-                          'your CRM and ERP systems' : 'multiple platforms';
+                        try {
+                          const systems = JSON.parse((companyResearch as any)?.currentSystems || '[]');
+                          return systems.includes('Salesforce CRM') || systems.includes('SAP ERP') ? 
+                            'your CRM and ERP systems' : 'multiple platforms';
+                        } catch {
+                          return 'multiple platforms';
+                        }
                       })()} creates 3-5 day release delays and increases bug escape rates by 40%. Your QA engineers spend 60% of their time on repetitive test execution instead of exploratory testing. This testing bottleneck directly impacts your {(() => {
-                        const initiatives = (companyResearch as any)?.initiatives || [];
-                        return initiatives[0] || 'digital transformation initiatives';
+                        try {
+                          const initiatives = JSON.parse((companyResearch as any)?.initiatives || '[]');
+                          return initiatives[0] || 'digital transformation initiatives';
+                        } catch {
+                          return 'digital transformation initiatives';
+                        }
                       })()}.
                     </p>
                   </div>
@@ -606,11 +667,15 @@ export default function CompanyDetailModal({ company, prospects, isOpen, onClose
                     <h5 className="font-medium text-sm text-gray-700 mb-1">Position</h5>
                     <p className="text-sm text-gray-600">
                       Avo Automation provides AI-powered test automation specifically designed for enterprises using {(() => {
-                        const systems = (companyResearch as any)?.systemsInUse || [];
-                        const relevantSystems = systems.filter((s: string) => 
-                          s.includes('Salesforce') || s.includes('SAP') || s.includes('Oracle')
-                        );
-                        return relevantSystems.length > 0 ? relevantSystems[0] : 'enterprise systems';
+                        try {
+                          const systems = JSON.parse((companyResearch as any)?.currentSystems || '[]');
+                          const relevantSystems = systems.filter((s: string) => 
+                            s.includes('Salesforce') || s.includes('SAP') || s.includes('Oracle')
+                          );
+                          return relevantSystems.length > 0 ? relevantSystems[0] : 'enterprise systems';
+                        } catch {
+                          return 'enterprise systems';
+                        }
                       })()}. Our platform reduces testing time by 80% while increasing coverage across all your critical systems. Unlike traditional tools, Avo learns from your existing test cases and automatically maintains tests as your applications evolve.
                     </p>
                   </div>
