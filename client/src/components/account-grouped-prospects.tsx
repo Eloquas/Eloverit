@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Building, Users, ChevronDown, ChevronRight, Mail, Phone } from "lucide-react";
 import { getQueryFn } from "@/lib/queryClient";
+import CompanyDetailModal from "./company-detail-modal";
 
 interface Prospect {
   id: number;
@@ -36,6 +37,8 @@ export default function AccountGroupedProspects({
   onSelectedProspectsChange 
 }: AccountGroupedProspectsProps) {
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
+  const [companyProspects, setCompanyProspects] = useState<any[]>([]);
 
   const { data: prospects = [], isLoading } = useQuery({
     queryKey: ["/api/prospects"],
@@ -134,6 +137,16 @@ export default function AccountGroupedProspects({
     }
   };
 
+  const openCompanyDetail = (company: string, prospects: any[]) => {
+    setSelectedCompany(company);
+    setCompanyProspects(prospects);
+  };
+
+  const closeCompanyDetail = () => {
+    setSelectedCompany(null);
+    setCompanyProspects([]);
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -191,7 +204,15 @@ export default function AccountGroupedProspects({
                         {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                         <Building className="h-5 w-5 text-blue-600" />
                         <div className="text-left">
-                          <CardTitle className="text-lg">{account.company}</CardTitle>
+                          <CardTitle 
+                            className="text-lg cursor-pointer hover:text-blue-600 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openCompanyDetail(account.company, account.prospects);
+                            }}
+                          >
+                            {account.company}
+                          </CardTitle>
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Users className="h-3 w-3" />
@@ -206,7 +227,7 @@ export default function AccountGroupedProspects({
                       <div className="flex items-center gap-3">
                         <div className="flex gap-1">
                           {account.targetRoles.map(role => (
-                            <Badge key={role} variant="secondary" className="text-xs">
+                            <Badge key={role} variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
                               {role}
                             </Badge>
                           ))}
@@ -282,6 +303,16 @@ export default function AccountGroupedProspects({
           );
         })}
       </div>
+      
+      {/* Company Detail Modal */}
+      {selectedCompany && (
+        <CompanyDetailModal
+          company={selectedCompany}
+          prospects={companyProspects}
+          isOpen={!!selectedCompany}
+          onClose={closeCompanyDetail}
+        />
+      )}
     </div>
   );
 }

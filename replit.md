@@ -54,6 +54,7 @@ A comprehensive business communication automation platform that leverages AI to 
 - Short, human-like emails (3 paragraphs max)
 - Simplified header navigation
 - Card-based SCIPAB generator with progress tracking
+- Enhanced badge styling with light blue backgrounds for better readability
 
 ✅ **Data Validation (January 2025):** PDL Integration for authentic company insights
 - People Data Labs API integration for real company data
@@ -61,6 +62,16 @@ A comprehensive business communication automation platform that leverages AI to 
 - Industry classification and company size verification
 - Replaces generic knowledge base with verified information
 - PDL data validation indicators in UI
+- Enhanced system detection (Salesforce CRM, SAP ERP, Oracle Database, etc.)
+- Industry-specific initiatives (e.g., airline operational efficiency)
+
+✅ **Company Detail Modal (January 2025):** Complete prospect and content management
+- Clickable company names show detailed SCIPAB research overview
+- Company-level initiatives, systems, and pain points from PDL data
+- Contact-level persona insights based on role, seniority, and industry
+- Tree structure for generated email cadences under each contact
+- Expandable email sequences showing all 6 generated emails
+- Role-based care priorities and pain point analysis
 
 ## Technical Notes
 - Uses database storage for persistence
