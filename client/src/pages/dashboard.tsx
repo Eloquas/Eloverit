@@ -1,4 +1,4 @@
-import Header from "@/components/header";
+import DashboardLayout from "@/components/dashboard-layout";
 import StatsGrid from "@/components/stats-grid";
 import AccountGroupedProspects from "@/components/account-grouped-prospects";
 import SCIPABGeneratorCard from "@/components/scipab-generator-card";
@@ -8,34 +8,51 @@ export default function Dashboard() {
   const [selectedProspects, setSelectedProspects] = useState<number[]>([]);
 
   return (
-    <div className="min-h-screen avo-gradient-soft">
-      <Header />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <div className="sm:flex sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-3xl font-bold text-primary">Dashboard</h2>
-              <p className="mt-2 text-gray-600">Manage your prospects and generate personalized sales copy</p>
+    <DashboardLayout>
+      {/* Page Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-primary">Dashboard</h1>
+            <p className="mt-2 text-gray-600">Manage your prospects and generate personalized sales copy</p>
+          </div>
+          <div className="hidden sm:block">
+            <div className="flex items-center space-x-4 text-sm text-gray-500">
+              <span>Last updated: 2 min ago</span>
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             </div>
           </div>
         </div>
+      </div>
 
+      {/* Stats Grid */}
+      <div className="mb-8">
         <StatsGrid />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        {/* Prospects Section */}
+        <div className="xl:col-span-3">
+          <div className="bg-white rounded-xl avo-shadow-card p-6">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Prospects by Account</h2>
+              <p className="text-gray-600 text-sm">Organize and manage your prospect pipeline by company</p>
+            </div>
             <AccountGroupedProspects 
               selectedProspects={selectedProspects}
               onSelectedProspectsChange={setSelectedProspects}
             />
           </div>
-          <div className="lg:col-span-1">
+        </div>
+
+        {/* SCIPAB Generator Section */}
+        <div className="xl:col-span-1">
+          <div className="sticky top-24">
             <SCIPABGeneratorCard selectedProspects={selectedProspects} />
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

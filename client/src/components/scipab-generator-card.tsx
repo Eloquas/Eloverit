@@ -79,34 +79,36 @@ export default function SCIPABGeneratorCard({ selectedProspects }: SCIPABGenerat
 
   if (selectedProspects.length === 0) {
     return (
-      <Card className="avo-card border-2 border-dashed border-primary/30">
+      <Card className="avo-card-modern border-2 border-dashed border-primary/20 avo-hover-scale">
         <CardHeader className="text-center pb-4">
-          <Target className="h-12 w-12 mx-auto text-primary mb-4" />
-          <CardTitle className="text-primary">SCIPAB Cadence Generator</CardTitle>
-          <CardDescription>
+          <div className="w-16 h-16 mx-auto avo-gradient-blue rounded-2xl flex items-center justify-center mb-4 avo-shadow-soft">
+            <Target className="h-8 w-8 text-white" />
+          </div>
+          <CardTitle className="avo-text-gradient text-xl">SCIPAB Cadence Generator</CardTitle>
+          <CardDescription className="text-gray-600">
             Select prospects to generate research-driven, consultative email sequences
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-            <div className="p-4 avo-badge-blue rounded-xl transition-all duration-200 hover:scale-105">
+          <div className="grid grid-cols-1 gap-3 text-center">
+            <div className="p-4 avo-badge-blue rounded-2xl transition-all duration-200 avo-hover-scale">
               <Building className="h-6 w-6 mx-auto mb-2 text-primary" />
               <div className="text-sm font-medium">Account Research</div>
               <div className="text-xs text-gray-600">SDLC, QA, systems initiatives</div>
             </div>
-            <div className="p-4 avo-badge-green rounded-xl transition-all duration-200 hover:scale-105">
+            <div className="p-4 avo-badge-green rounded-2xl transition-all duration-200 avo-hover-scale">
               <Users className="h-6 w-6 mx-auto mb-2 text-accent" />
               <div className="text-sm font-medium">Manager+ Targeting</div>
               <div className="text-xs text-gray-600">QA, ERP, CRM, systems roles</div>
             </div>
-            <div className="p-4 avo-badge-purple rounded-xl transition-all duration-200 hover:scale-105">
+            <div className="p-4 avo-badge-purple rounded-2xl transition-all duration-200 avo-hover-scale">
               <Mail className="h-6 w-6 mx-auto mb-2 text-purple-600" />
               <div className="text-sm font-medium">6-Email Sequence</div>
               <div className="text-xs text-gray-600">Consultative SCIPAB framework</div>
             </div>
           </div>
           
-          <div className="mt-6 p-4 avo-badge-green rounded-xl border border-green-300">
+          <div className="mt-6 p-4 avo-badge-green rounded-2xl border border-green-200 avo-glass">
             <div className="flex items-center gap-2 text-green-700">
               <Shield className="h-4 w-4" />
               <span className="text-sm font-medium">Data Validation: PDL Verified</span>
@@ -122,15 +124,15 @@ export default function SCIPABGeneratorCard({ selectedProspects }: SCIPABGenerat
 
   return (
     <div className="space-y-6">
-      <Card className="border-blue-200 shadow-lg">
+      <Card className="avo-card-modern border-primary/30 avo-shadow-card">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-blue-600" />
+              <CardTitle className="flex items-center gap-2 avo-text-gradient">
+                <Target className="h-5 w-5 text-primary" />
                 SCIPAB Generator
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-600">
                 Generate consultative cadences for {selectedProspects.length} prospects
               </CardDescription>
             </div>
@@ -138,7 +140,7 @@ export default function SCIPABGeneratorCard({ selectedProspects }: SCIPABGenerat
               onClick={() => generateCadence.mutate(selectedProspects)}
               disabled={generateCadence.isPending}
               size="lg"
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-primary hover:bg-primary-dark avo-shadow-soft rounded-xl avo-hover-scale"
             >
               {generateCadence.isPending ? (
                 <>
@@ -157,13 +159,13 @@ export default function SCIPABGeneratorCard({ selectedProspects }: SCIPABGenerat
         
         {generateCadence.isPending && (
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex justify-between text-sm">
-                <span>Researching accounts and generating content...</span>
-                <span>Step 1-5 in progress</span>
+                <span className="font-medium">Researching accounts and generating content...</span>
+                <span className="avo-badge-blue rounded-full px-3 py-1">Step 1-5 in progress</span>
               </div>
-              <Progress value={45} className="h-2" />
-              <div className="text-xs text-gray-600">
+              <Progress value={45} className="h-3 rounded-full" />
+              <div className="text-xs text-gray-600 avo-glass rounded-lg p-3">
                 This may take 30-60 seconds to complete account research and generate all 6 emails per prospect
               </div>
             </div>

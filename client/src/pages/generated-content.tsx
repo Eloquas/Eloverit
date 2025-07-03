@@ -1,3 +1,4 @@
+import DashboardLayout from "@/components/dashboard-layout";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -121,40 +122,38 @@ export default function GeneratedContent() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
+      <DashboardLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="w-8 h-8 border-4 border-green-200 border-t-green-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">Loading generated content...</p>
           </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link href="/">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </Link>
+    <DashboardLayout>
+      {/* Page Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Generated Content</h1>
-            <p className="text-gray-600">
-              {filteredContent.length} of {generatedContent.length} content items
+            <h1 className="text-3xl font-bold text-primary">Generated Content</h1>
+            <p className="mt-2 text-gray-600">
+              {filteredContent.length} of {generatedContent.length} content items available
             </p>
           </div>
+          
+          <Button 
+            onClick={handleExportContent} 
+            disabled={filteredContent.length === 0}
+            className="bg-primary hover:bg-primary-dark avo-shadow-soft"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export to CSV
+          </Button>
         </div>
-        
-        <Button onClick={handleExportContent} disabled={filteredContent.length === 0}>
-          <Download className="w-4 h-4 mr-2" />
-          Export to CSV
-        </Button>
       </div>
 
       {/* Filters */}
@@ -306,6 +305,6 @@ export default function GeneratedContent() {
         open={!!previewContent} 
         onClose={() => setPreviewContent(null)} 
       />
-    </div>
+    </DashboardLayout>
   );
 }
