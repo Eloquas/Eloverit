@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, Clock, Target, Building, Users, Mail } from "lucide-react";
+import { CheckCircle, Clock, Target, Building, Users, Mail, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -103,6 +103,16 @@ export default function SCIPABGeneratorCard({ selectedProspects }: SCIPABGenerat
               <Mail className="h-6 w-6 mx-auto mb-2 text-purple-600" />
               <div className="text-sm font-medium">6-Email Sequence</div>
               <div className="text-xs text-gray-600">Consultative SCIPAB framework</div>
+            </div>
+          </div>
+          
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center gap-2 text-green-800">
+              <Shield className="h-4 w-4" />
+              <span className="text-sm font-medium">Data Validation: PDL Verified</span>
+            </div>
+            <div className="text-xs text-green-600 mt-1">
+              Using authentic company data from People Data Labs for accurate insights
             </div>
           </div>
         </CardContent>
