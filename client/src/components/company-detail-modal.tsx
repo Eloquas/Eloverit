@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, Building2, Target, Zap, Users, Mail, Briefcase, ExternalLink, Shield } from "lucide-react";
+import { ChevronDown, ChevronRight, Building2, Target, Zap, Users, Mail, Briefcase, ExternalLink, Shield, TrendingUp, AlertCircle, CheckCircle2, Activity } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -32,6 +32,19 @@ export default function CompanyDetailModal({ company, prospects, isOpen, onClose
           return null; // No research found for this company
         }
         throw new Error('Failed to fetch company research');
+      }
+      return response.json();
+    },
+    enabled: isOpen && !!company,
+  });
+
+  // Fetch recent company news
+  const { data: companyNews } = useQuery({
+    queryKey: ['/api/company-news', company],
+    queryFn: async () => {
+      const response = await fetch(`/api/company-news/${encodeURIComponent(company)}`);
+      if (!response.ok) {
+        return null;
       }
       return response.json();
     },
@@ -294,6 +307,181 @@ export default function CompanyDetailModal({ company, prospects, isOpen, onClose
                 </div>
               </div>
               
+              {/* Recent Changes Scanner */}
+              <div className="mt-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+                <h4 className="font-medium mb-3 flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-amber-600" />
+                  Recent Changes & QA Automation Signals
+                </h4>
+                <div className="space-y-2 text-sm">
+                  {(() => {
+                    const jobPostings = (companyResearch as any)?.jobPostings || [];
+                    const qaJobs = jobPostings.filter((job: any) => 
+                      job.title?.toLowerCase().includes('qa') || 
+                      job.title?.toLowerCase().includes('test') ||
+                      job.title?.toLowerCase().includes('quality')
+                    );
+                    const hasTestingInitiatives = (companyResearch as any)?.initiatives?.some((init: string) => 
+                      init.toLowerCase().includes('test') || 
+                      init.toLowerCase().includes('quality') ||
+                      init.toLowerCase().includes('automation')
+                    );
+                    
+                    return (
+                      <>
+                        {qaJobs.length > 0 && (
+                          <div className="flex items-start gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span className="text-gray-700">
+                              <strong>Active QA Hiring:</strong> {qaJobs.length} open QA/testing positions posted in last 30 days
+                            </span>
+                          </div>
+                        )}
+                        {hasTestingInitiatives && (
+                          <div className="flex items-start gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span className="text-gray-700">
+                              <strong>Testing Initiatives:</strong> Identified automation and quality improvement focus areas
+                            </span>
+                          </div>
+                        )}
+                        {(companyResearch as any)?.systemsInUse?.includes('Salesforce CRM') && (
+                          <div className="flex items-start gap-2">
+                            <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5" />
+                            <span className="text-gray-700">
+                              <strong>CRM Testing Need:</strong> Salesforce implementation requires continuous regression testing
+                            </span>
+                          </div>
+                        )}
+                        {(companyResearch as any)?.painPoints?.some((pain: string) => 
+                          pain.toLowerCase().includes('release') || 
+                          pain.toLowerCase().includes('bug') ||
+                          pain.toLowerCase().includes('quality')
+                        ) && (
+                          <div className="flex items-start gap-2">
+                            <TrendingUp className="h-4 w-4 text-blue-600 mt-0.5" />
+                            <span className="text-gray-700">
+                              <strong>Quality Challenges:</strong> Reported issues with release cycles and bug rates
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* Intent Score / Heat Map */}
+              <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
+                <h4 className="font-medium mb-3 flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-purple-600" />
+                  QA Automation Intent Score
+                </h4>
+                <div className="space-y-3">
+                  {(() => {
+                    // Calculate intent score
+                    const jobPostings = (companyResearch as any)?.jobPostings || [];
+                    const initiatives = (companyResearch as any)?.initiatives || [];
+                    const painPoints = (companyResearch as any)?.painPoints || [];
+                    const systems = (companyResearch as any)?.systemsInUse || [];
+                    
+                    let score = 0;
+                    let factors = [];
+                    
+                    // QA hiring (40 points max)
+                    const qaJobs = jobPostings.filter((job: any) => 
+                      job.title?.toLowerCase().includes('qa') || 
+                      job.title?.toLowerCase().includes('test') ||
+                      job.title?.toLowerCase().includes('quality')
+                    ).length;
+                    const hiringScore = Math.min(qaJobs * 10, 40);
+                    score += hiringScore;
+                    if (hiringScore > 0) factors.push({ name: 'QA Hiring Activity', score: hiringScore, max: 40 });
+                    
+                    // Testing initiatives (30 points max)
+                    const testingInitiatives = initiatives.filter((init: string) => 
+                      init.toLowerCase().includes('test') || 
+                      init.toLowerCase().includes('quality') ||
+                      init.toLowerCase().includes('automation')
+                    ).length;
+                    const initiativeScore = Math.min(testingInitiatives * 15, 30);
+                    score += initiativeScore;
+                    if (initiativeScore > 0) factors.push({ name: 'Testing Initiatives', score: initiativeScore, max: 30 });
+                    
+                    // Enterprise systems (20 points max)
+                    const enterpriseSystems = systems.filter((sys: string) => 
+                      sys.includes('Salesforce') || 
+                      sys.includes('SAP') ||
+                      sys.includes('Oracle')
+                    ).length;
+                    const systemScore = Math.min(enterpriseSystems * 10, 20);
+                    score += systemScore;
+                    if (systemScore > 0) factors.push({ name: 'Enterprise Systems', score: systemScore, max: 20 });
+                    
+                    // Pain points (10 points max)
+                    const qualityPains = painPoints.filter((pain: string) => 
+                      pain.toLowerCase().includes('release') || 
+                      pain.toLowerCase().includes('bug') ||
+                      pain.toLowerCase().includes('quality')
+                    ).length;
+                    const painScore = Math.min(qualityPains * 5, 10);
+                    score += painScore;
+                    if (painScore > 0) factors.push({ name: 'Quality Challenges', score: painScore, max: 10 });
+                    
+                    const getScoreColor = (score: number) => {
+                      if (score >= 75) return 'text-green-600 bg-green-100';
+                      if (score >= 50) return 'text-amber-600 bg-amber-100';
+                      return 'text-gray-600 bg-gray-100';
+                    };
+                    
+                    const getScoreLabel = (score: number) => {
+                      if (score >= 75) return 'High Intent';
+                      if (score >= 50) return 'Medium Intent';
+                      return 'Low Intent';
+                    };
+                    
+                    return (
+                      <>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <div className={`text-3xl font-bold ${getScoreColor(score).split(' ')[0]}`}>
+                              {score}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              <div className="font-medium">/ 100</div>
+                              <div className={`px-2 py-0.5 rounded-full text-xs font-medium ${getScoreColor(score)}`}>
+                                {getScoreLabel(score)}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xs text-gray-500">Based on</div>
+                            <div className="text-sm font-medium">{factors.length} indicators</div>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          {factors.map((factor, idx) => (
+                            <div key={idx} className="space-y-1">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-gray-600">{factor.name}</span>
+                                <span className="font-medium">{factor.score}/{factor.max}</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full"
+                                  style={{ width: `${(factor.score / factor.max) * 100}%` }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+
               {/* Data Quality Indicator */}
               <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl border border-green-200">
                 <div className="flex items-center justify-between">
@@ -320,6 +508,53 @@ export default function CompanyDetailModal({ company, prospects, isOpen, onClose
                 </p>
               </div>
               
+              {/* Recent Company News */}
+              {companyNews && companyNews.articles && companyNews.articles.length > 0 && (
+                <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-blue-600" />
+                      Recent Company Remarks & News
+                    </h4>
+                    <Badge variant="outline" className="text-xs">
+                      Last 30 days
+                    </Badge>
+                  </div>
+                  <div className="space-y-3">
+                    {companyNews.articles.map((article: any, idx: number) => (
+                      <div key={idx} className="border-l-2 border-blue-300 pl-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h5 className="font-medium text-sm text-gray-800">{article.title}</h5>
+                            <p className="text-xs text-gray-600 mt-1">{article.snippet}</p>
+                            <div className="flex items-center gap-3 mt-2">
+                              <span className="text-xs text-gray-500">{article.source}</span>
+                              <span className="text-xs text-gray-500">
+                                {new Date(article.date).toLocaleDateString()}
+                              </span>
+                              {article.qaSignals && article.qaSignals.length > 0 && (
+                                <div className="flex gap-1">
+                                  {article.qaSignals.map((signal: string, i: number) => (
+                                    <Badge key={i} className="text-xs py-0 px-1.5 avo-badge-blue">
+                                      {signal}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          {article.relevance === "high" && (
+                            <Badge className="text-xs avo-badge-green">
+                              High Relevance
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* SCIPAB Brief - QA Automation Alignment */}
               <div className="mt-6 p-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl border border-purple-200">
                 <h4 className="font-semibold text-lg mb-4 flex items-center gap-2 avo-text-gradient">

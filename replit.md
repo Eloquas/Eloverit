@@ -108,6 +108,15 @@ A comprehensive business communication automation platform that leverages AI to 
 - Highlights key metrics: 80% testing time reduction, 60% faster releases, 40% fewer bugs
 - Professional purple/blue gradient design matching Avo branding
 
+✅ **Company Changes Scanner & Intent Score (January 2025):** Forward-thinking account intelligence
+- Recent Changes Scanner highlights QA automation signals: active hiring, testing initiatives, CRM needs
+- Real-time analysis of job postings, initiatives, and pain points for QA relevance
+- QA Automation Intent Score (0-100) with visual heat map showing account readiness
+- Scoring factors: QA hiring activity (40%), testing initiatives (30%), enterprise systems (20%), quality challenges (10%)
+- Color-coded indicators: High Intent (75+, green), Medium Intent (50-74, amber), Low Intent (<50, gray)
+- Recent Company News section with mock data structure ready for news API integration
+- Visual progress bars showing contribution of each factor to overall intent score
+
 ## Technical Notes
 - Uses database storage for persistence
 - AI system validates Avo Automation representation in all content

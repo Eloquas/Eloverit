@@ -633,6 +633,41 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
       res.status(500).json({ message: "Failed to fetch account research" });
     }
   });
+  
+  // Get recent company news and remarks
+  app.get("/api/company-news/:companyName", async (req, res) => {
+    try {
+      const { companyName } = req.params;
+      
+      // For now, return mock data - can be integrated with news APIs later
+      const recentNews = {
+        articles: [
+          {
+            title: `${companyName} Expands QA Team to Support Digital Transformation`,
+            source: "Tech News Today",
+            date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            relevance: "high",
+            qaSignals: ["hiring", "digital transformation"],
+            snippet: "Company announces plans to double QA engineering team as part of quality-first initiative..."
+          },
+          {
+            title: `${companyName} Adopts Agile Testing Framework`,
+            source: "Industry Weekly",
+            date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+            relevance: "high",
+            qaSignals: ["agile", "testing framework"],
+            snippet: "Leadership emphasizes importance of automated testing in achieving faster release cycles..."
+          }
+        ],
+        lastUpdated: new Date().toISOString()
+      };
+      
+      res.json(recentNews);
+    } catch (error) {
+      console.error('Error fetching company news:', error);
+      res.status(500).json({ error: 'Failed to fetch company news' });
+    }
+  });
 
   app.post("/api/account-research/generate", async (req, res) => {
     try {
