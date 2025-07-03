@@ -25,6 +25,16 @@ export default function CompanyDetailModal({ company, prospects, isOpen, onClose
   // Fetch company research data
   const { data: companyResearch } = useQuery({
     queryKey: ['/api/account-research', company],
+    queryFn: async () => {
+      const response = await fetch(`/api/account-research/${encodeURIComponent(company)}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null; // No research found for this company
+        }
+        throw new Error('Failed to fetch company research');
+      }
+      return response.json();
+    },
     enabled: isOpen && !!company,
   });
 
@@ -172,35 +182,68 @@ export default function CompanyDetailModal({ company, prospects, isOpen, onClose
                     Current Initiatives
                   </h4>
                   <ul className="space-y-1 text-sm">
-                    {(companyResearch as any)?.initiatives?.map((initiative: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
-                        {initiative}
-                      </li>
-                    )) || <li className="text-gray-500">No data available</li>}
+                    {(() => {
+                      try {
+                        const initiatives = typeof (companyResearch as any)?.initiatives === 'string' 
+                          ? JSON.parse((companyResearch as any).initiatives)
+                          : (companyResearch as any)?.initiatives || [];
+                        return initiatives.length > 0 
+                          ? initiatives.map((initiative: string, idx: number) => (
+                              <li key={idx} className="flex items-start gap-2">
+                                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
+                                {initiative}
+                              </li>
+                            ))
+                          : <li className="text-gray-500">No initiatives data available</li>;
+                      } catch {
+                        return <li className="text-gray-500">Error parsing initiatives data</li>;
+                      }
+                    })()}
                   </ul>
                 </div>
                 
                 <div>
                   <h4 className="font-medium mb-2">Systems in Use</h4>
                   <div className="flex flex-wrap gap-1">
-                    {(companyResearch as any)?.systems?.map((system: string, idx: number) => (
-                      <Badge key={idx} variant="outline" className="text-xs">
-                        {system}
-                      </Badge>
-                    )) || <span className="text-gray-500 text-xs">No data available</span>}
+                    {(() => {
+                      try {
+                        const systems = typeof (companyResearch as any)?.currentSystems === 'string' 
+                          ? JSON.parse((companyResearch as any).currentSystems)
+                          : (companyResearch as any)?.currentSystems || [];
+                        return systems.length > 0 
+                          ? systems.map((system: string, idx: number) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {system}
+                              </Badge>
+                            ))
+                          : <span className="text-gray-500 text-xs">No systems data available</span>;
+                      } catch {
+                        return <span className="text-gray-500 text-xs">Error parsing systems data</span>;
+                      }
+                    })()}
                   </div>
                 </div>
                 
                 <div>
                   <h4 className="font-medium mb-2">Pain Points</h4>
                   <ul className="space-y-1 text-sm">
-                    {(companyResearch as any)?.painPoints?.map((pain: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 bg-red-400 rounded-full mt-2 flex-shrink-0"></span>
-                        {pain}
-                      </li>
-                    )) || <li className="text-gray-500">No data available</li>}
+                    {(() => {
+                      try {
+                        const painPoints = typeof (companyResearch as any)?.painPoints === 'string' 
+                          ? JSON.parse((companyResearch as any).painPoints)
+                          : (companyResearch as any)?.painPoints || [];
+                        return painPoints.length > 0 
+                          ? painPoints.map((pain: string, idx: number) => (
+                              <li key={idx} className="flex items-start gap-2">
+                                <span className="w-1.5 h-1.5 bg-red-400 rounded-full mt-2 flex-shrink-0"></span>
+                                {pain}
+                              </li>
+                            ))
+                          : <li className="text-gray-500">No pain points data available</li>;
+                      } catch {
+                        return <li className="text-gray-500">Error parsing pain points data</li>;
+                      }
+                    })()}
                   </ul>
                 </div>
               </div>

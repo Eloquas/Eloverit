@@ -618,6 +618,22 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
     }
   });
 
+  // Get account research by company name
+  app.get("/api/account-research/:companyName", async (req, res) => {
+    try {
+      const { companyName } = req.params;
+      const research = await storage.getAccountResearchByCompany(decodeURIComponent(companyName));
+      
+      if (!research) {
+        return res.status(404).json({ message: "No research found for this company" });
+      }
+      
+      res.json(research);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch account research" });
+    }
+  });
+
   app.post("/api/account-research/generate", async (req, res) => {
     try {
       const { companyName } = req.body;
