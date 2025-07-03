@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, Building2, Target, Zap, Users, Mail } from "lucide-react";
+import { ChevronDown, ChevronRight, Building2, Target, Zap, Users, Mail, Briefcase } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -169,9 +169,9 @@ export default function CompanyDetailModal({ company, prospects, isOpen, onClose
         <div className="space-y-6">
           {/* Company Overview */}
           {companyResearch && (
-            <div className="bg-blue-50 p-4 rounded-lg border">
-              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                <Target className="h-5 w-5" />
+            <div className="avo-card-modern p-6 rounded-2xl avo-shadow-soft">
+              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2 avo-text-gradient">
+                <Target className="h-5 w-5 text-primary" />
                 Company Research & SCIPAB Context
               </h3>
               
@@ -245,6 +245,37 @@ export default function CompanyDetailModal({ company, prospects, isOpen, onClose
                       }
                     })()}
                   </ul>
+                </div>
+              </div>
+              
+              {/* Job Openings Section */}
+              <div className="mt-4">
+                <h4 className="font-medium mb-2 flex items-center gap-1">
+                  <Briefcase className="h-4 w-4 text-green-600" />
+                  Relevant Job Openings (QA, SDLC, Enterprise Systems)
+                </h4>
+                <div className="space-y-2">
+                  {(() => {
+                    try {
+                      const jobPostings = typeof (companyResearch as any)?.recentJobPostings === 'string' 
+                        ? JSON.parse((companyResearch as any).recentJobPostings)
+                        : (companyResearch as any)?.recentJobPostings || [];
+                      return jobPostings.length > 0 
+                        ? jobPostings.map((job: string, idx: number) => (
+                            <div key={idx} className="p-3 avo-badge-green rounded-xl border border-green-100 avo-hover-scale transition-all duration-200">
+                              <div className="flex items-start gap-3">
+                                <div className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                  <span className="text-white text-xs font-bold">{idx + 1}</span>
+                                </div>
+                                <span className="text-sm text-gray-700 font-medium">{job}</span>
+                              </div>
+                            </div>
+                          ))
+                        : <div className="text-sm text-gray-500">No job postings data available</div>;
+                    } catch {
+                      return <div className="text-sm text-gray-500">Error parsing job postings data</div>;
+                    }
+                  })()}
                 </div>
               </div>
             </div>
