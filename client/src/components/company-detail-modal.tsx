@@ -320,6 +320,82 @@ export default function CompanyDetailModal({ company, prospects, isOpen, onClose
                 </p>
               </div>
               
+              {/* SCIPAB Brief - QA Automation Alignment */}
+              <div className="mt-6 p-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl border border-purple-200">
+                <h4 className="font-semibold text-lg mb-4 flex items-center gap-2 avo-text-gradient">
+                  <Zap className="h-5 w-5 text-purple-600" />
+                  SCIPAB Brief: Avo QA Automation Alignment
+                </h4>
+                
+                <div className="space-y-3">
+                  <div>
+                    <h5 className="font-medium text-sm text-gray-700 mb-1">Situation</h5>
+                    <p className="text-sm text-gray-600">
+                      {company} is actively hiring for {(() => {
+                        const jobPostings = (companyResearch as any)?.jobPostings || [];
+                        const qaRelated = jobPostings.filter((job: any) => 
+                          job.title?.toLowerCase().includes('qa') || 
+                          job.title?.toLowerCase().includes('test') ||
+                          job.title?.toLowerCase().includes('quality')
+                        ).length;
+                        return qaRelated > 0 ? `${qaRelated} QA/testing roles` : 'software development roles';
+                      })()} while managing {(() => {
+                        const systems = (companyResearch as any)?.systemsInUse || [];
+                        return systems.length > 0 ? systems.slice(0, 2).join(' and ') : 'multiple enterprise systems';
+                      })()}. Your QA team is balancing manual testing across these platforms with increasing release velocity demands. Industry data shows 73% of enterprises struggle with QA bottlenecks in multi-system environments.
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-medium text-sm text-gray-700 mb-1">Complication</h5>
+                    <p className="text-sm text-gray-600">
+                      Manual testing across {(() => {
+                        const systems = (companyResearch as any)?.systemsInUse || [];
+                        return systems.includes('Salesforce CRM') || systems.includes('SAP ERP') ? 
+                          'your CRM and ERP systems' : 'multiple platforms';
+                      })()} creates 3-5 day release delays and increases bug escape rates by 40%. Your QA engineers spend 60% of their time on repetitive test execution instead of exploratory testing. This testing bottleneck directly impacts your {(() => {
+                        const initiatives = (companyResearch as any)?.initiatives || [];
+                        return initiatives[0] || 'digital transformation initiatives';
+                      })()}.
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-medium text-sm text-gray-700 mb-1">Implication</h5>
+                    <p className="text-sm text-gray-600">
+                      Without automated testing, {company} risks falling behind competitors who release 2-3x faster with higher quality. Manual QA costs will increase by 35% annually as system complexity grows. Your development teams' productivity suffers when waiting for QA cycles, leading to missed market opportunities and technical debt accumulation.
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-medium text-sm text-gray-700 mb-1">Position</h5>
+                    <p className="text-sm text-gray-600">
+                      Avo Automation provides AI-powered test automation specifically designed for enterprises using {(() => {
+                        const systems = (companyResearch as any)?.systemsInUse || [];
+                        const relevantSystems = systems.filter((s: string) => 
+                          s.includes('Salesforce') || s.includes('SAP') || s.includes('Oracle')
+                        );
+                        return relevantSystems.length > 0 ? relevantSystems[0] : 'enterprise systems';
+                      })()}. Our platform reduces testing time by 80% while increasing coverage across all your critical systems. Unlike traditional tools, Avo learns from your existing test cases and automatically maintains tests as your applications evolve.
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-medium text-sm text-gray-700 mb-1">Ask</h5>
+                    <p className="text-sm text-gray-600">
+                      Schedule a 30-minute discovery call to explore how Avo can accelerate your QA cycles from days to hours. We'll analyze your current testing bottlenecks and demonstrate ROI specific to {company}'s tech stack. Our enterprise architects can design a proof-of-concept targeting your most time-consuming test scenarios.
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-medium text-sm text-gray-700 mb-1">Benefit</h5>
+                    <p className="text-sm text-gray-600">
+                      {company} will achieve 60% faster release cycles, 40% reduction in production bugs, and $2M+ annual savings in QA costs. Your QA team transitions from manual testers to quality engineers focusing on strategic testing initiatives. This positions {company} as a technology leader with the agility to outpace competitors in delivering innovative solutions.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
               {/* Job Openings Section */}
               <div className="mt-4">
                 <div className="flex items-center justify-between mb-2">

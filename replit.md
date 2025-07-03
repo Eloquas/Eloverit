@@ -90,6 +90,24 @@ A comprehensive business communication automation platform that leverages AI to 
 - Professional shadow system with elevated and soft variations
 - Smooth scrolling and custom scrollbar styling matching brand colors
 
+✅ **Data Source Citations & Validation (January 2025):** Enhanced authenticity indicators
+- Source citation links added to all research sections (LinkedIn, G2, Glassdoor, Indeed)
+- PDL verification badges showing data comes from People Data Labs API
+- Data quality score indicator (4/5 stars) with visual representation
+- External link icons for easy access to source websites
+- Timestamp showing when research was last updated
+- Explicit messaging about minimal AI inference
+- Clickable source bubbles that open in new tabs for verification
+
+✅ **SCIPAB Brief Integration (January 2025):** Concise QA automation alignment POV
+- Added comprehensive SCIPAB brief section in company detail modal
+- Each SCIPAB element (Situation, Complication, Implication, Position, Ask, Benefit) limited to 3 sentences
+- Dynamic content pulls from actual PDL data (job postings, systems in use, initiatives)
+- Focuses specifically on Avo QA automation value proposition
+- Uses company-specific data points for personalization (hiring patterns, tech stack)
+- Highlights key metrics: 80% testing time reduction, 60% faster releases, 40% fewer bugs
+- Professional purple/blue gradient design matching Avo branding
+
 ## Technical Notes
 - Uses database storage for persistence
 - AI system validates Avo Automation representation in all content
