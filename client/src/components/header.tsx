@@ -79,24 +79,27 @@ export default function Header() {
 
   return (
     <>
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="bg-white avo-shadow-soft border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 avo-gradient-blue rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">P</span>
+                </div>
                 <h1 className="text-2xl font-bold text-primary">ProspectCopy</h1>
               </div>
-              <nav className="hidden md:ml-8 md:flex md:space-x-8">
-                <a href="/" className="text-primary border-b-2 border-primary px-1 pb-4 text-sm font-medium">Dashboard</a>
-                <a href="/generated-content" className="text-gray-500 hover:text-secondary px-1 pb-4 text-sm font-medium">Generated Content</a>
+              <nav className="hidden md:ml-8 md:flex md:space-x-2">
+                <a href="/" className="text-primary bg-avo-blue-50 hover:bg-avo-blue-100 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200">Dashboard</a>
+                <a href="/generated-content" className="text-gray-600 hover:text-primary hover:bg-avo-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200">Generated Content</a>
               </nav>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleExportProspects}
-                className="inline-flex items-center"
+                className="inline-flex items-center border-gray-200 hover:border-primary hover:bg-avo-blue-50 transition-all duration-200"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Export Prospects
@@ -105,27 +108,27 @@ export default function Header() {
                 variant="outline"
                 size="sm"
                 onClick={handleExportWorkflow}
-                className="inline-flex items-center bg-accent text-white hover:bg-green-700 border-accent"
+                className="inline-flex items-center bg-accent text-white hover:bg-green-600 border-accent avo-shadow-soft"
               >
                 <Download className="w-4 h-4 mr-2" />
-                Export Workflow Spreadsheet
+                Export Workflow
               </Button>
               <Button
                 size="sm"
                 onClick={() => setShowUploadDialog(true)}
-                className="inline-flex items-center bg-primary hover:bg-primary-dark"
+                className="inline-flex items-center bg-primary hover:bg-primary-dark avo-shadow-soft transition-all duration-200 hover:transform hover:-translate-y-0.5"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Upload Prospects
               </Button>
-              <button className="text-gray-500 hover:text-secondary">
+              <button className="text-gray-400 hover:text-primary p-2 rounded-lg hover:bg-avo-blue-50 transition-all duration-200">
                 <Bell className="w-5 h-5" />
               </button>
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+              <div className="flex items-center space-x-3 pl-3 border-l border-gray-200">
+                <div className="w-8 h-8 avo-gradient-blue rounded-full flex items-center justify-center avo-shadow-soft">
                   <span className="text-white text-sm font-medium">JD</span>
                 </div>
-                <span className="hidden md:block text-sm font-medium">John Doe</span>
+                <span className="hidden md:block text-sm font-medium text-gray-700">John Doe</span>
               </div>
             </div>
           </div>

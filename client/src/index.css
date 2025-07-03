@@ -3,29 +3,46 @@
 @tailwind utilities;
 
 :root {
+  /* Avo Automation Design System Colors */
   --background: hsl(0, 0%, 100%);
-  --foreground: hsl(20, 14.3%, 4.1%);
-  --muted: hsl(60, 4.8%, 95.9%);
-  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --foreground: hsl(218, 15%, 25%); /* Darker blue-gray for text */
+  --muted: hsl(220, 13%, 97%); /* Very light blue-gray backgrounds */
+  --muted-foreground: hsl(218, 10%, 50%);
   --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --popover-foreground: hsl(218, 15%, 25%);
   --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(20, 14.3%, 4.1%);
-  --border: hsl(20, 5.9%, 90%);
-  --input: hsl(20, 5.9%, 90%);
-  --primary: hsl(207, 90%, 54%);
-  --primary-foreground: hsl(211, 100%, 99%);
-  --primary-dark: hsl(217, 91%, 44%);
-  --secondary: hsl(210, 40%, 24%);
-  --secondary-foreground: hsl(24, 9.8%, 10%);
-  --accent: hsl(122, 100%, 39%);
-  --accent-foreground: hsl(60, 9.1%, 97.8%);
+  --card-foreground: hsl(218, 15%, 25%);
+  --border: hsl(220, 13%, 88%); /* Light gray borders like Avo */
+  --input: hsl(220, 13%, 88%);
+  
+  /* Avo's signature blue color scheme */
+  --primary: hsl(214, 84%, 56%); /* Avo's primary blue #3B82F6 */
+  --primary-foreground: hsl(0, 0%, 100%);
+  --primary-dark: hsl(214, 84%, 46%); /* Darker blue for hover states */
+  
+  /* Professional secondary colors */
+  --secondary: hsl(250, 60%, 65%); /* Purple accent like Avo uses */
+  --secondary-foreground: hsl(0, 0%, 100%);
+  
+  /* Success green matching Avo's palette */
+  --accent: hsl(142, 76%, 47%); /* Professional green #10B981 */
+  --accent-foreground: hsl(0, 0%, 100%);
+  
   --destructive: hsl(0, 84.2%, 60.2%);
-  --destructive-foreground: hsl(60, 9.1%, 97.8%);
-  --ring: hsl(20, 14.3%, 4.1%);
-  --radius: 0.5rem;
-  --surface: hsl(210, 20%, 98%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --ring: hsl(214, 84%, 56%);
+  --radius: 0.75rem; /* More rounded like Avo's design */
+  --surface: hsl(220, 13%, 97%);
   --error: hsl(0, 84.2%, 60.2%);
+  
+  /* Avo-specific colors */
+  --avo-blue-50: hsl(214, 100%, 97%);
+  --avo-blue-100: hsl(214, 95%, 93%);
+  --avo-blue-500: hsl(214, 84%, 56%);
+  --avo-blue-600: hsl(214, 84%, 46%);
+  --avo-purple-500: hsl(250, 60%, 65%);
+  --avo-green-500: hsl(142, 76%, 47%);
+  --avo-orange-500: hsl(25, 95%, 55%);
 }
 
 .dark {
@@ -66,6 +83,69 @@
 }
 
 @layer utilities {
+  /* Avo-inspired gradients and effects */
+  .avo-gradient-blue {
+    background: linear-gradient(135deg, var(--avo-blue-500) 0%, var(--avo-purple-500) 100%);
+  }
+  
+  .avo-gradient-soft {
+    background: linear-gradient(135deg, var(--avo-blue-50) 0%, hsl(220, 13%, 97%) 100%);
+  }
+  
+  .avo-shadow-soft {
+    box-shadow: 0 4px 20px -2px hsl(214, 84%, 56%, 0.1);
+  }
+  
+  .avo-shadow-card {
+    box-shadow: 0 2px 8px -1px rgba(0, 0, 0, 0.06), 0 1px 4px -1px rgba(0, 0, 0, 0.04);
+  }
+  
+  /* Avo card styling */
+  .avo-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+  }
+  
+  .avo-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 8px 30px -4px hsl(214, 84%, 56%, 0.15);
+    transform: translateY(-1px);
+  }
+  
+  /* Avo badge styles matching their design */
+  .avo-badge-blue {
+    background: var(--avo-blue-50);
+    color: var(--avo-blue-600);
+    border: 1px solid var(--avo-blue-100);
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  
+  .avo-badge-purple {
+    background: hsl(250, 60%, 95%);
+    color: hsl(250, 60%, 45%);
+    border: 1px solid hsl(250, 60%, 85%);
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  
+  .avo-badge-green {
+    background: hsl(142, 76%, 95%);
+    color: hsl(142, 76%, 35%);
+    border: 1px solid hsl(142, 76%, 85%);
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  
+  /* Existing utilities updated with Avo colors */
   .text-primary {
     color: var(--primary);
   }
@@ -116,17 +196,5 @@
   
   .hover\:text-secondary:hover {
     color: var(--secondary);
-  }
-  
-  .hover\:text-green-700:hover {
-    color: hsl(122, 76%, 32%);
-  }
-  
-  .hover\:text-red-700:hover {
-    color: hsl(0, 74%, 42%);
-  }
-  
-  .hover\:bg-green-700:hover {
-    background-color: hsl(122, 76%, 32%);
   }
 }

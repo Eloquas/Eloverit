@@ -79,35 +79,35 @@ export default function SCIPABGeneratorCard({ selectedProspects }: SCIPABGenerat
 
   if (selectedProspects.length === 0) {
     return (
-      <Card className="border-2 border-dashed border-gray-300">
+      <Card className="avo-card border-2 border-dashed border-primary/30">
         <CardHeader className="text-center pb-4">
-          <Target className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <CardTitle className="text-gray-600">SCIPAB Cadence Generator</CardTitle>
+          <Target className="h-12 w-12 mx-auto text-primary mb-4" />
+          <CardTitle className="text-primary">SCIPAB Cadence Generator</CardTitle>
           <CardDescription>
             Select prospects to generate research-driven, consultative email sequences
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <Building className="h-6 w-6 mx-auto mb-2 text-blue-600" />
+            <div className="p-4 avo-badge-blue rounded-xl transition-all duration-200 hover:scale-105">
+              <Building className="h-6 w-6 mx-auto mb-2 text-primary" />
               <div className="text-sm font-medium">Account Research</div>
               <div className="text-xs text-gray-600">SDLC, QA, systems initiatives</div>
             </div>
-            <div className="p-3 bg-green-50 rounded-lg">
-              <Users className="h-6 w-6 mx-auto mb-2 text-green-600" />
+            <div className="p-4 avo-badge-green rounded-xl transition-all duration-200 hover:scale-105">
+              <Users className="h-6 w-6 mx-auto mb-2 text-accent" />
               <div className="text-sm font-medium">Manager+ Targeting</div>
               <div className="text-xs text-gray-600">QA, ERP, CRM, systems roles</div>
             </div>
-            <div className="p-3 bg-purple-50 rounded-lg">
+            <div className="p-4 avo-badge-purple rounded-xl transition-all duration-200 hover:scale-105">
               <Mail className="h-6 w-6 mx-auto mb-2 text-purple-600" />
               <div className="text-sm font-medium">6-Email Sequence</div>
               <div className="text-xs text-gray-600">Consultative SCIPAB framework</div>
             </div>
           </div>
           
-          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center gap-2 text-green-800">
+          <div className="mt-6 p-4 avo-badge-green rounded-xl border border-green-300">
+            <div className="flex items-center gap-2 text-green-700">
               <Shield className="h-4 w-4" />
               <span className="text-sm font-medium">Data Validation: PDL Verified</span>
             </div>

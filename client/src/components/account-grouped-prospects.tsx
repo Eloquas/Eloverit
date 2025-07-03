@@ -192,13 +192,13 @@ export default function AccountGroupedProspects({
           const isPartiallySelected = accountProspectIds.some(id => selectedProspects.includes(id)) && !isAccountSelected;
 
           return (
-            <Card key={account.company} className="border-l-4 border-l-blue-500">
+            <Card key={account.company} className="avo-card border-l-4 border-l-primary">
               <Collapsible>
                 <CollapsibleTrigger 
                   className="w-full"
                   onClick={() => toggleAccount(account.company)}
                 >
-                  <CardHeader className="hover:bg-gray-50 transition-colors">
+                  <CardHeader className="hover:bg-avo-blue-50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
