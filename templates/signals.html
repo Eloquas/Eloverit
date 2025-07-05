@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Job Signals - Eloquas AI{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 2rem;">Job Signals</h2>
+
+{% if signals_by_company %}
+    {% for company, signals in signals_by_company.items() %}
+    <div class="card">
+        <h3 style="margin-bottom: 1.5rem;">{{ company }} ({{ signals|length }} signals)</h3>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Position</th>
+                    <th>Keywords</th>
+                    <th>Match Score</th>
+                    <th>Posted</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for signal in signals %}
+                <tr>
+                    <td>
+                        <strong>{{ signal.title }}</strong>
+                        <br>
+                        <small style="color: #666;">{{ signal.description_snippet[:100] }}...</small>
+                    </td>
+                    <td>
+                        {% for keyword in signal.keywords %}
+                            <span class="badge badge-info">{{ keyword }}</span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <span class="badge {% if signal.match_score > 0.8 %}badge-success{% elif signal.match_score > 0.6 %}badge-warning{% else %}badge-danger{% endif %}">
+                            {{ "%.0f"|format(signal.match_score * 100) }}%
+                        </span>
+                    </td>
+                    <td>{{ signal.timestamp[:10] }}</td>
+                    <td>
+                        <a href="{{ signal.url }}" target="_blank" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">
+                            View Job
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="card">
+        <p style="text-align: center; color: #666;">
+            No job signals detected yet. Signals will appear here as matching positions are found at your prospect companies.
+        </p>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Compose Email - Eloquas AI{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Compose Email to {{ prospect.name }}</h2>
+    <p style="color: #666; margin-bottom: 2rem;">{{ prospect.title }} at {{ prospect.company }}</p>
+    
+    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 2rem;">
+        <!-- Email Form -->
+        <div>
+            <form id="emailForm">
+                <input type="hidden" id="prospect_id" value="{{ prospect.id }}">
+                
+                <div class="form-group">
+                    <label for="subject">Subject Line</label>
+                    <input type="text" id="subject" name="subject" value="{{ email_template.subject }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="body">Email Body</label>
+                    <textarea id="body" name="body" rows="15" required>{{ email_template.body }}</textarea>
+                </div>
+                
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn">Send Email</button>
+                    <button type="button" class="btn btn-secondary" onclick="calculateStoryScore()">Check StoryScore</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Scoring Panel -->
+        <div>
+            <!-- Trust Score -->
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <h4>TrustScore</h4>
+                <div style="font-size: 2.5rem; font-weight: 600; color: {% if trustscore > 70 %}#27ae60{% elif trustscore > 50 %}#f39c12{% else %}#e74c3c{% endif %};">
+                    {{ "%.1f"|format(trustscore) }}
+                </div>
+                <p style="color: #666; font-size: 0.875rem; margin-top: 0.5rem;">
+                    Overall deliverability score
+                </p>
+            </div>
+            
+            <!-- Story Score -->
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <h4>StoryScore</h4>
+                <div id="storyScoreValue" style="font-size: 2.5rem; font-weight: 600; color: #95a5a6;">
+                    --/20
+                </div>
+                <p style="color: #666; font-size: 0.875rem; margin-top: 0.5rem;">
+                    Email quality & personalization
+                </p>
+            </div>
+            
+            <!-- Signal Info -->
+            {% if signal %}
+            <div style="background: #e3f2fd; padding: 1.5rem; border-radius: 8px;">
+                <h4>Active Signal</h4>
+                <p style="margin: 0.5rem 0;"><strong>{{ signal.title }}</strong></p>
+                <p style="margin: 0.5rem 0; font-size: 0.875rem;">
+                    Keywords: 
+                    {% for keyword in signal.keywords %}
+                        <span class="badge badge-info">{{ keyword }}</span>
+                    {% endfor %}
+                </p>
+                <p style="margin: 0.5rem 0; font-size: 0.875rem;">
+                    Match: {{ "%.0f"|format(signal.match_score * 100) }}%
+                </p>
+                <a href="{{ signal.url }}" target="_blank" style="font-size: 0.875rem;">View Job →</a>
+            </div>
+            {% else %}
+            <div style="background: #fff3cd; padding: 1.5rem; border-radius: 8px;">
+                <h4>No Active Signal</h4>
+                <p style="color: #856404; font-size: 0.875rem;">
+                    No recent job signals for this company. Consider waiting for a stronger intent signal.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function calculateStoryScore() {
+    const body = document.getElementById('body').value;
+    
+    fetch('/api/storyscore', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ body: body })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const scoreElement = document.getElementById('storyScoreValue');
+        scoreElement.textContent = data.storyscore + '/20';
+        
+        // Update color based on score
+        if (data.storyscore > 15) {
+            scoreElement.style.color = '#27ae60';
+        } else if (data.storyscore > 10) {
+            scoreElement.style.color = '#f39c12';
+        } else {
+            scoreElement.style.color = '#e74c3c';
+        }
+    });
+}
+
+document.getElementById('emailForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        prospect_id: document.getElementById('prospect_id').value,
+        subject: document.getElementById('subject').value,
+        body: document.getElementById('body').value
+    };
+    
+    fetch('/send-email', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Email queued successfully!');
+            window.location.href = '/dashboard';
+        } else {
+            alert('Error: ' + data.error);
+        }
+    });
+});
+</script>
+{% endblock %}

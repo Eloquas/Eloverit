@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Prospects - Eloquas AI{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h2 style="margin-bottom: 2rem;">Upload Prospect List</h2>
+    
+    <form method="POST" action="{{ url_for('upload_prospects') }}" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="file">CSV File</label>
+            <input type="file" id="file" name="file" accept=".csv" required>
+            <p style="color: #666; font-size: 0.875rem; margin-top: 0.5rem;">
+                Required columns: name, email, title, company<br>
+                Optional: domain
+            </p>
+        </div>
+        
+        <button type="submit" class="btn">Upload Prospects</button>
+    </form>
+    
+    <div style="margin-top: 3rem; padding: 1.5rem; background: #f8f9fa; border-radius: 4px;">
+        <h4>CSV Format Example:</h4>
+        <pre style="background: #e9ecef; padding: 1rem; border-radius: 4px; overflow-x: auto;">
+name,email,title,company,domain
+John Smith,john.smith@acme.com,VP of Quality,Acme Corp,acme.com
+Jane Doe,jane.doe@techco.com,Director of QA,TechCo,techco.com
+Mike Johnson,mike@startup.io,Head of Engineering,StartupIO,startup.io</pre>
+    </div>
+</div>
+{% endblock %}

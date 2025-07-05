@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Eloquas AI{% endblock %}
+
+{% block content %}
+<h2>Welcome, {{ session.user_email }}</h2>
+<p style="color: #666; margin-bottom: 2rem;">Role: {{ session.user_role|upper }}</p>
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ prospects|length }}</div>
+        <div class="stat-label">Total Prospects</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-value">{{ signals|length }}</div>
+        <div class="stat-label">Active Signals</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-value">{{ "%.1f"|format(avg_trustscore) }}</div>
+        <div class="stat-label">Avg TrustScore</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-value">{{ email_queue.queued }}</div>
+        <div class="stat-label">Emails Queued</div>
+    </div>
+</div>
+
+<!-- Recent Signals -->
+<div class="card">
+    <h3 style="margin-bottom: 1.5rem;">Recent Job Signals</h3>
+    
+    {% if signals %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Position</th>
+                    <th>Keywords</th>
+                    <th>Match Score</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for signal in signals[:5] %}
+                <tr>
+                    <td><strong>{{ signal.company }}</strong></td>
+                    <td>{{ signal.title[:50] }}...</td>
+                    <td>
+                        {% for keyword in signal.keywords[:3] %}
+                            <span class="badge badge-info">{{ keyword }}</span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <span class="badge {% if signal.match_score > 0.8 %}badge-success{% elif signal.match_score > 0.6 %}badge-warning{% else %}badge-danger{% endif %}">
+                            {{ "%.0f"|format(signal.match_score * 100) }}%
+                        </span>
+                    </td>
+                    <td>{{ signal.timestamp[:10] }}</td>
+                    <td>
+                        <a href="{{ signal.url }}" target="_blank" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <p style="text-align: center; margin-top: 1rem;">
+            <a href="{{ url_for('signals') }}" class="btn">View All Signals</a>
+        </p>
+    {% else %}
+        <p style="text-align: center; color: #666;">No signals yet. They will appear here as job postings are discovered.</p>
+    {% endif %}
+</div>
+
+<!-- Top Prospects -->
+<div class="card">
+    <h3 style="margin-bottom: 1.5rem;">Top Prospects</h3>
+    
+    {% if prospects %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Company</th>
+                    <th>Title</th>
+                    <th>Email</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prospect in prospects[:10] %}
+                <tr>
+                    <td><strong>{{ prospect.name }}</strong></td>
+                    <td>{{ prospect.company }}</td>
+                    <td>{{ prospect.title }}</td>
+                    <td>{{ prospect.email }}</td>
+                    <td>
+                        <a href="{{ url_for('compose_email', prospect_id=prospect.id) }}" class="btn" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">
+                            Compose Email
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="text-align: center; color: #666;">
+            No prospects yet. 
+            <a href="{{ url_for('upload_prospects') }}">Upload your first CSV</a>
+        </p>
+    {% endif %}
+</div>
+
+<!-- Email Queue Status -->
+<div class="card">
+    <h3 style="margin-bottom: 1.5rem;">Email Activity</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div>
+            <h4 style="color: #3498db;">{{ email_queue.sent_today }}</h4>
+            <p style="color: #666;">Sent Today</p>
+        </div>
+        <div>
+            <h4 style="color: #f39c12;">{{ email_queue.queued }}</h4>
+            <p style="color: #666;">In Queue</p>
+        </div>
+        <div>
+            <h4 style="color: #e74c3c;">{{ email_queue.failed }}</h4>
+            <p style="color: #666;">Failed</p>
+        </div>
+        <div>
+            <h4 style="color: #27ae60;">{{ email_queue.total_sent }}</h4>
+            <p style="color: #666;">Total Sent</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

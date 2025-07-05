@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Eloquas AI{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 400px; margin: 0 auto;">
+    <h2 style="margin-bottom: 2rem; text-align: center;">Create Your Account</h2>
+    
+    <form method="POST" action="{{ url_for('register') }}">
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required autofocus>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required minlength="8">
+        </div>
+        
+        <div class="form-group">
+            <label for="company">Company</label>
+            <input type="text" id="company" name="company" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="role">Role</label>
+            <select id="role" name="role" required>
+                <option value="bdr">BDR (Business Development Rep)</option>
+                <option value="ae">AE (Account Executive)</option>
+                <option value="admin">Admin</option>
+            </select>
+        </div>
+        
+        <button type="submit" class="btn" style="width: 100%;">Create Account</button>
+    </form>
+    
+    <p style="text-align: center; margin-top: 1.5rem; color: #666;">
+        Already have an account? <a href="{{ url_for('login') }}">Login here</a>
+    </p>
+</div>
+{% endblock %}

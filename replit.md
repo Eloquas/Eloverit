@@ -1,9 +1,13 @@
-# ProspectCopy - AI-Powered Business Communication Automation
+# ProspectCopy & Eloquas AI - Dual Platform Repository
 
 ## Project Overview
-A comprehensive business communication automation platform that leverages AI to generate personalized email and LinkedIn outreach content for sales and marketing professionals, with specialized focus on enterprise systems and QA automation.
+This repository contains two complementary platforms:
 
-**Current State:** Enhanced with Avo Automation knowledge base, PostgreSQL database, advanced tone selection, and comprehensive content management system.
+1. **ProspectCopy:** A comprehensive business communication automation platform that leverages AI to generate personalized email and LinkedIn outreach content for sales and marketing professionals, with specialized focus on enterprise systems and QA automation.
+
+2. **Eloquas AI:** A P2P outbound intelligence platform for AEs and BDRs in enterprise sales, featuring secure multi-user login, RBAC, proactive data agents, TrustScore/StoryScore systems, and automated job signal detection.
+
+**Current State:** Both platforms operational - ProspectCopy with enhanced Avo Automation knowledge base and PostgreSQL database; Eloquas AI with Flask backend, user authentication, and signal detection system.
 
 ## User Preferences
 - **Communication Style:** Clear, actionable updates without excessive technical jargon
@@ -135,6 +139,44 @@ A comprehensive business communication automation platform that leverages AI to 
 - Rotating live insights with 3-second intervals
 - Card hover effects with scale transforms
 - Gradient overlays and modern card designs matching Avo branding
+
+## Eloquas AI Platform (January 2025)
+
+✅ **Backend Infrastructure:** Complete Flask-based P2P outbound intelligence system
+- Multi-user authentication with email/password login and session management
+- Role-based access control (RBAC) with Admin, AE, and BDR roles
+- Secure data isolation - users only see their own prospects and data
+- JSON-based database storage simulating Replit DB functionality
+
+✅ **Proactive Signal Engine:** Automated job board monitoring for intent signals
+- Daily job scraper monitoring F1000 company career pages via RSS feeds
+- Keyword matching for: SAP, Oracle, Dynamics 365, QA, Test Automation, Quality Engineering
+- Signal scoring system (0-1) based on keyword relevance and match quality
+- Deduplication using hash-based unique identifiers
+
+✅ **TrustScore & StoryScore System:** AI-powered email quality scoring
+- TrustScore (0-100): Composite of relationship (25%), intent freshness (25%), story quality (20%), deliverability (15%), engagement (15%)
+- StoryScore (0-20): GPT-4o integration for emotional pull, personalization, and clarity assessment
+- Real-time scoring API endpoints for instant feedback
+
+✅ **Email Engine with Deliverability:** Advanced email composition and sending
+- Spintax support for variation: {hello|hi|hey} syntax
+- Built-in spam score checking with deliverability guardrails
+- Email queue management with rate limiting (45-90 seconds between sends)
+- Template library for QA and SAP signals with personalized variations
+
+✅ **SMS Alerts via Twilio:** Daily signal digest notifications
+- Automated daily SMS alerts for new job signals
+- Company-grouped signal summaries
+- Integration ready for Twilio API (environment variables supported)
+
+✅ **User Interface:** Complete Jinja2 template system
+- Registration and login flows
+- Dashboard with stats grid, recent signals, and prospect management
+- CSV upload for bulk prospect import
+- Email composition interface with real-time TrustScore display
+- Admin panel for user management
+- Responsive design with modern CSS styling
 
 ## Technical Notes
 - Uses database storage for persistence

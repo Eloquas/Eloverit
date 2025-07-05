@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Users - Eloquas AI{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 2rem;">User Management</h2>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Company</th>
+                <th>Role</th>
+                <th>Created</th>
+                <th>Last Login</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td><strong>{{ user.email }}</strong></td>
+                <td>{{ user.company }}</td>
+                <td>
+                    <span class="badge {% if user.role == 'admin' %}badge-danger{% elif user.role == 'ae' %}badge-success{% else %}badge-info{% endif %}">
+                        {{ user.role|upper }}
+                    </span>
+                </td>
+                <td>{{ user.created_at[:10] if user.created_at else 'N/A' }}</td>
+                <td>{{ user.last_login[:10] if user.last_login else 'Never' }}</td>
+                <td>
+                    <span class="badge {% if user.is_active %}badge-success{% else %}badge-danger{% endif %}">
+                        {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">
+                        Edit
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>System Stats</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+        <div>
+            <h4>{{ users|length }}</h4>
+            <p style="color: #666;">Total Users</p>
+        </div>
+        <div>
+            <h4>{{ users|selectattr('role', 'equalto', 'admin')|list|length }}</h4>
+            <p style="color: #666;">Admins</p>
+        </div>
+        <div>
+            <h4>{{ users|selectattr('role', 'equalto', 'ae')|list|length }}</h4>
+            <p style="color: #666;">Account Executives</p>
+        </div>
+        <div>
+            <h4>{{ users|selectattr('role', 'equalto', 'bdr')|list|length }}</h4>
+            <p style="color: #666;">BDRs</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

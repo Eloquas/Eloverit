@@ -1,0 +1,122 @@
+ou're acting as a senior engineer building the backend infrastructure for a SaaS platform called Eloquas AI — a P2P outbound intelligence platform for AEs and BDRs in enterprise sales.
+
+✅ Objectives:
+Build a multi-user, account-based platform with secure login, RBAC (role-based access control), and proactive data agents that feed into a TrustScore and StoryScore system. This Repl will include secure data isolation, job board scanning, and outbound protections for email deliverability.
+
+🔧 Stack:
+Backend: Python (Flask)
+
+DB: Replit DB
+
+Auth: Session-based login (email + password) + role system (Admin, AE, BDR)
+
+Outbound: SMTP + Twilio
+
+Agents: Python scripts triggered via Replit cron
+
+AI: OpenAI for StoryScore (GPT-4o)
+
+🗂 Required File Structure:
+bash
+Copy
+Edit
+/main.py               # Flask app routes + login
+/users.py              # Registration, login, RBAC middleware
+/scoring.py            # trustscore(), storyscore()
+/jobs_scraper.py       # daily job board monitoring agent
+/emailer.py            # spintax send logic + spam score check
+/twilio_helper.py      # daily signal SMS digest
+/templates/            # Jinja HTML templates for login, dashboard
+/static/               # JS/CSS assets
+✅ Functional Requirements
+1. Secure Login & RBAC
+User registration & login using email + password
+
+Session auth with Flask
+
+Assign role: admin, ae, or bdr
+
+Middleware that restricts views/routes by role
+
+Users only see their own data
+
+2. Prospect List Upload
+CSV upload form (fields: name, email, title, company, domain)
+
+Store leads under authenticated user’s Replit DB namespace
+
+Prevent duplicate uploads
+
+3. Proactive Signal Engine (jobs_scraper.py)
+Daily cron job pulls job posts from:
+
+RSS feeds of F1000 company careers pages
+
+Google Custom Search fallback (site:careers.company.com)
+
+Match if job includes any of:
+"SAP", "Oracle", "Dynamics 365", "QA", "Test Automation", "Quality Engineering"
+
+Each valid job post becomes a “signal” object:
+
+json
+Copy
+Edit
+{
+  "company": "FIS",
+  "title": "Senior QA Engineer",
+  "url": "https://example.com/job123",
+  "keywords": ["QA", "SAP"],
+  "match_score": 0.87,
+  "timestamp": "2025-07-04T12:00:00",
+  "user_id": "johnwhite@example.com"
+}
+Deduplicate by hashing job title + company + URL
+
+Store in Replit DB by user
+
+4. TrustScore & StoryScore (scoring.py)
+trustscore(prospect, user, signal) returns 0–100 composite:
+
+ini
+Copy
+Edit
+trustscore = 100 * (0.25*relationship + 0.25*intent_freshness + 0.20*story + 0.15*deliverability + 0.15*engagement)
+relationship: shared connections, same school
+
+intent_freshness: recency of job signal
+
+story: call GPT-4o: "Rate this email on clarity, emotion, specificity"
+
+deliverability: SpamAssassin score
+
+engagement: opens + reply history (mock with 0–1 random float for now)
+
+storyscore(email_body) uses OpenAI to return 0–20 based on emotional pull and personalization
+
+5. Deliverability Guardrails (emailer.py)
+Spintax engine: {hello|hi|hey} syntax
+
+Randomize:
+
+Signature block
+
+Delay between sends: random.uniform(45, 90) seconds
+
+Call SpamAssassin or placeholder spam API
+
+Block send if score > 5
+
+Queue emails to throttle hourly
+
+6. SMS Intent Alerts (twilio_helper.py)
+Once per day, send Twilio SMS to each user:
+
+yaml
+Copy
+Edit
+⚡ 3 new signals for your accounts:
+- FIS: QA Engineer
+- Cisco: Test Lead
+- TCS: Automation Architect
+View more: https://app-link.com/dashboard
