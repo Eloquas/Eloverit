@@ -13,7 +13,8 @@ import {
   ChevronRight,
   Target,
   BarChart3,
-  Zap
+  Zap,
+  Sparkles
 } from "lucide-react";
 
 interface SidebarProps {
@@ -59,6 +60,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       icon: FileText,
       active: location === "/generated-content",
       badge: null
+    },
+    {
+      label: "Eloquas AI",
+      href: "/eloquas-ai",
+      icon: Sparkles,
+      active: location === "/eloquas-ai",
+      badge: "NEW"
     },
     {
       label: "Analytics",

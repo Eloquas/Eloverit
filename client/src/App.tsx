@@ -7,6 +7,7 @@ import Dashboard from "@/pages/dashboard";
 import GeneratedContent from "@/pages/generated-content";
 import AccountResearch from "@/pages/account-research";
 import EmailCadences from "@/pages/email-cadences";
+import { EloquasAI } from "@/pages/eloquas-ai";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/content" component={GeneratedContent} />
       <Route path="/research" component={AccountResearch} />
       <Route path="/cadences" component={EmailCadences} />
+      <Route path="/eloquas-ai" component={EloquasAI} />
       <Route component={NotFound} />
     </Switch>
   );
