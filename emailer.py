@@ -183,7 +183,7 @@ class EmailEngine:
             
         elif trustbuild:
             # TrustBuild only
-            anchors = trust_story_builder.find_trust_anchors(rep_profile, prospect_profile)
+            anchors = trust_story_builder.find_trust_anchors(rep_profile, prospect_profile, prospect)
             email = trust_story_builder.generate_trustbuild_email(prospect, anchors, signal)
             return [email]  # Return as single-item list for consistency
         

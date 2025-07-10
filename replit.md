@@ -55,13 +55,19 @@ This repository contains two complementary platforms:
   - Finds common ground: shared companies, schools, interests
   - Generates consultative, give-first email openings
   - Integrates with LinkedIn OAuth for enhanced personalization
+  - Gracefully handles dummy LinkedIn credentials with mock profile generation
+  - Fallback to "Soft Intro" when no trust anchors found
 - StoryBuild™: Hero's Journey narrative email sequences
   - 6-7 step email cadence using storytelling framework
   - Steps: Hero Introduction, Challenge, Guide Appears, Fork in Road, Happy Path, Victory
   - Each email 100-125 words focused on transformation narrative
+  - Executive outcome language: system stability, faster releases, lower OpEx
 - Combined Mode: Merges trust anchoring with storytelling for maximum impact
 - UI Implementation: Toggle switches in compose email interface
 - Real-time sequence generation and preview
+- Status indicators showing active modes and email step numbers
+- Mobile-responsive design with stacked toggles for screens ≤600px
+- Bug fixes: Corrected parameter handling in trust_story_builder.py and emailer.py
 
 ✅ **5-Step SCIPAB Research Flow:** Complete implementation of consultative sales framework
 - Step 1: Account-level research for SDLC, testing, QA, SAP, D365, Oracle initiatives  

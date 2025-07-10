@@ -82,6 +82,19 @@
         </button>
     </div>
     
+    <!-- Mode Status Indicators -->
+    <div style="margin-bottom: 1rem;">
+        {% if trustbuild %}
+        <span class="badge badge-success" style="margin-right: 0.5rem;">TrustBuild Enabled</span>
+        {% endif %}
+        {% if storybuild %}
+        <span class="badge badge-info" style="margin-right: 0.5rem;">StoryBuild Email {{ email_template.story_step if email_template and email_template.story_step else 1 }} of {{ email_template.total_steps if email_template and email_template.total_steps else 7 }}</span>
+        {% endif %}
+        {% if not trustbuild and not storybuild %}
+        <span class="badge badge-secondary">Standard Mode</span>
+        {% endif %}
+    </div>
+    
     <div class="email-compose-grid" style="display: grid; grid-template-columns: 1fr 300px; gap: 2rem;">
         <!-- Email Form -->
         <div>

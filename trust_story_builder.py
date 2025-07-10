@@ -40,7 +40,7 @@ class TrustStoryBuilder:
             "enhanced quality metrics"
         ]
     
-    def find_trust_anchors(self, rep_profile: Dict, prospect_profile: Dict) -> Dict[str, List[str]]:
+    def find_trust_anchors(self, rep_profile: Dict, prospect_profile: Dict, prospect: Dict = None) -> Dict[str, List[str]]:
         """Find shared trust anchors between rep and prospect profiles"""
         anchors = {
             'company': [],
@@ -49,7 +49,7 @@ class TrustStoryBuilder:
         }
         
         # Use mock data if LinkedIn integration is using dummy credentials
-        if linkedin_auth.is_dummy and prospect_profile is None:
+        if linkedin_auth.is_dummy and prospect_profile is None and prospect:
             # Mock prospect profile based on their company info
             prospect_profile = self._get_mock_prospect_profile(prospect)
         
