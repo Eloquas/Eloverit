@@ -5,7 +5,26 @@
 {% block content %}
 <div class="card">
     <h2>Compose Email to {{ prospect.name }}</h2>
-    <p style="color: #666; margin-bottom: 2rem;">{{ prospect.title }} at {{ prospect.company }}</p>
+    <p style="color: #666; margin-bottom: 1rem;">{{ prospect.title }} at {{ prospect.company }}</p>
+    
+    <!-- Enhancement Mode Toggles -->
+    <div style="display: flex; gap: 2rem; margin-bottom: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="trustbuild" {% if trustbuild %}checked{% endif %} onchange="toggleEnhancementMode()">
+            <span style="font-weight: 500;">TrustBuild™</span>
+            <span style="font-size: 0.875rem; color: #666;" title="Activates trust-based anchoring using LinkedIn profiles and shared connections">ⓘ</span>
+        </label>
+        
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="storybuild" {% if storybuild %}checked{% endif %} onchange="toggleEnhancementMode()">
+            <span style="font-weight: 500;">StoryBuild™</span>
+            <span style="font-size: 0.875rem; color: #666;" title="Generates a 6-7 step Hero's Journey email sequence">ⓘ</span>
+        </label>
+        
+        <button type="button" class="btn btn-secondary" style="margin-left: auto; padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="regenerateSequence()">
+            Regenerate
+        </button>
+    </div>
     
     <div style="display: grid; grid-template-columns: 1fr 300px; gap: 2rem;">
         <!-- Email Form -->
@@ -41,6 +60,28 @@
                 <p style="color: #666; font-size: 0.875rem; margin-top: 0.5rem;">
                     Overall deliverability score
                 </p>
+                
+                {% if linkedin_profile %}
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#0077b5">
+                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                        </svg>
+                        <span style="font-size: 0.875rem; font-weight: 500;">LinkedIn Trust</span>
+                    </div>
+                    <div style="background: #e3f2fd; padding: 8px 12px; border-radius: 6px;">
+                        <span style="font-size: 1.25rem; font-weight: 600; color: #0077b5;">{{ linkedin_trust_score }}</span>
+                        <span style="font-size: 0.875rem; color: #666;">/100</span>
+                    </div>
+                </div>
+                {% else %}
+                <div style="margin-top: 1rem; padding: 12px; background: #fffbf0; border-radius: 6px; border: 1px solid #ffc107;">
+                    <p style="margin: 0; font-size: 0.875rem; color: #856404;">
+                        <a href="{{ url_for('linkedin_login') }}" style="color: #0077b5; text-decoration: none;">Connect LinkedIn</a> 
+                        to boost trust scoring
+                    </p>
+                </div>
+                {% endif %}
             </div>
             
             <!-- Story Score -->
@@ -80,9 +121,64 @@
             {% endif %}
         </div>
     </div>
+    
+    <!-- Email Sequence Display (for StoryBuild mode) -->
+    {% if email_sequence and storybuild %}
+    <div class="card" style="margin-top: 2rem;">
+        <h3 style="margin-bottom: 1.5rem;">StoryBuild™ Email Sequence</h3>
+        <div style="display: grid; gap: 1rem;">
+            {% for email in email_sequence %}
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #5e72e4;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    <div>
+                        <h4 style="margin: 0;">Step {{ email.story_step }}: {{ email.story_step_name }}</h4>
+                        <p style="margin: 0.25rem 0; color: #666; font-size: 0.875rem;">{{ email.subject }}</p>
+                    </div>
+                    <button type="button" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;" 
+                            onclick="useEmailFromSequence({{ loop.index0 }})">
+                        Use This
+                    </button>
+                </div>
+                <div style="background: white; padding: 1rem; border-radius: 6px; font-size: 0.875rem; white-space: pre-line; max-height: 200px; overflow-y: auto;">{{ email.body }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <script>
+// Store email sequence data
+const emailSequence = {{ email_sequence|tojson if email_sequence else '[]' }};
+
+function toggleEnhancementMode() {
+    const trustbuild = document.getElementById('trustbuild').checked;
+    const storybuild = document.getElementById('storybuild').checked;
+    const prospectId = document.getElementById('prospect_id').value;
+    
+    // Redirect with new parameters
+    const params = new URLSearchParams();
+    if (trustbuild) params.append('trustbuild', 'true');
+    if (storybuild) params.append('storybuild', 'true');
+    
+    window.location.href = `/compose-email/${prospectId}?${params.toString()}`;
+}
+
+function regenerateSequence() {
+    toggleEnhancementMode(); // For now, just reload with same settings
+}
+
+function useEmailFromSequence(index) {
+    if (emailSequence && emailSequence[index]) {
+        const email = emailSequence[index];
+        document.getElementById('subject').value = email.subject;
+        document.getElementById('body').value = email.body;
+        
+        // Calculate story score for the new email
+        calculateStoryScore();
+    }
+}
+
 function calculateStoryScore() {
     const body = document.getElementById('body').value;
     

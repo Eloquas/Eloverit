@@ -18,6 +18,7 @@ from scoring import calculate_trustscore, calculate_storyscore
 from jobs_scraper import JobSignalScanner
 from emailer import EmailEngine
 from twilio_helper import SMSNotifier
+from linkedin_auth import linkedin_auth
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -110,6 +111,69 @@ def logout():
     """User logout"""
     session.clear()
     flash('You have been logged out', 'info')
+    return redirect(url_for('login'))
+
+@app.route('/auth/linkedin')
+def linkedin_login():
+    """Initiate LinkedIn OAuth flow"""
+    auth_url = linkedin_auth.get_authorization_url()
+    if not linkedin_auth.client_id:
+        flash('LinkedIn integration not configured. Please set LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET environment variables.', 'error')
+        return redirect(url_for('login'))
+    return redirect(auth_url)
+
+@app.route('/auth/linkedin/callback')
+def linkedin_callback():
+    """Handle LinkedIn OAuth callback"""
+    code = request.args.get('code')
+    state = request.args.get('state')
+    error = request.args.get('error')
+    
+    if error:
+        flash(f'LinkedIn authentication failed: {error}', 'error')
+        return redirect(url_for('login'))
+    
+    if not code:
+        flash('LinkedIn authentication failed: No authorization code received', 'error')
+        return redirect(url_for('login'))
+    
+    # Exchange code for access token and get profile
+    profile_data, error = linkedin_auth.handle_callback(code, state)
+    
+    if error:
+        flash(f'LinkedIn authentication error: {error}', 'error')
+        return redirect(url_for('login'))
+    
+    if profile_data:
+        # Check if user exists with this LinkedIn email
+        email = profile_data.get('email')
+        if email:
+            user = User.get_by_email(email)
+            if not user:
+                # Create new user from LinkedIn profile
+                user = User.create(
+                    email=email,
+                    password=generate_password_hash(secrets.token_hex(16)),  # Random password since they'll use LinkedIn
+                    role='bdr',
+                    company=''
+                )
+                user = User.get_by_email(email)
+            
+            if user:
+                # Log them in
+                session['user_id'] = user.id
+                session['user_email'] = user.email
+                session['user_role'] = user.role
+                session['linkedin_profile'] = profile_data
+                User.update_last_login(user.email)
+                
+                flash(f'Successfully logged in via LinkedIn as {profile_data.get("firstName")} {profile_data.get("lastName")}', 'success')
+                return redirect(url_for('dashboard'))
+        
+        flash('Could not retrieve email from LinkedIn profile', 'error')
+    else:
+        flash('Failed to retrieve LinkedIn profile', 'error')
+    
     return redirect(url_for('login'))
 
 @app.route('/dashboard')
@@ -235,14 +299,42 @@ def compose_email(prospect_id):
     # Calculate trust score
     trustscore = calculate_trustscore(prospect, user_id, latest_signal)
     
-    # Generate email template
-    email_template = email_engine.generate_template(prospect, latest_signal)
+    # Get trust score components including LinkedIn data
+    from scoring import get_trust_components
+    trust_components = get_trust_components(prospect, user_id, latest_signal)
+    
+    # Check if user has LinkedIn connected
+    linkedin_profile = linkedin_auth.get_user_profile(user_id)
+    linkedin_trust_score = None
+    if linkedin_profile:
+        linkedin_trust_score = linkedin_auth.calculate_linkedin_trust_score(linkedin_profile)
+    
+    # Get enhancement mode settings from query params or session
+    trustbuild = request.args.get('trustbuild', 'false').lower() == 'true'
+    storybuild = request.args.get('storybuild', 'false').lower() == 'true'
+    
+    # Generate email template or sequence
+    email_sequence = None
+    if trustbuild or storybuild:
+        email_sequence = email_engine.generate_template(
+            prospect, latest_signal, trustbuild, storybuild, user_id
+        )
+        # For single template mode, extract first email
+        email_template = email_sequence[0] if email_sequence else None
+    else:
+        email_template = email_engine.generate_template(prospect, latest_signal)
     
     return render_template('compose_email.html',
                          prospect=prospect,
                          signal=latest_signal,
                          trustscore=trustscore,
-                         email_template=email_template)
+                         trust_components=trust_components,
+                         linkedin_profile=linkedin_profile,
+                         linkedin_trust_score=linkedin_trust_score,
+                         email_template=email_template,
+                         trustbuild=trustbuild,
+                         storybuild=storybuild,
+                         email_sequence=email_sequence)
 
 @app.route('/send-email', methods=['POST'])
 @login_required

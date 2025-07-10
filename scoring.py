@@ -8,6 +8,7 @@ import hashlib
 from datetime import datetime, timedelta
 import openai
 import json
+from linkedin_auth import linkedin_auth
 
 # Initialize OpenAI
 openai.api_key = os.environ.get('OPENAI_API_KEY')
@@ -49,11 +50,31 @@ def calculate_trustscore(prospect, user_id, signal=None):
 def calculate_relationship_score(prospect, user_id):
     """
     Calculate relationship strength based on:
+    - LinkedIn profile completeness and quality
     - Shared connections (mocked)
     - Same school/company history
     - Previous interactions
     """
     score = 0.3  # Base score
+    
+    # Get LinkedIn profile data if available
+    linkedin_profile = linkedin_auth.get_user_profile(user_id)
+    if linkedin_profile:
+        # Add LinkedIn trust score component (25% of relationship score)
+        linkedin_score = linkedin_auth.calculate_linkedin_trust_score(linkedin_profile) / 100
+        score += linkedin_score * 0.25
+        
+        # Check if prospect has similar headline keywords
+        prospect_title = prospect.get('title', '').lower()
+        user_headline = linkedin_profile.get('headline', '').lower()
+        
+        # Check for industry/role alignment
+        common_keywords = ['sap', 'oracle', 'dynamics', 'erp', 'crm', 'quality', 'qa', 'director', 'manager', 'vp']
+        prospect_keywords = sum(1 for kw in common_keywords if kw in prospect_title)
+        user_keywords = sum(1 for kw in common_keywords if kw in user_headline)
+        
+        if prospect_keywords > 0 and user_keywords > 0:
+            score += 0.15  # Bonus for industry alignment
     
     # Mock: Check for shared connections
     shared_connections = random.randint(0, 5)

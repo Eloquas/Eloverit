@@ -12,6 +12,8 @@ from datetime import datetime, timedelta
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from trust_story_builder import trust_story_builder
+from linkedin_auth import linkedin_auth
 
 # Database paths
 DB_PATH = os.path.join(os.path.dirname(__file__), 'db')
@@ -114,8 +116,14 @@ class EmailEngine:
         
         return text
     
-    def generate_template(self, prospect, signal=None):
-        """Generate email template based on prospect and signal"""
+    def generate_template(self, prospect, signal=None, trustbuild=False, storybuild=False, user_id=None):
+        """Generate email template based on prospect and signal with optional TrustBuild/StoryBuild modes"""
+        
+        # If enhanced modes are enabled, use trust_story_builder
+        if trustbuild or storybuild:
+            return self._generate_enhanced_sequence(prospect, signal, trustbuild, storybuild, user_id)
+        
+        # Otherwise use original template logic
         # Select template based on signal
         if signal and any(kw in ['QA', 'Quality', 'Test'] for kw in signal.get('keywords', [])):
             template_key = 'qa_signal'
@@ -153,6 +161,33 @@ class EmailEngine:
             'body': body,
             'template_used': template_key
         }
+    
+    def _generate_enhanced_sequence(self, prospect, signal, trustbuild, storybuild, user_id):
+        """Generate enhanced email sequence with TrustBuild and/or StoryBuild"""
+        
+        # Get LinkedIn profiles if available
+        rep_profile = linkedin_auth.get_user_profile(user_id) if user_id else None
+        prospect_profile = None  # Would need prospect's LinkedIn data
+        
+        if trustbuild and storybuild:
+            # Combined mode
+            sequence = trust_story_builder.generate_combined_sequence(
+                prospect, rep_profile, prospect_profile, signal
+            )
+            return sequence  # Returns full sequence
+            
+        elif storybuild:
+            # StoryBuild only
+            sequence = trust_story_builder.generate_storybuild_sequence(prospect, signal)
+            return sequence  # Returns full sequence
+            
+        elif trustbuild:
+            # TrustBuild only
+            anchors = trust_story_builder.find_trust_anchors(rep_profile, prospect_profile)
+            email = trust_story_builder.generate_trustbuild_email(prospect, anchors, signal)
+            return [email]  # Return as single-item list for consistency
+        
+        return []
     
     def _guess_industry(self, company_name):
         """Guess industry from company name"""

@@ -43,6 +43,19 @@ This repository contains two complementary platforms:
 5. **Brand Awareness Focus:** Specialized for enterprise systems audience with educational content approach
 
 ## Latest Implementation (January 2025)
+✅ **TrustBuild™ and StoryBuild™ Enhancement Modes (January 2025):** Advanced email personalization
+- TrustBuild™: Trust-based email anchoring using LinkedIn profiles and shared connections
+  - Finds common ground: shared companies, schools, interests
+  - Generates consultative, give-first email openings
+  - Integrates with LinkedIn OAuth for enhanced personalization
+- StoryBuild™: Hero's Journey narrative email sequences
+  - 6-7 step email cadence using storytelling framework
+  - Steps: Hero Introduction, Challenge, Guide Appears, Fork in Road, Happy Path, Victory
+  - Each email 100-125 words focused on transformation narrative
+- Combined Mode: Merges trust anchoring with storytelling for maximum impact
+- UI Implementation: Toggle switches in compose email interface
+- Real-time sequence generation and preview
+
 ✅ **5-Step SCIPAB Research Flow:** Complete implementation of consultative sales framework
 - Step 1: Account-level research for SDLC, testing, QA, SAP, D365, Oracle initiatives  
 - Step 2: Role analysis targeting Manager+ in QA, Business Systems, Enterprise Systems
