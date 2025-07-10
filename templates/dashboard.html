@@ -2,9 +2,103 @@
 
 {% block title %}Dashboard - Eloquas AI{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Mobile-responsive styles for dashboard */
+@media screen and (max-width: 600px) {
+    /* LinkedIn profile section */
+    .linkedin-profile {
+        flex-direction: column !important;
+        text-align: center !important;
+    }
+    
+    .linkedin-profile img {
+        margin: 0 auto 1rem !important;
+    }
+    
+    /* Stats grid on mobile */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1rem !important;
+    }
+    
+    /* Mobile tables */
+    .mobile-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        min-width: 500px;
+    }
+    
+    /* Mobile cards */
+    .mobile-card-grid {
+        display: none;
+    }
+    
+    /* Hide desktop table on mobile */
+    @media screen and (max-width: 600px) {
+        .desktop-table {
+            display: none;
+        }
+        
+        .mobile-card-grid {
+            display: block;
+        }
+    }
+    
+    /* Mobile signal card */
+    .signal-card {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        border-left: 4px solid #5e72e4;
+    }
+    
+    .signal-card h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1rem;
+    }
+    
+    .signal-card p {
+        margin: 0.25rem 0;
+        font-size: 0.875rem;
+        color: #666;
+    }
+    
+    /* Mobile prospect card */
+    .prospect-card {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        border-left: 4px solid #27ae60;
+    }
+    
+    .prospect-card h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1rem;
+    }
+    
+    .prospect-card p {
+        margin: 0.25rem 0;
+        font-size: 0.875rem;
+        color: #666;
+    }
+    
+    .prospect-card .btn {
+        width: 100%;
+        margin-top: 0.75rem;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 {% if session.linkedin_profile %}
-<div style="display: flex; align-items: center; gap: 20px; margin-bottom: 2rem;">
+<div class="linkedin-profile" style="display: flex; align-items: center; gap: 20px; margin-bottom: 2rem;">
     {% if session.linkedin_profile.profilePicture %}
     <img src="{{ session.linkedin_profile.profilePicture }}" alt="Profile" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
     {% endif %}
@@ -84,40 +178,68 @@
     <h3 style="margin-bottom: 1.5rem;">Recent Job Signals</h3>
     
     {% if signals %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Company</th>
-                    <th>Position</th>
-                    <th>Keywords</th>
-                    <th>Match Score</th>
-                    <th>Date</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for signal in signals[:5] %}
-                <tr>
-                    <td><strong>{{ signal.company }}</strong></td>
-                    <td>{{ signal.title[:50] }}...</td>
-                    <td>
-                        {% for keyword in signal.keywords[:3] %}
-                            <span class="badge badge-info">{{ keyword }}</span>
+        <!-- Desktop Table View -->
+        <div class="desktop-table">
+            <div class="mobile-table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Company</th>
+                            <th>Position</th>
+                            <th>Keywords</th>
+                            <th>Match Score</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for signal in signals[:5] %}
+                        <tr>
+                            <td><strong>{{ signal.company }}</strong></td>
+                            <td>{{ signal.title[:50] }}...</td>
+                            <td>
+                                {% for keyword in signal.keywords[:3] %}
+                                    <span class="badge badge-info">{{ keyword }}</span>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <span class="badge {% if signal.match_score > 0.8 %}badge-success{% elif signal.match_score > 0.6 %}badge-warning{% else %}badge-danger{% endif %}">
+                                    {{ "%.0f"|format(signal.match_score * 100) }}%
+                                </span>
+                            </td>
+                            <td>{{ signal.timestamp[:10] }}</td>
+                            <td>
+                                <a href="{{ signal.url }}" target="_blank" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">View</a>
+                            </td>
+                        </tr>
                         {% endfor %}
-                    </td>
-                    <td>
-                        <span class="badge {% if signal.match_score > 0.8 %}badge-success{% elif signal.match_score > 0.6 %}badge-warning{% else %}badge-danger{% endif %}">
-                            {{ "%.0f"|format(signal.match_score * 100) }}%
-                        </span>
-                    </td>
-                    <td>{{ signal.timestamp[:10] }}</td>
-                    <td>
-                        <a href="{{ signal.url }}" target="_blank" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">View</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Mobile Card View -->
+        <div class="mobile-card-grid">
+            {% for signal in signals[:5] %}
+            <div class="signal-card">
+                <h4>{{ signal.company }}</h4>
+                <p><strong>{{ signal.title[:50] }}...</strong></p>
+                <p>
+                    {% for keyword in signal.keywords[:3] %}
+                        <span class="badge badge-info">{{ keyword }}</span>
+                    {% endfor %}
+                </p>
+                <p>
+                    Match: 
+                    <span class="badge {% if signal.match_score > 0.8 %}badge-success{% elif signal.match_score > 0.6 %}badge-warning{% else %}badge-danger{% endif %}">
+                        {{ "%.0f"|format(signal.match_score * 100) }}%
+                    </span>
+                    • {{ signal.timestamp[:10] }}
+                </p>
+                <a href="{{ signal.url }}" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: center;">View Job Posting</a>
+            </div>
+            {% endfor %}
+        </div>
         
         <p style="text-align: center; margin-top: 1rem;">
             <a href="{{ url_for('signals') }}" class="btn">View All Signals</a>
@@ -132,32 +254,52 @@
     <h3 style="margin-bottom: 1.5rem;">Top Prospects</h3>
     
     {% if prospects %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Company</th>
-                    <th>Title</th>
-                    <th>Email</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for prospect in prospects[:10] %}
-                <tr>
-                    <td><strong>{{ prospect.name }}</strong></td>
-                    <td>{{ prospect.company }}</td>
-                    <td>{{ prospect.title }}</td>
-                    <td>{{ prospect.email }}</td>
-                    <td>
-                        <a href="{{ url_for('compose_email', prospect_id=prospect.id) }}" class="btn" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">
-                            Compose Email
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <!-- Desktop Table View -->
+        <div class="desktop-table">
+            <div class="mobile-table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Company</th>
+                            <th>Title</th>
+                            <th>Email</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for prospect in prospects[:10] %}
+                        <tr>
+                            <td><strong>{{ prospect.name }}</strong></td>
+                            <td>{{ prospect.company }}</td>
+                            <td>{{ prospect.title }}</td>
+                            <td>{{ prospect.email }}</td>
+                            <td>
+                                <a href="{{ url_for('compose_email', prospect_id=prospect.id) }}" class="btn" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">
+                                    Compose Email
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Mobile Card View -->
+        <div class="mobile-card-grid">
+            {% for prospect in prospects[:10] %}
+            <div class="prospect-card">
+                <h4>{{ prospect.name }}</h4>
+                <p><strong>{{ prospect.title }}</strong></p>
+                <p>{{ prospect.company }}</p>
+                <p style="font-size: 0.813rem;">{{ prospect.email }}</p>
+                <a href="{{ url_for('compose_email', prospect_id=prospect.id) }}" class="btn">
+                    Compose Email
+                </a>
+            </div>
+            {% endfor %}
+        </div>
     {% else %}
         <p style="text-align: center; color: #666;">
             No prospects yet. 

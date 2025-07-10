@@ -48,6 +48,11 @@ class TrustStoryBuilder:
             'interests': []
         }
         
+        # Use mock data if LinkedIn integration is using dummy credentials
+        if linkedin_auth.is_dummy and prospect_profile is None:
+            # Mock prospect profile based on their company info
+            prospect_profile = self._get_mock_prospect_profile(prospect)
+        
         # Extract from LinkedIn profiles if available
         if rep_profile and prospect_profile:
             # Company overlap
@@ -114,6 +119,48 @@ class TrustStoryBuilder:
                 interests.append(keyword)
                 
         return interests
+    
+    def _get_mock_prospect_profile(self, prospect: Dict) -> Dict:
+        """Generate mock LinkedIn profile for testing when using dummy credentials"""
+        if not prospect:
+            return None
+            
+        # Common mock profiles for testing
+        mock_profiles = {
+            'VP Engineering': {
+                'firstName': 'Jane',
+                'lastName': 'Doe',
+                'headline': 'VP Engineering @ Acme Corp | Former Microsoft | Stanford MBA',
+                'companies': ['Acme Corp', 'Microsoft', 'Oracle'],
+                'schools': ['Stanford', 'MIT'],
+                'interests': ['enterprise systems', 'digital transformation', 'qa automation']
+            },
+            'Director': {
+                'firstName': 'John',
+                'lastName': 'Smith',
+                'headline': 'Director of Quality Engineering @ TechCorp | SAP Expert',
+                'companies': ['TechCorp', 'IBM', 'Accenture'],
+                'schools': ['Harvard', 'Berkeley'],
+                'interests': ['sap', 'test automation', 'devops']
+            },
+            'Manager': {
+                'firstName': 'Sarah',
+                'lastName': 'Johnson',
+                'headline': 'QA Manager @ Enterprise Inc | Oracle Certified',
+                'companies': ['Enterprise Inc', 'Deloitte', 'PwC'],
+                'schools': ['MIT', 'Carnegie Mellon'],
+                'interests': ['oracle', 'quality engineering', 'agile']
+            }
+        }
+        
+        # Select mock profile based on title
+        title = prospect.get('title', '').lower()
+        if 'vp' in title or 'vice president' in title:
+            return mock_profiles['VP Engineering']
+        elif 'director' in title:
+            return mock_profiles['Director']
+        else:
+            return mock_profiles['Manager']
     
     def generate_trustbuild_opening(self, anchors: Dict[str, List[str]], 
                                   prospect: Dict, signal: Optional[Dict] = None) -> str:

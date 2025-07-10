@@ -18,11 +18,17 @@ class LinkedInAuth:
         self.client_id = os.environ.get('LINKEDIN_CLIENT_ID', '')
         self.client_secret = os.environ.get('LINKEDIN_CLIENT_SECRET', '')
         self.redirect_uri = os.environ.get('LINKEDIN_REDIRECT_URI', 'http://localhost:5001/auth/linkedin/callback')
-        self.scope = 'r_liteprofile r_emailaddress w_member_social'
+        self.scope = 'r_liteprofile r_emailaddress'  # Updated scope per requirements
         self.auth_base_url = 'https://www.linkedin.com/oauth/v2/authorization'
         self.token_url = 'https://www.linkedin.com/oauth/v2/accessToken'
         self.profile_url = 'https://api.linkedin.com/v2/me'
         self.email_url = 'https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))'
+        
+        # Check if using dummy credentials
+        self.is_dummy = (
+            self.client_id in ['', 'abc123_dummy_client_id'] or
+            self.client_secret in ['', 'xyz789_dummy_client_secret']
+        )
         
         # LinkedIn profile data storage
         self.profiles_db = 'db/linkedin_profiles.json'
@@ -50,6 +56,10 @@ class LinkedInAuth:
     
     def get_authorization_url(self):
         """Generate LinkedIn OAuth authorization URL"""
+        # Return mock URL if using dummy credentials
+        if self.is_dummy:
+            return None
+            
         params = {
             'response_type': 'code',
             'client_id': self.client_id,

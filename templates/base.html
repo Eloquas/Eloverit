@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Eloquas AI - P2P Outbound Intelligence{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/mobile.css">
     <style>
         * {
             margin: 0;
@@ -220,7 +221,12 @@
     <nav class="navbar">
         <div class="navbar-content">
             <h1>Eloquas AI</h1>
-            <div>
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" style="display: none;">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="desktop-nav">
                 {% if session.user_id %}
                     <a href="{{ url_for('dashboard') }}">Dashboard</a>
                     <a href="{{ url_for('signals') }}">Signals</a>
@@ -237,6 +243,28 @@
         </div>
     </nav>
     
+    <!-- Mobile Navigation -->
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-header">
+            <h2>Menu</h2>
+            <button class="mobile-nav-close" id="mobileNavClose">&times;</button>
+        </div>
+        <div class="mobile-nav-links">
+            {% if session.user_id %}
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('signals') }}">Signals</a>
+                <a href="{{ url_for('upload_prospects') }}">Upload</a>
+                {% if session.user_role == 'admin' %}
+                    <a href="{{ url_for('admin_users') }}">Admin</a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+        </div>
+    </div>
+    
     <div class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -252,5 +280,51 @@
     </div>
     
     {% block extra_js %}{% endblock %}
+    
+    <script>
+        // Mobile menu functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const mobileNav = document.getElementById('mobileNav');
+            const mobileNavClose = document.getElementById('mobileNavClose');
+            
+            // Show/hide mobile menu toggle based on screen size
+            function checkScreenSize() {
+                if (window.innerWidth <= 600) {
+                    mobileMenuToggle.style.display = 'block';
+                } else {
+                    mobileMenuToggle.style.display = 'none';
+                    mobileNav.classList.remove('active');
+                }
+            }
+            
+            checkScreenSize();
+            window.addEventListener('resize', checkScreenSize);
+            
+            // Toggle mobile menu
+            mobileMenuToggle.addEventListener('click', function() {
+                mobileNav.classList.add('active');
+            });
+            
+            mobileNavClose.addEventListener('click', function() {
+                mobileNav.classList.remove('active');
+            });
+            
+            // Close menu when clicking on a link
+            const mobileNavLinks = document.querySelectorAll('.mobile-nav-links a');
+            mobileNavLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    mobileNav.classList.remove('active');
+                });
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!mobileNav.contains(e.target) && !mobileMenuToggle.contains(e.target)) {
+                    mobileNav.classList.remove('active');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

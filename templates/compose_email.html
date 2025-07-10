@@ -2,13 +2,69 @@
 
 {% block title %}Compose Email - Eloquas AI{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Mobile-responsive styles for compose email */
+@media screen and (max-width: 600px) {
+    /* Stack layout on mobile */
+    .email-compose-grid {
+        display: block !important;
+    }
+    
+    .email-compose-form {
+        margin-bottom: 2rem;
+    }
+    
+    .enhancement-modes {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+    
+    .enhancement-modes label {
+        width: 100%;
+        padding: 0.75rem;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+    }
+    
+    .regenerate-btn {
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-top: 1rem !important;
+    }
+    
+    /* Mobile sequence display */
+    .sequence-item-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+    }
+    
+    .sequence-use-btn {
+        width: 100% !important;
+    }
+    
+    /* Form buttons */
+    .form-actions {
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+    }
+    
+    .form-actions button {
+        width: 100% !important;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="card">
     <h2>Compose Email to {{ prospect.name }}</h2>
     <p style="color: #666; margin-bottom: 1rem;">{{ prospect.title }} at {{ prospect.company }}</p>
     
     <!-- Enhancement Mode Toggles -->
-    <div style="display: flex; gap: 2rem; margin-bottom: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+    <div class="enhancement-modes" style="display: flex; gap: 2rem; margin-bottom: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
             <input type="checkbox" id="trustbuild" {% if trustbuild %}checked{% endif %} onchange="toggleEnhancementMode()">
             <span style="font-weight: 500;">TrustBuild™</span>
@@ -21,12 +77,12 @@
             <span style="font-size: 0.875rem; color: #666;" title="Generates a 6-7 step Hero's Journey email sequence">ⓘ</span>
         </label>
         
-        <button type="button" class="btn btn-secondary" style="margin-left: auto; padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="regenerateSequence()">
+        <button type="button" class="btn btn-secondary regenerate-btn" style="margin-left: auto; padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="regenerateSequence()">
             Regenerate
         </button>
     </div>
     
-    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 2rem;">
+    <div class="email-compose-grid" style="display: grid; grid-template-columns: 1fr 300px; gap: 2rem;">
         <!-- Email Form -->
         <div>
             <form id="emailForm">
@@ -42,7 +98,7 @@
                     <textarea id="body" name="body" rows="15" required>{{ email_template.body }}</textarea>
                 </div>
                 
-                <div style="display: flex; gap: 1rem;">
+                <div class="form-actions" style="display: flex; gap: 1rem;">
                     <button type="submit" class="btn">Send Email</button>
                     <button type="button" class="btn btn-secondary" onclick="calculateStoryScore()">Check StoryScore</button>
                 </div>
@@ -129,12 +185,12 @@
         <div style="display: grid; gap: 1rem;">
             {% for email in email_sequence %}
             <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #5e72e4;">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                <div class="sequence-item-header" style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                     <div>
                         <h4 style="margin: 0;">Step {{ email.story_step }}: {{ email.story_step_name }}</h4>
                         <p style="margin: 0.25rem 0; color: #666; font-size: 0.875rem;">{{ email.subject }}</p>
                     </div>
-                    <button type="button" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;" 
+                    <button type="button" class="btn btn-secondary sequence-use-btn" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;" 
                             onclick="useEmailFromSequence({{ loop.index0 }})">
                         Use This
                     </button>

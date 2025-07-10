@@ -117,9 +117,10 @@ def logout():
 def linkedin_login():
     """Initiate LinkedIn OAuth flow"""
     auth_url = linkedin_auth.get_authorization_url()
-    if not linkedin_auth.client_id:
-        flash('LinkedIn integration not configured. Please set LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET environment variables.', 'error')
-        return redirect(url_for('login'))
+    if auth_url is None:
+        # Using dummy credentials - show error message
+        flash('LinkedIn integration is not configured. Please contact your administrator.', 'error')
+        return redirect(url_for('dashboard') if 'user_id' in session else url_for('login'))
     return redirect(auth_url)
 
 @app.route('/auth/linkedin/callback')
