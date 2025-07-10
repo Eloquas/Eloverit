@@ -1,0 +1,124 @@
+## 📍 Eloquas AI – Replit Agent Prompt  
+### Add **TrustBuild™** and **StoryBuild™** Optional Modes
+
+### 1. Purpose  
+Upgrade the existing outbound‑messaging engine with two *independently toggleable* enhancement layers that deepen trust, emotional resonance, and executive memorability—while remaining fully compatible with the current **SCIPAB + consultative** baseline prompt.
+
+---
+
+### 2. Definitions & Trigger Flags  
+
+| Flag | Default | Effect | Key Output Tags |
+|------|---------|--------|-----------------|
+| `trustbuild=true`  | **false** | Activates TrustBuild rule‑set | `TrustBuild Enabled` |
+| `storybuild=true`  | **false** | Activates StoryBuild rule‑set | `StoryBuild Email X of Y` |
+
+Both may be enabled simultaneously. The engine must merge rule‑sets deterministically (see §4).
+
+---
+
+### 3. Individual Mode Logic  
+
+#### 3.1 TrustBuild™  
+1. **Match Shared Trust Anchors**  
+   * Inputs: *Rep profile* + *Prospect LinkedIn profile* (both already stored or fetched).  
+   * Anchors in priority order: company overlap → school overlap → mutual interests/affiliations.  
+2. **Craft First‑Touch Message**  
+   * Validate prospect’s business challenge calmly; no hype.  
+   * Open with a give‑first element (insight, resource, POV).  
+   * **No** ROI tables, numbers, or time asks in email #1.  
+   * Executive language focus: system stability, faster releases, lower OpEx, seamless updates.  
+3. **Fallback** – If zero anchors: create a “Soft Intro” email that helps without overreaching.
+
+#### 3.2 StoryBuild™  
+1. **Generate 6–7‑Step Narrative (Hero’s Journey)**  
+   1. Hero Introduction  
+   2. Hero Challenge  
+   3. Guide Appears (Avo/Eloquas)  
+   4. Fork in the Road (action vs. status quo)  
+   5. Happy Path Example (social proof)  
+   6. Hero’s Victory  
+   7. Guide’s Perspective *(optional)*  
+2. **Tone Guardrails**  
+   * 100–125 words max per email.  
+   * No fluff, fake drama, or urgency click‑bait.  
+3. **Preview & Regenerate** – Expose full sequence in UI; allow per‑step regeneration.
+
+---
+
+### 4. Combined‑Mode Behavior  
+When **both** modes are on:  
+* Begin each email with TrustBuild anchoring where available.  
+* Thread the full Hero’s Journey arc across the sequence.  
+* Maintain CXO‑level outcome language throughout.  
+* The result is a “Type‑2 communication” (memorable + emotionally encoded).
+
+---
+
+### 5. UI / UX Requirements  
+1. **Toggle Controls** – Two independent switches with one‑sentence tooltips.  
+2. **Status Surface** – Each generated email chip or row must display active mode flags.  
+3. **Sequence Viewer** – For StoryBuild, show step number & allow inline regenerate.
+
+---
+
+### 6. Data & Error Handling  
+* **No Guessing** – If LinkedIn or profile data is missing, skip anchor‑matching gracefully.  
+* **No Hallucinations** – Never invent shared histories, numbers, or customer quotes.  
+* **Retries** – If merged rule‑sets produce < 6 emails, auto‑extend using StoryBuild skeleton.  
+
+---
+
+### 7. Acceptance Tests (done ≈ true)  
+- [ ] UI shows toggles; default state *off*.  
+- [ ] With `trustbuild=true`, first‑touch contains an anchor or Soft Intro fallback.  
+- [ ] With `storybuild=true`, engine outputs 6–7 labeled emails, 100‑125 words each.  
+- [ ] With both flags, outputs include anchor *and* correct narrative step labels.  
+- [ ] Each email record stores active flags for audit/export.  
+- [ ] Disabling a flag and regenerating reflects new logic instantly.  
+
+---
+
+### 8. Future‑Ready (Backlog)  
+**Account‑Level Narrative Builder** (metaphor generator).  
+* Exclusive per account; vertical‑specific metaphors.  
+* Persistence layer keyed on `account_id`.  
+* No cross‑account reuse.
+
+---
+
+### 9. Deliverables for this Task  
+1. Extended messaging‑generation module implementing §§3‑4 logic.  
+2. Updated UI components (§5).  
+3. Unit tests covering §7 scenarios.  
+4. Documentation snippet for user help center (≤ 150 words).
+
+---
+
+## 🚧 Signature‑Mode QA, Secrets Stub & Mobile Dashboard Plan
+*(Implementation companion to the prompt above)*  
+
+---
+
+### 1  Testing & Verification Plan
+
+| Layer | Goal | Recommended Approach |
+|-------|------|----------------------|
+| **Unit Tests** | Rule firing | • Jest / Vitest<br>• Stub profile objects; toggle flags.<br>• Assert:<br>  • TrustBuild: anchor or Soft Intro.<br>  • StoryBuild: 6–7 emails, labels, 100–125 words.<br>  • Combined: anchor + narrative labels. |
+| **Integration Tests** | Pipeline incl. UI | • Playwright / Cypress.<br>Scenarios:<br>  1. Flags off (baseline).<br>  2. TrustBuild on, no matches → Soft Intro.<br>  3. StoryBuild on → sequence preview + regenerate.<br>  4. Both on with anchors → merged output.<br>• Validate status tags in DOM. |
+| **Regression** | Legacy output intact | Snapshot tests when flags off. |
+| **Performance** | ≤ 250 ms per email | Measure & fail if slower. |
+
+**Done = ** all tests green, coverage ≥ 85 %, zero console errors.
+
+---
+
+### 2  Secure LinkedIn Integration (with Dummy Data)
+
+#### 2.1 Environment Variables – `.env.example`
+
+```env
+# ─── LinkedIn OAuth (DUMMY VALUES – replace in prod) ─────────────────────────────
+LINKEDIN_CLIENT_ID=abc123_dummy_client_id
+LINKEDIN_CLIENT_SECRET=xyz789_dummy_client_secret
+LINKEDIN_REDIRECT=http://localhost:3000/auth/linkedin/callback
