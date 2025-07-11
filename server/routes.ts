@@ -10,8 +10,9 @@ import { Readable } from "stream";
 import * as XLSX from "xlsx";
 import { avoKnowledgeBase, qaMarketIntelligence, getPersonalizedAvoInsights } from "./avo-knowledge";
 import { enterpriseSystemsKnowledge, categorizeJobTitle, determineSeniorityLevel, identifySystemsExperience, getPersonalizedEnterpriseInsights } from "./enterprise-knowledge";
-import { buildSCIPABFramework, generateCadenceContent, type SCIPABContext } from "./scipab-framework";
+import { scipabFramework, type SCIPABContext } from "./scipab-framework";
 import { pdlService } from "./pdl-service";
+import { linkedInPostGenerator } from "./linkedin-posts";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -1177,6 +1178,80 @@ Keep it conversational and human - like one professional helping another.`;
     } catch (error) {
       console.error("Enterprise content generation error:", error);
       res.status(500).json({ message: "Failed to generate enterprise content" });
+    }
+  });
+
+  // LinkedIn Posts Routes
+  app.get("/api/linkedin-posts", async (req, res) => {
+    try {
+      // Mock user ID - in production, get from authenticated session
+      const userId = 1;
+      const posts = await linkedInPostGenerator.getPostsForUser(userId);
+      res.json(posts);
+    } catch (error) {
+      console.error("Failed to fetch LinkedIn posts:", error);
+      res.status(500).json({ message: "Failed to fetch LinkedIn posts" });
+    }
+  });
+
+  app.post("/api/linkedin-posts/generate", async (req, res) => {
+    try {
+      // Mock user ID - in production, get from authenticated session
+      const userId = 1;
+      const posts = await linkedInPostGenerator.checkTriggersAndGeneratePosts(userId);
+      res.json({ message: `Generated ${posts.length} new posts`, posts });
+    } catch (error) {
+      console.error("Failed to generate LinkedIn posts:", error);
+      res.status(500).json({ message: "Failed to generate LinkedIn posts" });
+    }
+  });
+
+  app.patch("/api/linkedin-posts/:postId", async (req, res) => {
+    try {
+      const { postId } = req.params;
+      const updates = req.body;
+      const updatedPost = await linkedInPostGenerator.updatePost(postId, updates);
+      
+      if (!updatedPost) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      
+      res.json(updatedPost);
+    } catch (error) {
+      console.error("Failed to update LinkedIn post:", error);
+      res.status(500).json({ message: "Failed to update LinkedIn post" });
+    }
+  });
+
+  app.post("/api/linkedin-posts/:postId/approve", async (req, res) => {
+    try {
+      const { postId } = req.params;
+      const approvedPost = await linkedInPostGenerator.approvePost(postId);
+      
+      if (!approvedPost) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      
+      res.json(approvedPost);
+    } catch (error) {
+      console.error("Failed to approve LinkedIn post:", error);
+      res.status(500).json({ message: "Failed to approve LinkedIn post" });
+    }
+  });
+
+  app.post("/api/linkedin-posts/:postId/publish", async (req, res) => {
+    try {
+      const { postId } = req.params;
+      const publishedPost = await linkedInPostGenerator.publishPost(postId);
+      
+      if (!publishedPost) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      
+      res.json(publishedPost);
+    } catch (error) {
+      console.error("Failed to publish LinkedIn post:", error);
+      res.status(500).json({ message: "Failed to publish LinkedIn post" });
     }
   });
 

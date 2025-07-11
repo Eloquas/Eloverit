@@ -14,7 +14,8 @@ import {
   Target,
   BarChart3,
   Zap,
-  Sparkles
+  Sparkles,
+  Send
 } from "lucide-react";
 
 interface SidebarProps {
@@ -67,6 +68,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       icon: Sparkles,
       active: location === "/eloquas-ai",
       badge: "NEW"
+    },
+    {
+      label: "LinkedIn Posts",
+      href: "/linkedin-posts",
+      icon: Send,
+      active: location === "/linkedin-posts",
+      badge: "AI"
     },
     {
       label: "Analytics",

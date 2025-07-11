@@ -50,6 +50,15 @@ This repository contains two complementary platforms:
 5. **Brand Awareness Focus:** Specialized for enterprise systems audience with educational content approach
 
 ## Latest Implementation (January 2025)
+✅ **LinkedIn Post Generation for Sales Teams (January 2025):** AI-powered weekly posts based on performance
+- Automated trigger detection: High replies (3+), High TrustScore (>80), Score improvements (≥40%), Personal bests
+- First-person humble-brag posts with insights, metrics, and engagement questions
+- Draft → Approve → Publish workflow with editable content
+- Optional "Powered by Eloquas AI" branding toggle
+- Mock LinkedIn API integration ready for OAuth implementation
+- Stats dashboard showing drafts, approved, published posts
+- Responsive card-based UI with trigger badges and quick actions
+
 ✅ **TrustBuild™ and StoryBuild™ Enhancement Modes (January 2025):** Advanced email personalization
 - TrustBuild™: Trust-based email anchoring using LinkedIn profiles and shared connections
   - Finds common ground: shared companies, schools, interests
