@@ -59,6 +59,22 @@ This repository contains two complementary platforms:
 - Stats dashboard showing drafts, approved, published posts
 - Responsive card-based UI with trigger badges and quick actions
 
+✅ **Gamified Achievement System (January 2025):** Complete engagement and motivation system
+- 15+ achievements across 5 categories: Engagement, Content, Performance, Milestone, Special
+- Bronze/Silver/Gold/Platinum tier system with point values
+- Real-time achievement tracking and unlock notifications
+- User stats tracking: Total points, level progression, streaks, activity metrics
+- Team leaderboard with weekly/monthly/all-time views
+- Progress tracking for in-progress achievements with percentage completion
+- Animated achievement unlock notifications with slide-in animation
+- Integration with email generation, LinkedIn posts, and trust/story scoring
+- Achievement categories:
+  - Engagement: First Contact (10pts), Email Veteran (50pts), Email Master (200pts)
+  - Content: Story Teller (30pts), Trust Builder (30pts), LinkedIn Influencer (40pts)
+  - Performance: Trusted Advisor (60pts), Perfect Storyteller (80pts), Reply Magnet (100pts)
+  - Milestone: Week Warrior (25pts), Month Master (100pts), Early Bird (20pts)
+  - Special: AI Pioneer (50pts), Team Player (75pts)
+
 ✅ **TrustBuild™ and StoryBuild™ Enhancement Modes (January 2025):** Advanced email personalization
 - TrustBuild™: Trust-based email anchoring using LinkedIn profiles and shared connections
   - Finds common ground: shared companies, schools, interests

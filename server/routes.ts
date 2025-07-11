@@ -13,6 +13,7 @@ import { enterpriseSystemsKnowledge, categorizeJobTitle, determineSeniorityLevel
 import { scipabFramework, type SCIPABContext } from "./scipab-framework";
 import { pdlService } from "./pdl-service";
 import { linkedInPostGenerator } from "./linkedin-posts";
+import { achievementSystem } from "./achievements";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -398,6 +399,13 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
 
       if (generatedContents.length === 0) {
         return res.status(500).json({ message: "Failed to generate any content" });
+      }
+
+      // Record achievement activity for email generation
+      if (type === 'email') {
+        for (let i = 0; i < generatedContents.length; i++) {
+          await achievementSystem.recordActivity(1, 'email_sent');
+        }
       }
 
       res.json({
@@ -1252,6 +1260,59 @@ Keep it conversational and human - like one professional helping another.`;
     } catch (error) {
       console.error("Failed to publish LinkedIn post:", error);
       res.status(500).json({ message: "Failed to publish LinkedIn post" });
+    }
+  });
+
+  // Achievement System Routes
+  app.get("/api/achievements", async (req, res) => {
+    try {
+      // Mock user ID - in production, get from authenticated session
+      const userId = 1;
+      const achievementsData = await achievementSystem.getUserAchievements(userId);
+      res.json(achievementsData);
+    } catch (error) {
+      console.error("Failed to fetch achievements:", error);
+      res.status(500).json({ message: "Failed to fetch achievements" });
+    }
+  });
+
+  app.get("/api/achievements/leaderboard", async (req, res) => {
+    try {
+      const { timeframe = 'weekly' } = req.query;
+      const leaderboard = await achievementSystem.getLeaderboard(timeframe as any);
+      res.json(leaderboard);
+    } catch (error) {
+      console.error("Failed to fetch leaderboard:", error);
+      res.status(500).json({ message: "Failed to fetch leaderboard" });
+    }
+  });
+
+  app.post("/api/achievements/record", async (req, res) => {
+    try {
+      // Mock user ID - in production, get from authenticated session
+      const userId = 1;
+      const { activityType, metadata } = req.body;
+      
+      const newAchievements = await achievementSystem.recordActivity(userId, activityType, metadata);
+      
+      res.json({ 
+        message: "Activity recorded",
+        newAchievements,
+        count: newAchievements.length
+      });
+    } catch (error) {
+      console.error("Failed to record activity:", error);
+      res.status(500).json({ message: "Failed to record activity" });
+    }
+  });
+
+  app.get("/api/achievements/all", async (req, res) => {
+    try {
+      const allAchievements = achievementSystem.getAllAchievements();
+      res.json(allAchievements);
+    } catch (error) {
+      console.error("Failed to fetch all achievements:", error);
+      res.status(500).json({ message: "Failed to fetch all achievements" });
     }
   });
 

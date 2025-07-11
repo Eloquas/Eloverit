@@ -15,7 +15,8 @@ import {
   BarChart3,
   Zap,
   Sparkles,
-  Send
+  Send,
+  Trophy
 } from "lucide-react";
 
 interface SidebarProps {
@@ -75,6 +76,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       icon: Send,
       active: location === "/linkedin-posts",
       badge: "AI"
+    },
+    {
+      label: "Achievements",
+      href: "/achievements",
+      icon: Trophy,
+      active: location === "/achievements",
+      badge: "🏆"
     },
     {
       label: "Analytics",

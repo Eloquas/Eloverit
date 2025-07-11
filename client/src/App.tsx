@@ -9,6 +9,7 @@ import AccountResearch from "@/pages/account-research";
 import EmailCadences from "@/pages/email-cadences";
 import { EloquasAI } from "@/pages/eloquas-ai";
 import LinkedInPosts from "@/pages/linkedin-posts";
+import Achievements from "@/pages/achievements";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/cadences" component={EmailCadences} />
       <Route path="/eloquas-ai" component={EloquasAI} />
       <Route path="/linkedin-posts" component={LinkedInPosts} />
+      <Route path="/achievements" component={Achievements} />
       <Route component={NotFound} />
     </Switch>
   );
