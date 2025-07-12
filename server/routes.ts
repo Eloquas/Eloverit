@@ -13,6 +13,7 @@ import { enterpriseSystemsKnowledge, categorizeJobTitle, determineSeniorityLevel
 import { scipabFramework, type SCIPABContext } from "./scipab-framework";
 import { pdlService } from "./pdl-service";
 import { linkedInPostGenerator } from "./linkedin-posts";
+import { eloquasOutreachEngine } from "./outreach-engine";
 import { achievementSystem } from "./achievements";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
@@ -1343,6 +1344,80 @@ Keep it conversational and human - like one professional helping another.`;
     } catch (error) {
       console.error("Failed to fetch all achievements:", error);
       res.status(500).json({ message: "Failed to fetch all achievements" });
+    }
+  });
+
+  // Outreach Engine endpoints
+  app.get("/api/outreach/campaigns", async (req, res) => {
+    try {
+      const userId = 1; // In production, get from auth
+      const campaigns = await eloquasOutreachEngine.getCampaignsForUser(userId);
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Failed to fetch campaigns:", error);
+      res.status(500).json({ error: "Failed to fetch campaigns" });
+    }
+  });
+
+  app.post("/api/outreach/campaigns", async (req, res) => {
+    try {
+      const userId = 1; // In production, get from auth
+      const { prospectId, sequenceType, personalizationData } = req.body;
+      
+      const campaign = await eloquasOutreachEngine.createCampaign(
+        userId, 
+        prospectId, 
+        sequenceType, 
+        personalizationData
+      );
+      res.json(campaign);
+    } catch (error) {
+      console.error('Error creating campaign:', error);
+      res.status(500).json({ error: "Failed to create outreach campaign" });
+    }
+  });
+
+  app.get("/api/outreach/sequences", async (req, res) => {
+    try {
+      const sequences = eloquasOutreachEngine.getSequences();
+      res.json(sequences);
+    } catch (error) {
+      console.error("Failed to fetch sequences:", error);
+      res.status(500).json({ error: "Failed to fetch sequences" });
+    }
+  });
+
+  app.post("/api/outreach/template", async (req, res) => {
+    try {
+      const { templateType, personalizationData } = req.body;
+      const template = await eloquasOutreachEngine.generateTemplate(templateType, personalizationData);
+      res.json(template);
+    } catch (error) {
+      console.error('Error generating template:', error);
+      res.status(500).json({ error: "Failed to generate template" });
+    }
+  });
+
+  app.put("/api/outreach/campaigns/:id/status", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const campaign = await eloquasOutreachEngine.updateCampaignStatus(id, status);
+      res.json(campaign);
+    } catch (error) {
+      console.error("Failed to update campaign status:", error);
+      res.status(500).json({ error: "Failed to update campaign status" });
+    }
+  });
+
+  app.get("/api/outreach/analytics", async (req, res) => {
+    try {
+      const userId = 1; // In production, get from auth
+      const analytics = await eloquasOutreachEngine.getAnalytics(userId);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Failed to fetch analytics:", error);
+      res.status(500).json({ error: "Failed to fetch analytics" });
     }
   });
 

@@ -78,6 +78,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       badge: "AI"
     },
     {
+      label: "Outreach MVP",
+      href: "/outreach-mvp",
+      icon: Mail,
+      active: location === "/outreach-mvp",
+      badge: "NEW"
+    },
+    {
       label: "Achievements",
       href: "/achievements",
       icon: Trophy,

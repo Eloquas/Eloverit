@@ -62,6 +62,18 @@ This repository contains two complementary platforms:
 - **Professional UI:** Enhanced modal with all required fields, validation, and comprehensive post summaries
 - **LinkedIn OAuth Ready:** Mock API integration prepared for LinkedIn publishing workflow
 
+✅ **Eloquas Outreach MVP Engine (January 2025):** Specialized sales outreach engine for QA and enterprise systems professionals
+- **Modular Message Architecture:** 6-component structure (Subject/Hook, Personalization, Value Prop, Trust Story, CTA, Signature)
+- **7 Template Types:** General Outreach #1-2, Pre-Event, Did Not Register, Registered No-Show, Post-Event, Nurture
+- **Personalization Data Structure:** Complete prospect profiling (name, role, industry, pain points, achievements, connections)
+- **3 Campaign Sequences:** General (7-day), Event-Driven (10-day), Nurture (ongoing)
+- **Trust & Story Scoring:** AI-powered scoring system (0-100) with detailed effectiveness analysis
+- **Campaign Management:** Full lifecycle from draft → active → paused → completed with performance tracking
+- **Cadence Logic:** Automated scheduling with sequence-specific timing (Day 1, 3, 7 for general outreach)
+- **Performance Analytics:** Open rates, reply rates, meeting bookings, trust score averages
+- **Professional UI:** Campaign dashboard, template generator, sequence management, analytics overview
+- **Tone & Style Compliance:** Consultative, friendly, human, non-salesy, concise (40-80 words), balanced professionalism
+
 ✅ **Gamified Achievement System (January 2025):** Complete engagement and motivation system
 - 15+ achievements across 5 categories: Engagement, Content, Performance, Milestone, Special
 - Bronze/Silver/Gold/Platinum tier system with point values
