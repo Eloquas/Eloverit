@@ -74,6 +74,18 @@ This repository contains two complementary platforms:
 - **Professional UI:** Campaign dashboard, template generator, sequence management, analytics overview
 - **Tone & Style Compliance:** Consultative, friendly, human, non-salesy, concise (40-80 words), balanced professionalism
 
+✅ **Sales Call Assessment Agent (January 2025):** AI-powered transcript analysis with actionable insights following exact specification
+- **Dual Input Methods:** File upload (.md, .rtf) and direct text paste for transcript processing
+- **Automated Signal Detection:** Extract and categorize action items into 8 platform-specific categories with placeholder links
+- **Speaker Analysis:** Sentiment (positive/neutral/negative), energy level (low/medium/high), influence scoring (1-10)
+- **Sales Performance Grading:** 6-skill evaluation (rapport, tone_match, clarity, discovery, storytelling, closing) on 1-5 scale
+- **Coaching Intelligence:** AI-powered coachable moment detection with specific quotes and improvement reasoning
+- **Platform Integration:** Direct links to Salesforce, Eloquas Messaging, Outlook Calendar, Avo Automation Docs, etc.
+- **Comprehensive Analytics:** Processing time tracking, performance averages, coaching area identification
+- **Professional Interface:** Tabbed layout for upload/process, results display, call history management
+- **Structured JSON Output:** Exact format compliance with call_id, participants, action_items, grading, coaching_notes
+- **Enterprise-Ready:** Built for Google Drive automation, manual uploads, and team coaching workflows
+
 ✅ **Gamified Achievement System (January 2025):** Complete engagement and motivation system
 - 15+ achievements across 5 categories: Engagement, Content, Performance, Milestone, Special
 - Bronze/Silver/Gold/Platinum tier system with point values

@@ -15,6 +15,7 @@ import { pdlService } from "./pdl-service";
 import { linkedInPostGenerator } from "./linkedin-posts";
 import { eloquasOutreachEngine } from "./outreach-engine";
 import { achievementSystem } from "./achievements";
+import { callAssessmentEngine } from "./call-assessment";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -1418,6 +1419,74 @@ Keep it conversational and human - like one professional helping another.`;
     } catch (error) {
       console.error("Failed to fetch analytics:", error);
       res.status(500).json({ error: "Failed to fetch analytics" });
+    }
+  });
+
+  // Call Assessment endpoints
+  app.post("/api/call-assessment/process", upload.single('transcript'), async (req, res) => {
+    try {
+      let transcript = '';
+      let metadata = {};
+
+      if (req.file) {
+        // Handle file upload
+        const fileContent = req.file.buffer.toString('utf-8');
+        transcript = fileContent;
+        metadata = {
+          title: req.body.title || req.file.originalname,
+          date: req.body.date || new Date().toISOString().split('T')[0],
+          participants: req.body.participants ? JSON.parse(req.body.participants) : undefined
+        };
+      } else if (req.body.transcript) {
+        // Handle direct transcript text
+        transcript = req.body.transcript;
+        metadata = {
+          title: req.body.title,
+          date: req.body.date,
+          participants: req.body.participants
+        };
+      } else {
+        return res.status(400).json({ error: "Transcript is required" });
+      }
+
+      const result = await callAssessmentEngine.processCallTranscript(transcript, metadata);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      res.json(result.assessment);
+    } catch (error) {
+      console.error('Call assessment failed:', error);
+      res.status(500).json({ error: "Failed to process call transcript" });
+    }
+  });
+
+  app.get("/api/call-assessment/demo", async (req, res) => {
+    try {
+      const demoAssessment = await callAssessmentEngine.getMockAssessment();
+      res.json(demoAssessment);
+    } catch (error) {
+      console.error("Failed to get demo assessment:", error);
+      res.status(500).json({ error: "Failed to load demo assessment" });
+    }
+  });
+
+  app.get("/api/call-assessment/history", async (req, res) => {
+    try {
+      const userId = 1; // In production, get from auth
+      // For now, return demo data - would fetch from database in production
+      const demoAssessment = await callAssessmentEngine.getMockAssessment();
+      const assessments = [demoAssessment];
+      const stats = callAssessmentEngine.getAssessmentStats(assessments);
+      
+      res.json({
+        assessments,
+        stats
+      });
+    } catch (error) {
+      console.error("Failed to fetch call history:", error);
+      res.status(500).json({ error: "Failed to fetch call history" });
     }
   });
 

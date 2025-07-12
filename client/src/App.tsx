@@ -11,6 +11,7 @@ import { EloquasAI } from "@/pages/eloquas-ai";
 import LinkedInPosts from "@/pages/linkedin-posts";
 import Achievements from "@/pages/achievements";
 import OutreachMVP from "@/pages/outreach-mvp";
+import CallAssessment from "@/pages/call-assessment";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/linkedin-posts" component={LinkedInPosts} />
       <Route path="/achievements" component={Achievements} />
       <Route path="/outreach-mvp" component={OutreachMVP} />
+      <Route path="/call-assessment" component={CallAssessment} />
       <Route component={NotFound} />
     </Switch>
   );

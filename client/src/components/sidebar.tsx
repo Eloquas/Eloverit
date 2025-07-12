@@ -85,6 +85,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       badge: "NEW"
     },
     {
+      label: "Call Assessment",
+      href: "/call-assessment",
+      icon: FileText,
+      active: location === "/call-assessment",
+      badge: "AI"
+    },
+    {
       label: "Achievements",
       href: "/achievements",
       icon: Trophy,

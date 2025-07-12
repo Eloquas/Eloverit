@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -174,3 +174,28 @@ export const csvUploadSchema = z.object({
   seniorityLevel: z.string().optional(),
   systemsExperience: z.string().optional(),
 });
+
+// Call Assessment Schema
+export const callAssessments = pgTable("call_assessments", {
+  id: serial("id").primaryKey(),
+  callId: text("call_id").notNull().unique(),
+  date: text("date").notNull(),
+  title: text("title"),
+  summary: text("summary").notNull(),
+  participants: json("participants").notNull(), // Array of CallParticipant
+  actionItems: json("action_items").notNull(), // Array of ActionItem
+  grading: json("grading").notNull(), // SalesGrading object
+  coachingNotes: json("coaching_notes").notNull(), // Array of CoachingNote
+  transcript: text("transcript"),
+  processedAt: timestamp("processed_at").defaultNow(),
+  processingTimeMs: integer("processing_time_ms").notNull(),
+  userId: integer("user_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type CallAssessment = typeof callAssessments.$inferSelect;
+export const insertCallAssessmentSchema = createInsertSchema(callAssessments).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertCallAssessment = z.infer<typeof insertCallAssessmentSchema>;
