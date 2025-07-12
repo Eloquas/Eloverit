@@ -1229,6 +1229,9 @@ Keep it conversational and human - like one professional helping another.`;
         return res.status(500).json({ message: "Failed to generate custom post" });
       }
 
+      // Store the post in the LinkedInPostGenerator's internal storage
+      await linkedInPostGenerator.storePost(post);
+
       res.json({ 
         message: "Generated custom LinkedIn post", 
         post,

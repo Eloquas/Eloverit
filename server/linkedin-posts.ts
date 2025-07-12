@@ -273,6 +273,10 @@ Write the post now:`;
     return this.generatePostWithInputs(userId, trigger, defaultInputs);
   }
 
+  async storePost(post: LinkedInPost): Promise<void> {
+    this.posts.set(post.id, post);
+  }
+
   async getPostsForUser(userId: number, status?: 'draft' | 'approved' | 'published'): Promise<LinkedInPost[]> {
     const userPosts = Array.from(this.posts.values()).filter(post => {
       const matchesUser = post.userId === userId;
