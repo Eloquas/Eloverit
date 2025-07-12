@@ -1348,6 +1348,43 @@ Keep it conversational and human - like one professional helping another.`;
     }
   });
 
+  // Enhanced user data route for visual progress tracking
+  app.get("/api/achievements/user-data", async (req, res) => {
+    try {
+      const userId = 1; // Mock user ID - in production, get from authenticated session
+      const enhancedData = achievementSystem.getEnhancedUserData(userId);
+      res.json(enhancedData);
+    } catch (error) {
+      console.error("Failed to fetch enhanced user data:", error);
+      res.status(500).json({ message: "Failed to fetch user data" });
+    }
+  });
+
+  // Level progression route
+  app.get("/api/achievements/level-progression", async (req, res) => {
+    try {
+      const userId = 1; // Mock user ID
+      const userData = achievementSystem.getEnhancedUserData(userId);
+      const levelProgression = achievementSystem.calculateLevelProgression(userData.totalPoints);
+      res.json(levelProgression);
+    } catch (error) {
+      console.error("Failed to calculate level progression:", error);
+      res.status(500).json({ message: "Failed to calculate level progression" });
+    }
+  });
+
+  // Streak data route
+  app.get("/api/achievements/streak-data", async (req, res) => {
+    try {
+      const userId = 1; // Mock user ID
+      const streakData = achievementSystem.calculateStreakData(userId);
+      res.json(streakData);
+    } catch (error) {
+      console.error("Failed to fetch streak data:", error);
+      res.status(500).json({ message: "Failed to fetch streak data" });
+    }
+  });
+
   // Outreach Engine endpoints
   app.get("/api/outreach/campaigns", async (req, res) => {
     try {

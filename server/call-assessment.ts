@@ -244,7 +244,17 @@ Return ONLY valid JSON in this exact format:
     }
 
     try {
-      const assessment = JSON.parse(response);
+      // Clean the response - remove code blocks and extra whitespace  
+      let cleanedResponse = response.trim();
+      
+      // Remove ```json and ``` if present
+      if (cleanedResponse.startsWith('```json')) {
+        cleanedResponse = cleanedResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanedResponse.startsWith('```')) {
+        cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      const assessment = JSON.parse(cleanedResponse.trim());
       
       // Enhance action items with proper platform links
       assessment.action_items = assessment.action_items.map((item: any) => {
@@ -262,6 +272,7 @@ Return ONLY valid JSON in this exact format:
       return assessment;
     } catch (parseError) {
       console.error('Failed to parse AI response:', response);
+      console.error('Parse error details:', parseError);
       throw new Error('Invalid JSON response from AI assessment');
     }
   }

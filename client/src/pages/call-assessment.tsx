@@ -69,6 +69,7 @@ export default function CallAssessment() {
   const [callTitle, setCallTitle] = useState('');
   const [callDate, setCallDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [currentAssessment, setCurrentAssessment] = useState<CallAssessment | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const queryClient = useQueryClient();
@@ -111,13 +112,14 @@ export default function CallAssessment() {
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      setCurrentAssessment(result); // Store the assessment result
       queryClient.invalidateQueries({ queryKey: ['/api/call-assessment/history'] });
       setShowProcessModal(false);
       setSelectedFile(null);
       setTranscriptText('');
       setCallTitle('');
-      setActiveTab('results');
+      setActiveTab('results'); // Switch to results tab to show assessment
     }
   });
 
@@ -508,36 +510,49 @@ export default function CallAssessment() {
         </TabsContent>
 
         <TabsContent value="results" className="space-y-6">
-          {demoAssessment ? (
+          {(currentAssessment || demoAssessment) ? (
             <>
-              {/* Call Summary */}
-              <Card>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle>{demoAssessment.call_id}</CardTitle>
-                      <CardDescription>
-                        {demoAssessment.date} • Processed in {demoAssessment.processing_time_ms}ms
-                      </CardDescription>
+              {/* Display current assessment if available, otherwise demo */}
+              {(() => {
+                const assessment = currentAssessment || demoAssessment;
+                return (
+                  <>
+                    {/* Call Summary */}
+                    <Card>
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle>{assessment.call_id}</CardTitle>
+                            <CardDescription>
+                              {assessment.date} • {assessment.processing_time_ms ? `Processed in ${assessment.processing_time_ms}ms` : 'Recently processed'}
+                            </CardDescription>
+                          </div>
+                          <div className="flex gap-2">
+                            {currentAssessment && (
+                              <Badge className="bg-blue-100 text-blue-800">Latest Result</Badge>
+                            )}
+                            <Badge className="bg-green-100 text-green-800">Completed</Badge>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-gray-700">{assessment.summary}</p>
+                      </CardContent>
+                    </Card>
+
+                    {/* Results Grid */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {renderParticipantsCard(assessment)}
+                      {renderGradingCard(assessment)}
                     </div>
-                    <Badge className="bg-green-100 text-green-800">Completed</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700">{demoAssessment.summary}</p>
-                </CardContent>
-              </Card>
 
-              {/* Results Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {renderParticipantsCard(demoAssessment)}
-                {renderGradingCard(demoAssessment)}
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {renderActionItemsCard(demoAssessment)}
-                {renderCoachingCard(demoAssessment)}
-              </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {renderActionItemsCard(assessment)}
+                      {renderCoachingCard(assessment)}
+                    </div>
+                  </>
+                );
+              })()}
             </>
           ) : (
             <Card>
