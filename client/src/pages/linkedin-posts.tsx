@@ -40,7 +40,7 @@ interface PostTrigger {
 interface PostInputs {
   industry: string;
   postFocus: string;
-  targetAudience: string;
+  targetAudience: string[];
   businessContext: string;
   keyMessage: string;
   desiredWordCount: number;
@@ -84,7 +84,7 @@ export default function LinkedInPosts() {
   const [customInputs, setCustomInputs] = useState<PostInputs>({
     industry: 'SaaS',
     postFocus: 'milestone',
-    targetAudience: 'Sales professionals',
+    targetAudience: ['Sales Manager', 'VP of Sales'],
     businessContext: 'Quarter performance',
     keyMessage: '',
     desiredWordCount: 100
@@ -310,23 +310,55 @@ export default function LinkedInPosts() {
 
                   {/* Target Audience */}
                   <div className="grid gap-2">
-                    <Label htmlFor="targetAudience">Target Audience</Label>
-                    <Select
-                      value={customInputs.targetAudience}
-                      onValueChange={(value) => setCustomInputs(prev => ({ ...prev, targetAudience: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select target audience" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Sales professionals">Sales Professionals</SelectItem>
-                        <SelectItem value="SDRs">SDRs</SelectItem>
-                        <SelectItem value="VPs of Sales">VPs of Sales</SelectItem>
-                        <SelectItem value="CTOs">CTOs</SelectItem>
-                        <SelectItem value="Marketing leaders">Marketing Leaders</SelectItem>
-                        <SelectItem value="Enterprise executives">Enterprise Executives</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="targetAudience">Target Audience Job Titles</Label>
+                    <div className="space-y-2">
+                      {customInputs.targetAudience.map((title, index) => (
+                        <div key={index} className="flex gap-2">
+                          <Input
+                            placeholder="e.g., VP of Sales, Sales Manager, Director of Revenue"
+                            value={title}
+                            onChange={(e) => {
+                              const newTitles = [...customInputs.targetAudience];
+                              newTitles[index] = e.target.value;
+                              setCustomInputs(prev => ({ ...prev, targetAudience: newTitles }));
+                            }}
+                            className="flex-1"
+                          />
+                          {customInputs.targetAudience.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const newTitles = customInputs.targetAudience.filter((_, i) => i !== index);
+                                setCustomInputs(prev => ({ ...prev, targetAudience: newTitles }));
+                              }}
+                              className="px-3"
+                            >
+                              ×
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setCustomInputs(prev => ({ 
+                            ...prev, 
+                            targetAudience: [...prev.targetAudience, ''] 
+                          }));
+                        }}
+                        className="w-full"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Another Job Title
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Add specific job titles you want to target (e.g., "VP of Sales", "Account Executive", "Sales Director")
+                    </p>
                   </div>
 
                   {/* Business Context */}
@@ -381,6 +413,16 @@ export default function LinkedInPosts() {
                           toast({
                             title: "Missing Key Message",
                             description: "Please enter a key message to generate your post.",
+                            variant: "destructive"
+                          });
+                          return;
+                        }
+                        
+                        const validTitles = customInputs.targetAudience.filter(title => title.trim());
+                        if (validTitles.length === 0) {
+                          toast({
+                            title: "Missing Target Audience",
+                            description: "Please enter at least one job title for your target audience.",
                             variant: "destructive"
                           });
                           return;
@@ -649,6 +691,12 @@ function PostCard({ post, onEdit, onApprove, onPublish, onCopy }: PostCardProps)
                 <div className="flex gap-2">
                   <span className="font-medium">Focus:</span>
                   <span>{post.inputs.postFocus}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-medium">Targeting:</span>
+                  <span>{Array.isArray(post.inputs.targetAudience) 
+                    ? post.inputs.targetAudience.filter(title => title.trim()).join(', ')
+                    : post.inputs.targetAudience}</span>
                 </div>
               </div>
             )}

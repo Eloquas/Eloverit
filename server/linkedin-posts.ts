@@ -14,7 +14,7 @@ interface PostTrigger {
 interface PostInputs {
   industry: string;
   postFocus: string;
-  targetAudience: string;
+  targetAudience: string[];
   businessContext: string;
   keyMessage: string;
   desiredWordCount: number;
@@ -192,7 +192,7 @@ export class LinkedInPostGenerator {
 INPUTS:
 - Industry: ${inputs.industry}
 - Post Focus: ${inputs.postFocus}
-- Target Audience: ${inputs.targetAudience}
+- Target Audience: ${Array.isArray(inputs.targetAudience) ? inputs.targetAudience.join(', ') : inputs.targetAudience}
 - Business Context: ${inputs.businessContext}
 - Key Message: ${inputs.keyMessage}
 - Target Word Count: ${inputs.desiredWordCount} words
@@ -264,7 +264,7 @@ Write the post now:`;
     const defaultInputs: PostInputs = {
       industry: 'SaaS',
       postFocus: 'milestone',
-      targetAudience: 'Sales professionals',
+      targetAudience: ['Sales Manager', 'VP of Sales', 'Account Executive'],
       businessContext: 'Quarter performance',
       keyMessage: 'Sharing insights from recent success',
       desiredWordCount: 100
