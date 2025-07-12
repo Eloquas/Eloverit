@@ -13,7 +13,9 @@ interface PostTrigger {
 
 interface PostInputs {
   companyName: string;
+  companyWebsite: string;
   scoreType: 'StoryScore' | 'TrustScore';
+  toneStyle: 'Consultative' | 'Conversational' | 'Authoritative' | 'Inspirational' | 'Empathetic';
   triggerEvent: string;
   industry: string;
   targetAudience: string;
@@ -167,6 +169,17 @@ export class LinkedInPostGenerator {
     return templates[industry] || 'operational improvements and strategic insights';
   }
 
+  private getToneGuidance(toneStyle: string): string {
+    const toneMap = {
+      'Consultative': 'Use advisory, expert-focused language. Position yourself as a trusted advisor sharing insights. Use phrases like "In my experience," "What I have learned," "Here is what surprised me." Be thoughtful and analytical.',
+      'Conversational': 'Write in a friendly, approachable tone. Use casual language and make it feel like a conversation with a colleague. Include rhetorical questions and relatable examples.',
+      'Authoritative': 'Use confident, commanding language that establishes credibility. Share definitive insights and strong statements. Avoid hedging words like "maybe" or "I think."',
+      'Inspirational': 'Focus on motivation and positive outcomes. Use uplifting language that encourages action. Share success stories and growth mindset perspectives.',
+      'Empathetic': 'Show understanding of challenges your audience faces. Use supportive language and acknowledge pain points. Focus on helping others succeed.'
+    };
+    return toneMap[toneStyle] || toneMap['Consultative'];
+  }
+
   private validateWordCount(content: string, targetCount: number): { wordCount: number; validationNotes: string[] } {
     const wordCount = content.split(/\s+/).filter(word => word.length > 0).length;
     const validationNotes: string[] = [];
@@ -201,11 +214,20 @@ export class LinkedInPostGenerator {
     try {
       const industryFocus = this.getIndustryTemplate(inputs.industry);
       
+      // Generate brand voice insights from website if provided
+      let brandVoiceContext = '';
+      if (inputs.companyWebsite) {
+        brandVoiceContext = `\n- Company Website: ${inputs.companyWebsite} (Use this to infer brand voice, products/services, and target market)`;
+      }
+
+      const toneGuidance = this.getToneGuidance(inputs.toneStyle);
+      
       const prompt = `You are Eloquas AI. Generate a LinkedIn post following the EXACT 5-part structure with these specifications:
 
 REQUIRED INPUTS:
-- Company Name: ${inputs.companyName}
+- Company Name: ${inputs.companyName}${brandVoiceContext}
 - Score Type: ${inputs.scoreType}
+- Tone Style: ${inputs.toneStyle} - ${toneGuidance}
 - Trigger Event: ${inputs.triggerEvent}
 - Industry: ${inputs.industry}
 - Target Audience: ${inputs.targetAudience}
@@ -214,12 +236,15 @@ REQUIRED INPUTS:
 - Desired Action: ${inputs.desiredAction}
 - Word Count Target: ${inputs.wordCountTarget} words
 
+TONE REQUIREMENTS:
+${toneGuidance}
+
 EXACT 5-PART STRUCTURE (follow precisely):
-1. **Hook (1-2 sentences)**: Frame the insight or surprise from the ${inputs.scoreType} activity
-2. **Context & Company (1 sentence)**: "At ${inputs.companyName}, I... [brief challenge or setup]"
+1. **Hook (1-2 sentences)**: Frame the insight or surprise from the ${inputs.scoreType} activity using ${inputs.toneStyle} tone
+2. **Context & Company (1 sentence)**: "At ${inputs.companyName}, I... [brief challenge or setup in ${inputs.industry}]"
 3. **Insight + Metric (1-2 sentences)**: "Our ${inputs.scoreType} activity showed that ${inputs.keyInsight}, driving ${inputs.metric}"
 4. **Question + Desired Action (1 sentence)**: "How have you...? ${inputs.desiredAction}"
-5. **Hashtags & Branding (optional)**: Up to 3 relevant hashtags
+5. **Hashtags & Branding (optional)**: Up to 3 relevant hashtags for ${inputs.industry}
 
 INDUSTRY FOCUS (${inputs.industry}): Emphasize ${industryFocus}
 
@@ -278,8 +303,10 @@ Write the post now:`;
   private async generatePost(userId: number, trigger: PostTrigger): Promise<LinkedInPost | null> {
     // Use default inputs for auto-generated posts
     const defaultInputs: PostInputs = {
-      companyName: 'Your Company',
+      companyName: 'Eloquas AI',
+      companyWebsite: 'https://eloquas.ai',
       scoreType: trigger.type.includes('trust') ? 'TrustScore' : 'StoryScore',
+      toneStyle: 'Consultative',
       triggerEvent: trigger.metric,
       industry: 'SaaS',
       targetAudience: 'Sales Managers, VPs of Sales, Account Executives',

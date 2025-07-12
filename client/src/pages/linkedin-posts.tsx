@@ -39,7 +39,9 @@ interface PostTrigger {
 
 interface PostInputs {
   companyName: string;
+  companyWebsite: string;
   scoreType: 'StoryScore' | 'TrustScore';
+  toneStyle: 'Consultative' | 'Conversational' | 'Authoritative' | 'Inspirational' | 'Empathetic';
   triggerEvent: string;
   industry: string;
   targetAudience: string;
@@ -86,7 +88,9 @@ export default function LinkedInPosts() {
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [customInputs, setCustomInputs] = useState<PostInputs>({
     companyName: '',
+    companyWebsite: '',
     scoreType: 'StoryScore',
+    toneStyle: 'Consultative',
     triggerEvent: '',
     industry: 'SaaS',
     targetAudience: 'Sales Managers, VPs of Sales, Account Executives',
@@ -296,10 +300,48 @@ export default function LinkedInPosts() {
                     <Label htmlFor="companyName">Company Name</Label>
                     <Input
                       id="companyName"
-                      placeholder="What company are you representing?"
+                      placeholder="Who do you represent? (Your employer or brand)"
                       value={customInputs.companyName}
                       onChange={(e) => setCustomInputs(prev => ({ ...prev, companyName: e.target.value }))}
                     />
+                  </div>
+
+                  {/* Company Website */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="companyWebsite">Company Website</Label>
+                    <Input
+                      id="companyWebsite"
+                      placeholder="e.g., https://www.avoautomation.com"
+                      value={customInputs.companyWebsite}
+                      onChange={(e) => setCustomInputs(prev => ({ ...prev, companyWebsite: e.target.value }))}
+                    />
+                    <p className="text-xs text-gray-500">
+                      Used to match your company's style & value propositions
+                    </p>
+                  </div>
+
+                  {/* Tone Style Selection */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="toneStyle">Tone Style</Label>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Choose your tone: How would you like to sound in this post?
+                    </p>
+                    <Select
+                      value={customInputs.toneStyle}
+                      onValueChange={(value: 'Consultative' | 'Conversational' | 'Authoritative' | 'Inspirational' | 'Empathetic') => 
+                        setCustomInputs(prev => ({ ...prev, toneStyle: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select tone style" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Consultative">Consultative - Advisory and expert-focused</SelectItem>
+                        <SelectItem value="Conversational">Conversational - Friendly and approachable</SelectItem>
+                        <SelectItem value="Authoritative">Authoritative - Confident and commanding</SelectItem>
+                        <SelectItem value="Inspirational">Inspirational - Motivating and uplifting</SelectItem>
+                        <SelectItem value="Empathetic">Empathetic - Understanding and supportive</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Trigger Event */}
@@ -699,6 +741,10 @@ function PostCard({ post, onEdit, onApprove, onPublish, onCopy }: PostCardProps)
                 <div className="flex gap-2">
                   <span className="font-medium">Score Type:</span>
                   <span>{post.inputs.scoreType}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-medium">Tone:</span>
+                  <span>{post.inputs.toneStyle}</span>
                 </div>
                 <div className="flex gap-2">
                   <span className="font-medium">Industry:</span>
