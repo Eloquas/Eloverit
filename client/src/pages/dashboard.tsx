@@ -1,4 +1,3 @@
-import DashboardLayout from "@/components/dashboard-layout";
 import StatsGrid from "@/components/stats-grid";
 import AccountGroupedProspects from "@/components/account-grouped-prospects";
 import SCIPABGeneratorCard from "@/components/scipab-generator-card";
@@ -9,7 +8,7 @@ export default function Dashboard() {
   const [selectedProspects, setSelectedProspects] = useState<number[]>([]);
 
   return (
-    <DashboardLayout>
+    <div className="space-y-6">
       {/* Page Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
@@ -59,6 +58,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }

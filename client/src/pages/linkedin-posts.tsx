@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import DashboardLayout from "@/components/dashboard-layout";
+
 import {
   Sparkles,
   Edit3,
@@ -252,7 +252,7 @@ export default function LinkedInPosts() {
   const published = posts.filter(p => p.status === 'published');
 
   return (
-    <DashboardLayout>
+    <div className="space-y-6">
       <div className="p-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -671,7 +671,7 @@ export default function LinkedInPosts() {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </div>
   );
 }
 
