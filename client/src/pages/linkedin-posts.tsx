@@ -8,6 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/dashboard-layout";
 import {
@@ -22,13 +25,25 @@ import {
   Award,
   Copy,
   ExternalLink,
-  Calendar
+  Calendar,
+  Plus,
+  AlertTriangle,
+  Check
 } from "lucide-react";
 
 interface PostTrigger {
   type: 'high_replies' | 'high_trust' | 'score_improvement' | 'personal_best';
   metric: string;
   context: string;
+}
+
+interface PostInputs {
+  industry: string;
+  postFocus: string;
+  targetAudience: string;
+  businessContext: string;
+  keyMessage: string;
+  desiredWordCount: number;
 }
 
 interface LinkedInPost {
@@ -41,6 +56,9 @@ interface LinkedInPost {
   createdAt: string;
   publishedAt?: string;
   includeBranding: boolean;
+  inputs?: PostInputs;
+  wordCount?: number;
+  validationNotes?: string[];
 }
 
 const triggerIcons = {
@@ -62,6 +80,15 @@ export default function LinkedInPosts() {
   const [selectedPost, setSelectedPost] = useState<LinkedInPost | null>(null);
   const [editedContent, setEditedContent] = useState("");
   const [includeBranding, setIncludeBranding] = useState(true);
+  const [showCustomModal, setShowCustomModal] = useState(false);
+  const [customInputs, setCustomInputs] = useState<PostInputs>({
+    industry: 'SaaS',
+    postFocus: 'milestone',
+    targetAudience: 'Sales professionals',
+    businessContext: 'Quarter performance',
+    keyMessage: '',
+    desiredWordCount: 100
+  });
 
   // Fetch posts
   const { data: posts = [], isLoading } = useQuery<LinkedInPost[]>({
@@ -84,6 +111,27 @@ export default function LinkedInPosts() {
       toast({
         title: "Posts Generated",
         description: "New LinkedIn posts have been created based on your recent activity.",
+      });
+    },
+  });
+
+  // Generate custom post
+  const generateCustomPost = useMutation({
+    mutationFn: async ({ trigger, inputs }: { trigger: PostTrigger; inputs: PostInputs }) => {
+      const response = await fetch('/api/linkedin-posts/generate-custom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trigger, inputs }),
+      });
+      if (!response.ok) throw new Error('Failed to generate custom post');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/linkedin-posts'] });
+      setShowCustomModal(false);
+      toast({
+        title: "Custom Post Generated",
+        description: `Generated ${data.wordCount}-word post with ${data.validationNotes?.length || 0} validation notes.`,
       });
     },
   });
@@ -204,14 +252,168 @@ export default function LinkedInPosts() {
               AI-generated posts based on your TrustScore & StoryScore achievements
             </p>
           </div>
-          <Button
-            onClick={() => generatePosts.mutate()}
-            disabled={generatePosts.isPending}
-            className="avo-gradient-blue text-white"
-          >
-            <Sparkles className="mr-2 h-4 w-4" />
-            {generatePosts.isPending ? 'Generating...' : 'Generate New Posts'}
-          </Button>
+          <div className="flex gap-3">
+            <Dialog open={showCustomModal} onOpenChange={setShowCustomModal}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Custom Post
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Create Custom LinkedIn Post</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-6 py-4">
+                  {/* Industry */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="industry">Industry</Label>
+                    <Select
+                      value={customInputs.industry}
+                      onValueChange={(value) => setCustomInputs(prev => ({ ...prev, industry: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select industry" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="SaaS">SaaS</SelectItem>
+                        <SelectItem value="Tech">Tech</SelectItem>
+                        <SelectItem value="Finance">Finance</SelectItem>
+                        <SelectItem value="Consulting">Consulting</SelectItem>
+                        <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                        <SelectItem value="Logistics">Logistics</SelectItem>
+                        <SelectItem value="Healthcare">Healthcare</SelectItem>
+                        <SelectItem value="Pharma">Pharma</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Post Focus */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="postFocus">Post Focus</Label>
+                    <Select
+                      value={customInputs.postFocus}
+                      onValueChange={(value) => setCustomInputs(prev => ({ ...prev, postFocus: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select post focus" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="milestone">New Milestone</SelectItem>
+                        <SelectItem value="insight">New Insight</SelectItem>
+                        <SelectItem value="customer-story">Customer Story</SelectItem>
+                        <SelectItem value="achievement">Personal Achievement</SelectItem>
+                        <SelectItem value="learning">Key Learning</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Target Audience */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="targetAudience">Target Audience</Label>
+                    <Select
+                      value={customInputs.targetAudience}
+                      onValueChange={(value) => setCustomInputs(prev => ({ ...prev, targetAudience: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select target audience" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Sales professionals">Sales Professionals</SelectItem>
+                        <SelectItem value="SDRs">SDRs</SelectItem>
+                        <SelectItem value="VPs of Sales">VPs of Sales</SelectItem>
+                        <SelectItem value="CTOs">CTOs</SelectItem>
+                        <SelectItem value="Marketing leaders">Marketing Leaders</SelectItem>
+                        <SelectItem value="Enterprise executives">Enterprise Executives</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Business Context */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="businessContext">Business Context</Label>
+                    <Input
+                      id="businessContext"
+                      placeholder="e.g., Q2 pipeline push, product launch, hiring drive"
+                      value={customInputs.businessContext}
+                      onChange={(e) => setCustomInputs(prev => ({ ...prev, businessContext: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* Key Message */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="keyMessage">Key Message</Label>
+                    <Textarea
+                      id="keyMessage"
+                      placeholder="Core takeaway you want to share..."
+                      value={customInputs.keyMessage}
+                      onChange={(e) => setCustomInputs(prev => ({ ...prev, keyMessage: e.target.value }))}
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Word Count */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="desiredWordCount">Desired Word Count</Label>
+                    <div className="flex items-center gap-4">
+                      <Input
+                        id="desiredWordCount"
+                        type="number"
+                        min={50}
+                        max={150}
+                        value={customInputs.desiredWordCount}
+                        onChange={(e) => setCustomInputs(prev => ({ ...prev, desiredWordCount: parseInt(e.target.value) }))}
+                        className="w-32"
+                      />
+                      <div className="text-sm text-gray-500">
+                        Optimal: 80-120 words | Hard limit: 150 words
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4">
+                    <Button variant="outline" onClick={() => setShowCustomModal(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (!customInputs.keyMessage.trim()) {
+                          toast({
+                            title: "Missing Key Message",
+                            description: "Please enter a key message to generate your post.",
+                            variant: "destructive"
+                          });
+                          return;
+                        }
+                        
+                        const mockTrigger: PostTrigger = {
+                          type: 'personal_best',
+                          metric: 'Custom post generation',
+                          context: customInputs.businessContext
+                        };
+                        
+                        generateCustomPost.mutate({ trigger: mockTrigger, inputs: customInputs });
+                      }}
+                      disabled={generateCustomPost.isPending}
+                      className="avo-gradient-blue text-white"
+                    >
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      {generateCustomPost.isPending ? 'Generating...' : 'Generate Post'}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            <Button
+              onClick={() => generatePosts.mutate()}
+              disabled={generatePosts.isPending}
+              className="avo-gradient-blue text-white"
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              {generatePosts.isPending ? 'Generating...' : 'Auto-Generate Posts'}
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -403,11 +605,53 @@ function PostCard({ post, onEdit, onApprove, onPublish, onCopy }: PostCardProps)
                 <TriggerIcon className="mr-1 h-3 w-3" />
                 {post.trigger.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
               </Badge>
+              {post.inputs && (
+                <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                  Custom Post
+                </Badge>
+              )}
               <span className="text-sm text-gray-500">
                 {formatDate(post.createdAt)}
               </span>
             </div>
             <p className="text-sm font-medium text-gray-700">{post.trigger.metric}</p>
+            
+            {/* Word Count and Validation */}
+            {(post.wordCount || post.validationNotes) && (
+              <div className="flex items-center gap-3 text-xs">
+                {post.wordCount && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-500">Words:</span>
+                    <span className={`font-medium ${
+                      post.wordCount <= 120 ? 'text-green-600' : 
+                      post.wordCount <= 150 ? 'text-amber-600' : 'text-red-600'
+                    }`}>
+                      {post.wordCount}
+                    </span>
+                  </div>
+                )}
+                {post.validationNotes && post.validationNotes.length > 0 && (
+                  <div className="flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3 text-amber-500" />
+                    <span className="text-amber-600">{post.validationNotes.length} note{post.validationNotes.length > 1 ? 's' : ''}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Custom Input Summary */}
+            {post.inputs && (
+              <div className="text-xs text-gray-500 space-y-1">
+                <div className="flex gap-2">
+                  <span className="font-medium">Industry:</span>
+                  <span>{post.inputs.industry}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-medium">Focus:</span>
+                  <span>{post.inputs.postFocus}</span>
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             {post.status === 'draft' && onEdit && (
@@ -431,6 +675,25 @@ function PostCard({ post, onEdit, onApprove, onPublish, onCopy }: PostCardProps)
       <CardContent>
         <div className="prose prose-sm max-w-none">
           <p className="whitespace-pre-wrap text-gray-700">{post.postContent}</p>
+          
+          {/* Validation Notes */}
+          {post.validationNotes && post.validationNotes.length > 0 && (
+            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <span className="text-sm font-medium text-amber-800">Validation Notes</span>
+              </div>
+              <ul className="text-sm text-amber-700 space-y-1">
+                {post.validationNotes.map((note, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="block w-1 h-1 bg-amber-500 rounded-full mt-2 flex-shrink-0"></span>
+                    <span>{note}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
           {post.includeBranding && (
             <p className="text-sm text-gray-500 mt-4 pt-4 border-t">
               💡 Powered by Eloquas AI

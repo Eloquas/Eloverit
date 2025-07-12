@@ -1214,6 +1214,33 @@ Keep it conversational and human - like one professional helping another.`;
     }
   });
 
+  app.post("/api/linkedin-posts/generate-custom", async (req, res) => {
+    try {
+      const userId = 1; // Mock user ID
+      const { trigger, inputs } = req.body;
+
+      if (!trigger || !inputs) {
+        return res.status(400).json({ message: "Trigger and inputs are required" });
+      }
+
+      const post = await linkedInPostGenerator.generatePostWithInputs(userId, trigger, inputs);
+      
+      if (!post) {
+        return res.status(500).json({ message: "Failed to generate custom post" });
+      }
+
+      res.json({ 
+        message: "Generated custom LinkedIn post", 
+        post,
+        wordCount: post.wordCount,
+        validationNotes: post.validationNotes
+      });
+    } catch (error) {
+      console.error("Failed to generate custom LinkedIn post:", error);
+      res.status(500).json({ message: "Failed to generate custom LinkedIn post" });
+    }
+  });
+
   app.patch("/api/linkedin-posts/:postId", async (req, res) => {
     try {
       const { postId } = req.params;

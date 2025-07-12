@@ -11,6 +11,15 @@ interface PostTrigger {
   context: string;
 }
 
+interface PostInputs {
+  industry: string;
+  postFocus: string;
+  targetAudience: string;
+  businessContext: string;
+  keyMessage: string;
+  desiredWordCount: number;
+}
+
 interface LinkedInPost {
   id: string;
   userId: number;
@@ -21,6 +30,9 @@ interface LinkedInPost {
   createdAt: Date;
   publishedAt?: Date;
   includeBranding: boolean;
+  inputs?: PostInputs;
+  wordCount?: number;
+  validationNotes?: string[];
 }
 
 export class LinkedInPostGenerator {
@@ -138,43 +150,95 @@ export class LinkedInPostGenerator {
     return triggers;
   }
 
-  private async generatePost(userId: number, trigger: PostTrigger): Promise<LinkedInPost | null> {
+  private getIndustryTemplate(industry: string): string {
+    const templates = {
+      'SaaS': 'product-usage stories and innovation hooks',
+      'Tech': 'product-usage stories and innovation hooks',
+      'Finance': 'compliance wins and risk-mitigation insights',
+      'Consulting': 'compliance wins and strategic insights',
+      'Manufacturing': 'efficiency gains and supply-chain stories',
+      'Logistics': 'efficiency gains and supply-chain stories',
+      'Healthcare': 'patient outcomes and regulatory learnings',
+      'Pharma': 'patient outcomes and regulatory learnings'
+    };
+    return templates[industry] || 'operational improvements and strategic insights';
+  }
+
+  private validateWordCount(content: string, targetCount: number): { wordCount: number; validationNotes: string[] } {
+    const wordCount = content.split(/\s+/).filter(word => word.length > 0).length;
+    const validationNotes: string[] = [];
+
+    if (wordCount > 150) {
+      validationNotes.push(`Post exceeds 150-word hard limit (${wordCount} words)`);
+    } else if (wordCount > targetCount + 20) {
+      validationNotes.push(`Post is ${wordCount - targetCount} words over target`);
+    } else if (wordCount < targetCount - 20) {
+      validationNotes.push(`Post is ${targetCount - wordCount} words under target`);
+    }
+
+    if (wordCount >= 80 && wordCount <= 120) {
+      validationNotes.push('✓ Within optimal range (80-120 words)');
+    }
+
+    return { wordCount, validationNotes };
+  }
+
+  async generatePostWithInputs(userId: number, trigger: PostTrigger, inputs: PostInputs): Promise<LinkedInPost | null> {
     try {
-      const prompt = `Generate a first-person LinkedIn post for a sales rep based on this achievement:
+      const industryFocus = this.getIndustryTemplate(inputs.industry);
+      
+      const prompt = `Generate a LinkedIn post for a sales rep with these exact specifications:
 
-Trigger: ${trigger.type}
-Metric: ${trigger.metric}
-Context: ${trigger.context}
+INPUTS:
+- Industry: ${inputs.industry}
+- Post Focus: ${inputs.postFocus}
+- Target Audience: ${inputs.targetAudience}
+- Business Context: ${inputs.businessContext}
+- Key Message: ${inputs.keyMessage}
+- Target Word Count: ${inputs.desiredWordCount} words
 
-Requirements:
-1. Write in first person from the rep's perspective
-2. Include the specific metric naturally
-3. Share an insight or learning
-4. End with a question to engage the audience
-5. Keep it humble and learning-focused
-6. No direct product pitching
-7. 3-4 paragraphs maximum
-8. Include 3-5 relevant hashtags at the end
+TRIGGER DATA:
+- Type: ${trigger.type}
+- Metric: ${trigger.metric}
+- Context: ${trigger.context}
 
-The tone should be professional but conversational, sharing a genuine win while inviting discussion.`;
+STRUCTURE REQUIREMENTS (follow exactly):
+1. Hook (1-2 sentences): Grab attention with a quick learning or surprise
+2. Insight + Metric (1-2 sentences): Share key takeaway with supporting data
+3. Context/Story (1-2 sentences): Brief situation or challenge outline
+4. Question/Reflection (1 sentence): Invite peers to share experience
+5. Hashtags: Up to 3 relevant hashtags
+
+INDUSTRY FOCUS (${inputs.industry}): Emphasize ${industryFocus}
+
+CONSTRAINTS:
+- Target exactly ${inputs.desiredWordCount} words (±10 words acceptable)
+- First person perspective
+- Professional but conversational tone
+- Humble-brag style that builds credibility
+- No direct product pitching
+- Include the trigger metric naturally
+
+Write the post now:`;
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: "You are a LinkedIn content strategist helping sales reps share their wins and insights authentically."
+            content: "You are Eloquas AI, an expert LinkedIn content strategist. Generate posts that exactly match the word count target and follow the 5-part structure precisely."
           },
           {
             role: "user",
             content: prompt
           }
         ],
-        temperature: 0.8,
-        max_tokens: 300
+        temperature: 0.7,
+        max_tokens: 400
       });
 
       const postContent = response.choices[0].message.content || "";
+      const validation = this.validateWordCount(postContent, inputs.desiredWordCount);
 
       return {
         id: `post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -184,12 +248,29 @@ The tone should be professional but conversational, sharing a genuine win while 
         trigger,
         status: 'draft',
         createdAt: new Date(),
-        includeBranding: true
+        includeBranding: true,
+        inputs,
+        wordCount: validation.wordCount,
+        validationNotes: validation.validationNotes
       };
     } catch (error) {
       console.error('Error generating LinkedIn post:', error);
       return null;
     }
+  }
+
+  private async generatePost(userId: number, trigger: PostTrigger): Promise<LinkedInPost | null> {
+    // Use default inputs for auto-generated posts
+    const defaultInputs: PostInputs = {
+      industry: 'SaaS',
+      postFocus: 'milestone',
+      targetAudience: 'Sales professionals',
+      businessContext: 'Quarter performance',
+      keyMessage: 'Sharing insights from recent success',
+      desiredWordCount: 100
+    };
+
+    return this.generatePostWithInputs(userId, trigger, defaultInputs);
   }
 
   async getPostsForUser(userId: number, status?: 'draft' | 'approved' | 'published'): Promise<LinkedInPost[]> {
