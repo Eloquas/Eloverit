@@ -38,12 +38,15 @@ interface PostTrigger {
 }
 
 interface PostInputs {
+  companyName: string;
+  scoreType: 'StoryScore' | 'TrustScore';
+  triggerEvent: string;
   industry: string;
-  postFocus: string;
-  targetAudience: string[];
-  businessContext: string;
-  keyMessage: string;
-  desiredWordCount: number;
+  targetAudience: string;
+  keyInsight: string;
+  metric: string;
+  desiredAction: string;
+  wordCountTarget: number;
 }
 
 interface LinkedInPost {
@@ -82,12 +85,15 @@ export default function LinkedInPosts() {
   const [includeBranding, setIncludeBranding] = useState(true);
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [customInputs, setCustomInputs] = useState<PostInputs>({
+    companyName: '',
+    scoreType: 'StoryScore',
+    triggerEvent: '',
     industry: 'SaaS',
-    postFocus: 'milestone',
-    targetAudience: ['Sales Manager', 'VP of Sales'],
-    businessContext: 'Quarter performance',
-    keyMessage: '',
-    desiredWordCount: 100
+    targetAudience: 'Sales Managers, VPs of Sales, Account Executives',
+    keyInsight: '',
+    metric: '',
+    desiredAction: "Let's compare notes!",
+    wordCountTarget: 100
   });
 
   // Fetch posts
@@ -265,6 +271,48 @@ export default function LinkedInPosts() {
                   <DialogTitle>Create Custom LinkedIn Post</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-6 py-4">
+                  {/* Score Type Selection */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="scoreType">Score Type</Label>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Would you like this week's draft to be based on your StoryScore or TrustScore activity?
+                    </p>
+                    <Select
+                      value={customInputs.scoreType}
+                      onValueChange={(value: 'StoryScore' | 'TrustScore') => setCustomInputs(prev => ({ ...prev, scoreType: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select score type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="StoryScore">StoryScore</SelectItem>
+                        <SelectItem value="TrustScore">TrustScore</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Company Name */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="companyName">Company Name</Label>
+                    <Input
+                      id="companyName"
+                      placeholder="What company are you representing?"
+                      value={customInputs.companyName}
+                      onChange={(e) => setCustomInputs(prev => ({ ...prev, companyName: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* Trigger Event */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="triggerEvent">Trigger Event</Label>
+                    <Input
+                      id="triggerEvent"
+                      placeholder="e.g., 3+ StoryScore replies, TrustScore > 80 reply"
+                      value={customInputs.triggerEvent}
+                      onChange={(e) => setCustomInputs(prev => ({ ...prev, triggerEvent: e.target.value }))}
+                    />
+                  </div>
+
                   {/* Industry */}
                   <div className="grid gap-2">
                     <Label htmlFor="industry">Industry</Label>
@@ -288,117 +336,68 @@ export default function LinkedInPosts() {
                     </Select>
                   </div>
 
-                  {/* Post Focus */}
-                  <div className="grid gap-2">
-                    <Label htmlFor="postFocus">Post Focus</Label>
-                    <Select
-                      value={customInputs.postFocus}
-                      onValueChange={(value) => setCustomInputs(prev => ({ ...prev, postFocus: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select post focus" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="milestone">New Milestone</SelectItem>
-                        <SelectItem value="insight">New Insight</SelectItem>
-                        <SelectItem value="customer-story">Customer Story</SelectItem>
-                        <SelectItem value="achievement">Personal Achievement</SelectItem>
-                        <SelectItem value="learning">Key Learning</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
                   {/* Target Audience */}
                   <div className="grid gap-2">
-                    <Label htmlFor="targetAudience">Target Audience Job Titles</Label>
-                    <div className="space-y-2">
-                      {customInputs.targetAudience.map((title, index) => (
-                        <div key={index} className="flex gap-2">
-                          <Input
-                            placeholder="e.g., VP of Sales, Sales Manager, Director of Revenue"
-                            value={title}
-                            onChange={(e) => {
-                              const newTitles = [...customInputs.targetAudience];
-                              newTitles[index] = e.target.value;
-                              setCustomInputs(prev => ({ ...prev, targetAudience: newTitles }));
-                            }}
-                            className="flex-1"
-                          />
-                          {customInputs.targetAudience.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const newTitles = customInputs.targetAudience.filter((_, i) => i !== index);
-                                setCustomInputs(prev => ({ ...prev, targetAudience: newTitles }));
-                              }}
-                              className="px-3"
-                            >
-                              ×
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setCustomInputs(prev => ({ 
-                            ...prev, 
-                            targetAudience: [...prev.targetAudience, ''] 
-                          }));
-                        }}
-                        className="w-full"
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Another Job Title
-                      </Button>
-                    </div>
+                    <Label htmlFor="targetAudience">Target Audience</Label>
+                    <Input
+                      id="targetAudience"
+                      placeholder="e.g., VP of Sales, CTOs, Procurement Leads"
+                      value={customInputs.targetAudience}
+                      onChange={(e) => setCustomInputs(prev => ({ ...prev, targetAudience: e.target.value }))}
+                    />
                     <p className="text-xs text-gray-500">
-                      Add specific job titles you want to target (e.g., "VP of Sales", "Account Executive", "Sales Director")
+                      Comma-separated list of roles you want to target
                     </p>
                   </div>
 
-                  {/* Business Context */}
+                  {/* Key Insight */}
                   <div className="grid gap-2">
-                    <Label htmlFor="businessContext">Business Context</Label>
+                    <Label htmlFor="keyInsight">Key Insight</Label>
                     <Input
-                      id="businessContext"
-                      placeholder="e.g., Q2 pipeline push, product launch, hiring drive"
-                      value={customInputs.businessContext}
-                      onChange={(e) => setCustomInputs(prev => ({ ...prev, businessContext: e.target.value }))}
+                      id="keyInsight"
+                      placeholder="Core learning or surprise (e.g., Personalized stories beat feature lists)"
+                      value={customInputs.keyInsight}
+                      onChange={(e) => setCustomInputs(prev => ({ ...prev, keyInsight: e.target.value }))}
                     />
                   </div>
 
-                  {/* Key Message */}
+                  {/* Metric */}
                   <div className="grid gap-2">
-                    <Label htmlFor="keyMessage">Key Message</Label>
-                    <Textarea
-                      id="keyMessage"
-                      placeholder="Core takeaway you want to share..."
-                      value={customInputs.keyMessage}
-                      onChange={(e) => setCustomInputs(prev => ({ ...prev, keyMessage: e.target.value }))}
-                      rows={3}
+                    <Label htmlFor="metric">Metric</Label>
+                    <Input
+                      id="metric"
+                      placeholder="Quantitative lift or rate (e.g., +42% reply rate)"
+                      value={customInputs.metric}
+                      onChange={(e) => setCustomInputs(prev => ({ ...prev, metric: e.target.value }))}
                     />
                   </div>
 
-                  {/* Word Count */}
+                  {/* Desired Action */}
                   <div className="grid gap-2">
-                    <Label htmlFor="desiredWordCount">Desired Word Count</Label>
+                    <Label htmlFor="desiredAction">Desired Action</Label>
+                    <Input
+                      id="desiredAction"
+                      placeholder="Call-to-action (e.g., Let's connect!, Share your frameworks)"
+                      value={customInputs.desiredAction}
+                      onChange={(e) => setCustomInputs(prev => ({ ...prev, desiredAction: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* Word Count Target */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="wordCountTarget">Word Count Target</Label>
                     <div className="flex items-center gap-4">
                       <Input
-                        id="desiredWordCount"
+                        id="wordCountTarget"
                         type="number"
                         min={50}
                         max={150}
-                        value={customInputs.desiredWordCount}
-                        onChange={(e) => setCustomInputs(prev => ({ ...prev, desiredWordCount: parseInt(e.target.value) }))}
+                        value={customInputs.wordCountTarget}
+                        onChange={(e) => setCustomInputs(prev => ({ ...prev, wordCountTarget: parseInt(e.target.value) }))}
                         className="w-32"
                       />
                       <div className="text-sm text-gray-500">
-                        Optimal: 80-120 words | Hard limit: 150 words
+                        Default: 80-120 words | Hard limit: 150 words
                       </div>
                     </div>
                   </div>
@@ -409,20 +408,29 @@ export default function LinkedInPosts() {
                     </Button>
                     <Button
                       onClick={() => {
-                        if (!customInputs.keyMessage.trim()) {
+                        // Validation for required fields
+                        if (!customInputs.companyName.trim()) {
                           toast({
-                            title: "Missing Key Message",
-                            description: "Please enter a key message to generate your post.",
+                            title: "Missing Company Name",
+                            description: "Please enter your company name.",
                             variant: "destructive"
                           });
                           return;
                         }
                         
-                        const validTitles = customInputs.targetAudience.filter(title => title.trim());
-                        if (validTitles.length === 0) {
+                        if (!customInputs.keyInsight.trim()) {
                           toast({
-                            title: "Missing Target Audience",
-                            description: "Please enter at least one job title for your target audience.",
+                            title: "Missing Key Insight",
+                            description: "Please enter a key insight to share.",
+                            variant: "destructive"
+                          });
+                          return;
+                        }
+                        
+                        if (!customInputs.metric.trim()) {
+                          toast({
+                            title: "Missing Metric",
+                            description: "Please enter a metric to highlight.",
                             variant: "destructive"
                           });
                           return;
@@ -430,8 +438,8 @@ export default function LinkedInPosts() {
                         
                         const mockTrigger: PostTrigger = {
                           type: 'personal_best',
-                          metric: 'Custom post generation',
-                          context: customInputs.businessContext
+                          metric: customInputs.triggerEvent || 'Custom post generation',
+                          context: `Custom ${customInputs.scoreType} post for ${customInputs.industry} industry`
                         };
                         
                         generateCustomPost.mutate({ trigger: mockTrigger, inputs: customInputs });
@@ -685,18 +693,24 @@ function PostCard({ post, onEdit, onApprove, onPublish, onCopy }: PostCardProps)
             {post.inputs && (
               <div className="text-xs text-gray-500 space-y-1">
                 <div className="flex gap-2">
+                  <span className="font-medium">Company:</span>
+                  <span>{post.inputs.companyName}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-medium">Score Type:</span>
+                  <span>{post.inputs.scoreType}</span>
+                </div>
+                <div className="flex gap-2">
                   <span className="font-medium">Industry:</span>
                   <span>{post.inputs.industry}</span>
                 </div>
                 <div className="flex gap-2">
-                  <span className="font-medium">Focus:</span>
-                  <span>{post.inputs.postFocus}</span>
+                  <span className="font-medium">Targeting:</span>
+                  <span>{post.inputs.targetAudience}</span>
                 </div>
                 <div className="flex gap-2">
-                  <span className="font-medium">Targeting:</span>
-                  <span>{Array.isArray(post.inputs.targetAudience) 
-                    ? post.inputs.targetAudience.filter(title => title.trim()).join(', ')
-                    : post.inputs.targetAudience}</span>
+                  <span className="font-medium">Key Insight:</span>
+                  <span>{post.inputs.keyInsight}</span>
                 </div>
               </div>
             )}

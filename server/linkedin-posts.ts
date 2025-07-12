@@ -12,12 +12,15 @@ interface PostTrigger {
 }
 
 interface PostInputs {
+  companyName: string;
+  scoreType: 'StoryScore' | 'TrustScore';
+  triggerEvent: string;
   industry: string;
-  postFocus: string;
-  targetAudience: string[];
-  businessContext: string;
-  keyMessage: string;
-  desiredWordCount: number;
+  targetAudience: string;
+  keyInsight: string;
+  metric: string;
+  desiredAction: string;
+  wordCountTarget: number;
 }
 
 interface LinkedInPost {
@@ -168,16 +171,27 @@ export class LinkedInPostGenerator {
     const wordCount = content.split(/\s+/).filter(word => word.length > 0).length;
     const validationNotes: string[] = [];
 
+    // Hard limit check (150 words)
     if (wordCount > 150) {
-      validationNotes.push(`Post exceeds 150-word hard limit (${wordCount} words)`);
-    } else if (wordCount > targetCount + 20) {
-      validationNotes.push(`Post is ${wordCount - targetCount} words over target`);
-    } else if (wordCount < targetCount - 20) {
-      validationNotes.push(`Post is ${targetCount - wordCount} words under target`);
+      validationNotes.push(`❌ Post exceeds 150-word hard limit (${wordCount} words)`);
     }
-
+    
+    // Target range check (80-120 words optimal)
     if (wordCount >= 80 && wordCount <= 120) {
       validationNotes.push('✓ Within optimal range (80-120 words)');
+    } else if (wordCount < 80) {
+      validationNotes.push(`⚠️ Below optimal range (${wordCount} words, target 80-120)`);
+    } else if (wordCount > 120 && wordCount <= 150) {
+      validationNotes.push(`⚠️ Above optimal range (${wordCount} words, target 80-120)`);
+    }
+
+    // Target vs actual comparison
+    const deviation = Math.abs(wordCount - targetCount);
+    if (deviation <= 10) {
+      validationNotes.push(`✓ Close to target (${wordCount}/${targetCount} words)`);
+    } else {
+      const direction = wordCount > targetCount ? 'over' : 'under';
+      validationNotes.push(`⚠️ ${deviation} words ${direction} target (${wordCount}/${targetCount})`);
     }
 
     return { wordCount, validationNotes };
@@ -187,37 +201,39 @@ export class LinkedInPostGenerator {
     try {
       const industryFocus = this.getIndustryTemplate(inputs.industry);
       
-      const prompt = `Generate a LinkedIn post for a sales rep with these exact specifications:
+      const prompt = `You are Eloquas AI. Generate a LinkedIn post following the EXACT 5-part structure with these specifications:
 
-INPUTS:
+REQUIRED INPUTS:
+- Company Name: ${inputs.companyName}
+- Score Type: ${inputs.scoreType}
+- Trigger Event: ${inputs.triggerEvent}
 - Industry: ${inputs.industry}
-- Post Focus: ${inputs.postFocus}
-- Target Audience: ${Array.isArray(inputs.targetAudience) ? inputs.targetAudience.join(', ') : inputs.targetAudience}
-- Business Context: ${inputs.businessContext}
-- Key Message: ${inputs.keyMessage}
-- Target Word Count: ${inputs.desiredWordCount} words
+- Target Audience: ${inputs.targetAudience}
+- Key Insight: ${inputs.keyInsight}
+- Metric: ${inputs.metric}
+- Desired Action: ${inputs.desiredAction}
+- Word Count Target: ${inputs.wordCountTarget} words
 
-TRIGGER DATA:
-- Type: ${trigger.type}
-- Metric: ${trigger.metric}
-- Context: ${trigger.context}
-
-STRUCTURE REQUIREMENTS (follow exactly):
-1. Hook (1-2 sentences): Grab attention with a quick learning or surprise
-2. Insight + Metric (1-2 sentences): Share key takeaway with supporting data
-3. Context/Story (1-2 sentences): Brief situation or challenge outline
-4. Question/Reflection (1 sentence): Invite peers to share experience
-5. Hashtags: Up to 3 relevant hashtags
+EXACT 5-PART STRUCTURE (follow precisely):
+1. **Hook (1-2 sentences)**: Frame the insight or surprise from the ${inputs.scoreType} activity
+2. **Context & Company (1 sentence)**: "At ${inputs.companyName}, I... [brief challenge or setup]"
+3. **Insight + Metric (1-2 sentences)**: "Our ${inputs.scoreType} activity showed that ${inputs.keyInsight}, driving ${inputs.metric}"
+4. **Question + Desired Action (1 sentence)**: "How have you...? ${inputs.desiredAction}"
+5. **Hashtags & Branding (optional)**: Up to 3 relevant hashtags
 
 INDUSTRY FOCUS (${inputs.industry}): Emphasize ${industryFocus}
 
+TONE REQUIREMENTS:
+- First-person, authentic and conversational
+- Humble-brag: share wins and curiosity
+- No fluff: every word must serve insight or action
+- Thought-leadership focus: position as peer expert
+
 CONSTRAINTS:
-- Target exactly ${inputs.desiredWordCount} words (±10 words acceptable)
-- First person perspective
+- Target exactly ${inputs.wordCountTarget} words (hard limit 150 words)
 - Professional but conversational tone
-- Humble-brag style that builds credibility
+- Include the trigger event naturally: ${inputs.triggerEvent}
 - No direct product pitching
-- Include the trigger metric naturally
 
 Write the post now:`;
 
@@ -238,7 +254,7 @@ Write the post now:`;
       });
 
       const postContent = response.choices[0].message.content || "";
-      const validation = this.validateWordCount(postContent, inputs.desiredWordCount);
+      const validation = this.validateWordCount(postContent, inputs.wordCountTarget);
 
       return {
         id: `post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -262,12 +278,15 @@ Write the post now:`;
   private async generatePost(userId: number, trigger: PostTrigger): Promise<LinkedInPost | null> {
     // Use default inputs for auto-generated posts
     const defaultInputs: PostInputs = {
+      companyName: 'Your Company',
+      scoreType: trigger.type.includes('trust') ? 'TrustScore' : 'StoryScore',
+      triggerEvent: trigger.metric,
       industry: 'SaaS',
-      postFocus: 'milestone',
-      targetAudience: ['Sales Manager', 'VP of Sales', 'Account Executive'],
-      businessContext: 'Quarter performance',
-      keyMessage: 'Sharing insights from recent success',
-      desiredWordCount: 100
+      targetAudience: 'Sales Managers, VPs of Sales, Account Executives',
+      keyInsight: 'Personalized messaging drives better engagement',
+      metric: trigger.metric,
+      desiredAction: "Let's compare notes!",
+      wordCountTarget: 100
     };
 
     return this.generatePostWithInputs(userId, trigger, defaultInputs);
