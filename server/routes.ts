@@ -20,6 +20,7 @@ import { callAssessmentEngine } from "./call-assessment";
 import { googleDriveService } from './google-drive';
 import { platformResearchEngine } from './platform-research';
 import { hybridResearchEngine } from './hybrid-research';
+import { PlatformDiscoveryEngine } from './platform-discovery';
 import { insertOnboardingResponseSchema, type InsertOnboardingResponse } from "@shared/schema";
 
 // AI-powered onboarding recommendations function
@@ -106,6 +107,7 @@ const openai = new OpenAI({
 });
 
 const upload = multer({ storage: multer.memoryStorage() });
+const platformDiscoveryEngine = new PlatformDiscoveryEngine();
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
@@ -1056,6 +1058,37 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
     } catch (error) {
       console.error("Account research error:", error);
       res.status(500).json({ message: "Failed to generate account research" });
+    }
+  });
+
+  // Platform discovery endpoint
+  app.post("/api/account-research/platform-discovery", async (req, res) => {
+    try {
+      const filters = req.body;
+      
+      if (!filters.platform) {
+        return res.status(400).json({ error: "Platform selection is required" });
+      }
+
+      console.log(`Platform discovery for: ${filters.platform} with filters:`, filters);
+      
+      // Use platform discovery engine for high-intent account discovery
+      const discoveredAccounts = await platformDiscoveryEngine.discoverHighIntentAccounts(filters);
+      
+      res.json({
+        success: true,
+        filters,
+        accounts: discoveredAccounts,
+        totalAccounts: discoveredAccounts.length,
+        highIntentAccounts: discoveredAccounts.filter(acc => acc.intentScore >= 75).length,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Platform discovery error:", error);
+      res.status(500).json({ 
+        error: "Failed to discover platform accounts",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 

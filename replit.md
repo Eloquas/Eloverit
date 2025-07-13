@@ -51,6 +51,14 @@ This repository contains two complementary platforms:
   - Intelligent data synthesis combining structured and unstructured insights
   - Quality scoring system (0-100) based on data completeness and authenticity
   - Fallback capabilities ensuring research completion even with limited data sources
+- ✅ **Platform Discovery Engine (January 2025):** Advanced account discovery with comprehensive filtering
+  - High-intent account discovery based on platform initiatives (Salesforce, SAP, Oracle, Dynamics 365, Workday, ServiceNow)
+  - Comprehensive filtering system: Fortune rankings (100/250/500/1000), employee size, industry, state/region
+  - Platform-specific hiring signals and testing requirements analysis
+  - Intent scoring algorithm (0-100) based on initiatives (40%), hiring signals (30%), Fortune ranking (15%), employee size (10%), QA requirements (5%)
+  - Real-time discovery results with initiative tracking, hiring urgency analysis, and migration project identification
+  - Quality-rated accounts (excellent/good/fair/basic) with authentic Fortune company data
+  - Direct integration with account research generator for seamless prospecting workflow
 
 ## Project Architecture
 - **Frontend:** React + Vite + TypeScript + Tailwind CSS

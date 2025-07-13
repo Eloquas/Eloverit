@@ -22,6 +22,14 @@ export default function AccountResearch() {
   const [selectedResearch, setSelectedResearch] = useState<any>(null);
   const [manualCompany, setManualCompany] = useState("");
   const [selectedPlatform, setSelectedPlatform] = useState("");
+  const [discoveryMode, setDiscoveryMode] = useState<"company" | "platform">("company");
+  const [discoveryFilters, setDiscoveryFilters] = useState({
+    platform: "",
+    fortuneRanking: "",
+    employeeSize: "",
+    industry: "",
+    state: ""
+  });
 
   const { data: prospects = [] } = useQuery({
     queryKey: ["/api/prospects"],
@@ -67,8 +75,51 @@ export default function AccountResearch() {
     }
   });
 
+  const platformDiscoveryMutation = useMutation({
+    mutationFn: async (filters: any) => {
+      const response = await apiRequest("POST", "/api/account-research/platform-discovery", filters);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/account-research"] });
+      toast({
+        title: "Platform discovery completed!",
+        description: `Found ${data.length} high-intent accounts matching your criteria`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Discovery failed",
+        description: error.message || "Failed to discover platform accounts",
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleResearchCompany = (companyName: string, platform?: string) => {
     researchCompanyMutation.mutate({ companyName, platform });
+  };
+
+  const handlePlatformDiscovery = () => {
+    if (!discoveryFilters.platform) {
+      toast({
+        title: "Platform required",
+        description: "Please select a platform for discovery",
+        variant: "destructive",
+      });
+      return;
+    }
+    platformDiscoveryMutation.mutate(discoveryFilters);
+  };
+
+  const resetDiscoveryFilters = () => {
+    setDiscoveryFilters({
+      platform: "",
+      fortuneRanking: "",
+      employeeSize: "",
+      industry: "",
+      state: ""
+    });
   };
 
   const calculateIntentScore = (research: any) => {
@@ -257,65 +308,164 @@ export default function AccountResearch() {
             </TabsContent>
             
             <TabsContent value="platform" className="space-y-4">
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    placeholder="Enter company name..."
-                    value={manualCompany}
-                    onChange={(e) => setManualCompany(e.target.value)}
-                  />
-                  <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select platform focus..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="salesforce">Salesforce Platform</SelectItem>
-                      <SelectItem value="sap">SAP Platform</SelectItem>
-                      <SelectItem value="oracle">Oracle Platform</SelectItem>
-                      <SelectItem value="dynamics">MS Dynamics Platform</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border border-green-200">
+                <h3 className="text-lg font-semibold text-green-900 mb-2">Platform Discovery Mode</h3>
+                <p className="text-green-700 text-sm mb-4">
+                  Discover high-intent accounts based on platform initiatives, hiring signals, and enterprise requirements
+                </p>
                 
-                <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
-                  <h4 className="font-medium text-purple-900 mb-2">Platform-Specific Research Focus:</h4>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="flex items-center text-purple-700">
-                      <Target className="w-4 h-4 mr-2" />
-                      Platform roles & initiatives
-                    </div>
-                    <div className="flex items-center text-purple-700">
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Testing & QA requirements
-                    </div>
-                    <div className="flex items-center text-purple-700">
-                      <TrendingUp className="w-4 h-4 mr-2" />
-                      Migration projects
-                    </div>
-                    <div className="flex items-center text-purple-700">
-                      <Users className="w-4 h-4 mr-2" />
-                      Implementation teams
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Platform Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Platform *</label>
+                    <Select 
+                      value={discoveryFilters.platform} 
+                      onValueChange={(value) => setDiscoveryFilters(prev => ({ ...prev, platform: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select platform..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="salesforce">Salesforce CRM</SelectItem>
+                        <SelectItem value="sap">SAP ERP</SelectItem>
+                        <SelectItem value="oracle">Oracle Database/ERP</SelectItem>
+                        <SelectItem value="dynamics">Microsoft Dynamics 365</SelectItem>
+                        <SelectItem value="workday">Workday HCM</SelectItem>
+                        <SelectItem value="servicenow">ServiceNow ITSM</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Fortune Ranking */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Fortune Ranking</label>
+                    <Select 
+                      value={discoveryFilters.fortuneRanking} 
+                      onValueChange={(value) => setDiscoveryFilters(prev => ({ ...prev, fortuneRanking: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select ranking..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="fortune-100">Fortune 100</SelectItem>
+                        <SelectItem value="fortune-250">Fortune 250</SelectItem>
+                        <SelectItem value="fortune-500">Fortune 500</SelectItem>
+                        <SelectItem value="fortune-1000">Fortune 1000</SelectItem>
+                        <SelectItem value="any">Any Size</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Employee Size */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Employee Size</label>
+                    <Select 
+                      value={discoveryFilters.employeeSize} 
+                      onValueChange={(value) => setDiscoveryFilters(prev => ({ ...prev, employeeSize: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select size..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0-500">0 - 500 employees</SelectItem>
+                        <SelectItem value="500-1000">500 - 1,000 employees</SelectItem>
+                        <SelectItem value="1000-5000">1,000 - 5,000 employees</SelectItem>
+                        <SelectItem value="5000-10000">5,000 - 10,000 employees</SelectItem>
+                        <SelectItem value="10000+">10,000+ employees</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Industry */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Industry</label>
+                    <Select 
+                      value={discoveryFilters.industry} 
+                      onValueChange={(value) => setDiscoveryFilters(prev => ({ ...prev, industry: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select industry..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="technology">Technology</SelectItem>
+                        <SelectItem value="finance">Finance</SelectItem>
+                        <SelectItem value="healthcare">Healthcare</SelectItem>
+                        <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                        <SelectItem value="retail">Retail</SelectItem>
+                        <SelectItem value="automotive">Automotive</SelectItem>
+                        <SelectItem value="insurance">Insurance</SelectItem>
+                        <SelectItem value="energy">Energy</SelectItem>
+                        <SelectItem value="telecommunications">Telecommunications</SelectItem>
+                        <SelectItem value="transportation">Transportation</SelectItem>
+                        <SelectItem value="construction">Construction</SelectItem>
+                        <SelectItem value="education">Education</SelectItem>
+                        <SelectItem value="government">Government</SelectItem>
+                        <SelectItem value="non-profit">Non-Profit</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* State */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">State/Region</label>
+                    <Select 
+                      value={discoveryFilters.state} 
+                      onValueChange={(value) => setDiscoveryFilters(prev => ({ ...prev, state: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select state..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="CA">California</SelectItem>
+                        <SelectItem value="TX">Texas</SelectItem>
+                        <SelectItem value="NY">New York</SelectItem>
+                        <SelectItem value="FL">Florida</SelectItem>
+                        <SelectItem value="IL">Illinois</SelectItem>
+                        <SelectItem value="WA">Washington</SelectItem>
+                        <SelectItem value="MA">Massachusetts</SelectItem>
+                        <SelectItem value="GA">Georgia</SelectItem>
+                        <SelectItem value="NC">North Carolina</SelectItem>
+                        <SelectItem value="OH">Ohio</SelectItem>
+                        <SelectItem value="PA">Pennsylvania</SelectItem>
+                        <SelectItem value="MI">Michigan</SelectItem>
+                        <SelectItem value="NJ">New Jersey</SelectItem>
+                        <SelectItem value="VA">Virginia</SelectItem>
+                        <SelectItem value="CO">Colorado</SelectItem>
+                        <SelectItem value="other">Other States</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-                
-                <Button 
-                  onClick={() => manualCompany && selectedPlatform && handleResearchCompany(manualCompany, selectedPlatform)}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                  disabled={!manualCompany || !selectedPlatform || researchCompanyMutation.isPending}
-                >
-                  {researchCompanyMutation.isPending ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      Analyzing {selectedPlatform?.toUpperCase()} Intelligence...
-                    </>
-                  ) : (
-                    <>
-                      <Target className="w-4 h-4 mr-2" />
-                      Generate {selectedPlatform?.toUpperCase()} Research
-                    </>
-                  )}
-                </Button>
+
+                <div className="flex items-center justify-between mt-6">
+                  <Button 
+                    variant="outline" 
+                    onClick={resetDiscoveryFilters}
+                    className="text-gray-600"
+                  >
+                    Reset Filters
+                  </Button>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Button 
+                      onClick={handlePlatformDiscovery}
+                      disabled={!discoveryFilters.platform || platformDiscoveryMutation.isPending}
+                      className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
+                    >
+                      {platformDiscoveryMutation.isPending ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                          Discovering Accounts...
+                        </>
+                      ) : (
+                        <>
+                          <Target className="w-4 h-4 mr-2" />
+                          Discover High-Intent Accounts
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
@@ -539,6 +689,92 @@ export default function AccountResearch() {
             );
           })}
         </div>
+      )}
+
+      {/* Platform Discovery Results */}
+      {platformDiscoveryMutation.isSuccess && platformDiscoveryMutation.data?.accounts && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center text-green-900">
+              <Target className="w-5 h-5 mr-2" />
+              Platform Discovery Results
+            </CardTitle>
+            <p className="text-sm text-green-700">
+              Found {platformDiscoveryMutation.data.totalAccounts} accounts matching your criteria, 
+              {platformDiscoveryMutation.data.highIntentAccounts} with high intent scores (75+)
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {platformDiscoveryMutation.data.accounts.map((account: any, index: number) => (
+                <motion.div
+                  key={`${account.companyName}-${index}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  className="p-4 border rounded-lg hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-gray-900">{account.companyName}</h3>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant={account.intentScore >= 75 ? "default" : account.intentScore >= 50 ? "secondary" : "outline"}>
+                        {account.intentScore}% Intent
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {account.researchQuality}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center text-gray-600">
+                      <Building2 className="w-4 h-4 mr-2" />
+                      {account.industry} • {account.employeeSize} • {account.headquarters}
+                    </div>
+                    
+                    <div className="flex items-start">
+                      <TrendingUp className="w-4 h-4 mr-2 mt-0.5 text-blue-500" />
+                      <div>
+                        <p className="font-medium text-gray-800">Platform Initiatives ({account.platformInitiatives?.length || 0})</p>
+                        {account.platformInitiatives?.slice(0, 2).map((initiative: any, i: number) => (
+                          <p key={i} className="text-xs text-gray-600">
+                            • {initiative.title} ({initiative.stage})
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start">
+                      <Users className="w-4 h-4 mr-2 mt-0.5 text-green-500" />
+                      <div>
+                        <p className="font-medium text-gray-800">Hiring Signals ({account.hiringSignals?.length || 0})</p>
+                        {account.hiringSignals?.slice(0, 2).map((signal: any, i: number) => (
+                          <p key={i} className="text-xs text-gray-600">
+                            • {signal.jobTitle} - {signal.department}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <span className="text-xs text-gray-500">
+                        Updated: {new Date(account.lastUpdated).toLocaleDateString()}
+                      </span>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="text-xs"
+                        onClick={() => handleResearchCompany(account.companyName)}
+                      >
+                        Generate Research
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Company Detail Modal */}
