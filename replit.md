@@ -33,6 +33,11 @@ This repository contains two complementary platforms:
   - Stacked layouts for TrustBuild™/StoryBuild™ toggles and forms
   - Optimized for fast loading on 3G networks
   - LinkedIn OAuth integration preserved on mobile devices
+- ✅ **Grouped Navigation System (January 2025):** Modern sidebar with collapsible groups
+  - Sales Engines group containing LinkedIn Posts, Eloquas AI, and Outreach MVP
+  - Expandable/collapsible navigation with hover tooltips for collapsed state
+  - Visual indicators for active states and grouped items
+  - Enhanced UX with gradient backgrounds and modern transitions
 
 ## Project Architecture
 - **Frontend:** React + Vite + TypeScript + Tailwind CSS

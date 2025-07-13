@@ -21,6 +21,8 @@ import {
   Settings, 
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Target,
   BarChart3,
   Zap,
@@ -28,7 +30,8 @@ import {
   Send,
   Trophy,
   User,
-  LogOut
+  LogOut,
+  Layers
 } from "lucide-react";
 
 interface SidebarProps {
@@ -39,6 +42,15 @@ interface SidebarProps {
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroups(prev => 
+      prev.includes(groupId) 
+        ? prev.filter(id => id !== groupId)
+        : [...prev, groupId]
+    );
+  };
 
   const navigationItems = [
     {
@@ -48,7 +60,6 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       active: location === "/",
       badge: null
     },
-
     {
       label: "Account Research",
       href: "/account-research",
@@ -69,27 +80,6 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       icon: FileText,
       active: location === "/generated-content",
       badge: null
-    },
-    {
-      label: "Eloquas AI",
-      href: "/eloquas-ai",
-      icon: Sparkles,
-      active: location === "/eloquas-ai",
-      badge: "NEW"
-    },
-    {
-      label: "LinkedIn Posts",
-      href: "/linkedin-posts",
-      icon: Send,
-      active: location === "/linkedin-posts",
-      badge: "AI"
-    },
-    {
-      label: "Outreach MVP",
-      href: "/outreach-mvp",
-      icon: Mail,
-      active: location === "/outreach-mvp",
-      badge: "NEW"
     },
     {
       label: "Call Assessment",
@@ -113,6 +103,35 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       badge: null
     }
   ];
+
+  const salesEngines = {
+    id: "sales-engines",
+    label: "Sales Engines",
+    icon: Layers,
+    items: [
+      {
+        label: "LinkedIn Posts",
+        href: "/linkedin-posts",
+        icon: Send,
+        active: location === "/linkedin-posts",
+        badge: "AI"
+      },
+      {
+        label: "Eloquas AI",
+        href: "/eloquas-ai",
+        icon: Sparkles,
+        active: location === "/eloquas-ai",
+        badge: "NEW"
+      },
+      {
+        label: "Outreach MVP",
+        href: "/outreach-mvp",
+        icon: Target,
+        active: location === "/outreach-mvp",
+        badge: "NEW"
+      }
+    ]
+  };
 
   const quickActions = [
     {
@@ -182,6 +201,90 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               </div>
             </Link>
           ))}
+
+          {/* Sales Engines Group */}
+          <div className="mt-4">
+            <Button
+              variant="ghost"
+              onClick={() => toggleGroup(salesEngines.id)}
+              className={`w-full justify-start h-11 rounded-xl transition-all duration-200 ${
+                expandedGroups.includes(salesEngines.id) || salesEngines.items.some(item => item.active)
+                  ? "bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border border-blue-200" 
+                  : "text-gray-600 hover:text-primary hover:bg-avo-blue-50 avo-hover-scale"
+              } ${collapsed ? "px-2" : "px-4"}`}
+            >
+              <salesEngines.icon className={`h-5 w-5 ${collapsed ? "" : "mr-3"}`} />
+              {!collapsed && (
+                <>
+                  <span className="flex-1 text-left font-medium">{salesEngines.label}</span>
+                  <div className="flex items-center space-x-1">
+                    <Badge className="text-xs bg-blue-100 text-blue-700 border border-blue-200">
+                      AI
+                    </Badge>
+                    {expandedGroups.includes(salesEngines.id) ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </div>
+                </>
+              )}
+            </Button>
+            
+            {/* Nested Items */}
+            {!collapsed && (expandedGroups.includes(salesEngines.id) || salesEngines.items.some(item => item.active)) && (
+              <div className="ml-4 mt-2 space-y-1 border-l-2 border-blue-100 pl-4">
+                {salesEngines.items.map((item) => (
+                  <Link key={item.href} href={item.href}>
+                    <Button
+                      variant="ghost"
+                      className={`w-full justify-start h-9 rounded-lg transition-all duration-200 ${
+                        item.active 
+                          ? "bg-blue-500 text-white hover:bg-blue-600" 
+                          : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                      }`}
+                    >
+                      <item.icon className="h-4 w-4 mr-3" />
+                      <span className="flex-1 text-left text-sm font-medium">{item.label}</span>
+                      {item.badge && (
+                        <Badge className="ml-2 text-xs bg-blue-100 text-blue-700 border border-blue-200">
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </Button>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {/* Hover tooltip for collapsed state */}
+            {collapsed && (
+              <div className="relative group">
+                <div className="absolute left-full top-0 ml-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50">
+                  <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-2 min-w-48">
+                    <div className="font-medium text-gray-900 mb-2">{salesEngines.label}</div>
+                    <div className="space-y-1">
+                      {salesEngines.items.map((item) => (
+                        <Link key={item.href} href={item.href}>
+                          <div className={`flex items-center p-2 rounded hover:bg-blue-50 ${
+                            item.active ? "bg-blue-100 text-blue-700" : "text-gray-600"
+                          }`}>
+                            <item.icon className="h-4 w-4 mr-2" />
+                            <span className="text-sm">{item.label}</span>
+                            {item.badge && (
+                              <Badge className="ml-auto text-xs">
+                                {item.badge}
+                              </Badge>
+                            )}
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Quick Actions */}
