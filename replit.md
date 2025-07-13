@@ -16,6 +16,7 @@ This repository contains two complementary platforms:
 - **Target Roles:** Manager+ level positions in QA, CRM, ERP, D365, SAP, Oracle, enterprise systems
 
 ## Recent Changes (Last Updated: January 13, 2025)
+- ✅ **Mobile Navigation Fixed:** Implemented responsive hamburger menu overlay system that stays within screen parameters
 - ✅ **Enhanced Corporate Messaging:** Integrated D365 corporate impact metrics ($4.7M downtime risk, $1.2M OPEX savings, $9K/minute CRM failures, 640 engineering hours freed per quarter) with thought-provoking business questions
 - ✅ **Advanced Tone Selection:** 10 AI-powered tone options with prospect-based recommendations
 - ✅ **Loading Indicators:** Fixed UX with proper loading states and progress notifications
@@ -24,7 +25,7 @@ This repository contains two complementary platforms:
 - ✅ **Enterprise Systems Targeting:** Job title categorization (QA, CRM, ERP, D365, SAP, Oracle) with manager+ level focus
 - ✅ **Account Research System:** AI-powered research for job postings, initiatives, and system migrations
 - ✅ **Email Cadence Management:** 6-email brand awareness sequences with system-specific messaging
-- ✅ **Enhanced Navigation:** Proper routing for Account Research and Email Cadences pages
+- ✅ **Enhanced Navigation:** Proper routing for Account Research and Email Cadences pages with fixed SCIPAB generator link
 - ✅ **ICP Alignment:** Strong support, non-line item pricing, 30% cost advantage, AI-enabled, ease of use messaging
 - ✅ **Mobile-First Responsive Design (January 2025):** Complete mobile optimization for Eloquas AI Flask platform
   - Responsive navigation with hamburger menu for screens ≤600px

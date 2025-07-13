@@ -129,7 +129,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const quickActions = [
     {
       label: "SCIPAB Generator",
-      href: "/scipab",
+      href: "/account-research",
       icon: Target,
       color: "bg-primary"
     },
