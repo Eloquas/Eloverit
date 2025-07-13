@@ -18,6 +18,7 @@ import { eloquasOutreachEngine } from "./outreach-engine";
 import { achievementSystem } from "./achievements";
 import { callAssessmentEngine } from "./call-assessment";
 import { googleDriveService } from './google-drive';
+import { platformResearchEngine } from './platform-research';
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -885,13 +886,58 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
 
   app.post("/api/account-research/generate", async (req, res) => {
     try {
-      const { companyName } = req.body;
+      const { companyName, platform } = req.body;
       
       if (!companyName) {
         return res.status(400).json({ message: "Company name is required" });
       }
 
-      // Only use authentic data from PDL - no AI generation or hallucinations
+      // Platform-specific research if platform is specified
+      if (platform && ['salesforce', 'sap', 'oracle', 'dynamics'].includes(platform)) {
+        try {
+          const platformData = await platformResearchEngine.researchPlatformInitiatives(companyName, platform);
+          
+          const research = await storage.createAccountResearch({
+            companyName,
+            industry: "Platform-focused research",
+            companySize: "Unknown",
+            currentSystems: JSON.stringify([platform.toUpperCase()]),
+            recentJobPostings: JSON.stringify(platformData.hiringSignals.map(signal => 
+              `${signal.jobTitle} - ${signal.department} (${signal.postedDate}): ${signal.keyRequirements.join(', ')}`
+            )),
+            initiatives: JSON.stringify(platformData.initiatives.map(init => 
+              `${init.title}: ${init.description} (Stage: ${init.stage})`
+            )),
+            painPoints: JSON.stringify(platformData.testingRequirements.map(req =>
+              `${req.area} testing: ${req.description} (Priority: ${req.priority})`
+            )),
+            decisionMakers: JSON.stringify(platformData.keyPersonnel.map(person =>
+              `${person.title} - ${person.department}`
+            )),
+            researchQuality: platformData.researchQuality
+          });
+
+          return res.json({ 
+            message: "Platform research generated successfully", 
+            companyName, 
+            platform: platform.toUpperCase(),
+            research,
+            platformData: {
+              testingOpportunities: platformResearchEngine.getTestingOpportunities(platformData),
+              migrationProjects: platformData.migrationProjects,
+              hiringUrgency: platformData.hiringSignals.filter(s => s.urgencyLevel === 'high').length
+            }
+          });
+        } catch (platformError) {
+          console.error(`Platform research failed for ${companyName} (${platform}):`, platformError);
+          return res.status(503).json({ 
+            message: "Platform research unavailable", 
+            error: "Unable to access platform-specific research data at this time." 
+          });
+        }
+      }
+
+      // Standard PDL research for general company research
       try {
         const pdlData = await pdlService.analyzeCompanyForSCIPAB(companyName);
         
@@ -910,8 +956,8 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
           recentJobPostings: JSON.stringify(pdlData.hiringPatterns || []),
           initiatives: JSON.stringify(pdlData.initiatives || []),
           painPoints: JSON.stringify(pdlData.painPoints || []),
-          decisionMakers: JSON.stringify([]), // Leave empty if no authentic data
-          researchQuality: "excellent" // PDL provides verified data only
+          decisionMakers: JSON.stringify([]),
+          researchQuality: "excellent"
         });
 
         res.json({ message: "Account research generated successfully", companyName, research });

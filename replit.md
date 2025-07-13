@@ -38,6 +38,12 @@ This repository contains two complementary platforms:
   - Expandable/collapsible navigation with hover tooltips for collapsed state
   - Visual indicators for active states and grouped items
   - Enhanced UX with gradient backgrounds and modern transitions
+- ✅ **Platform-Specific Account Research (January 2025):** Targeted enterprise platform intelligence
+  - Salesforce, SAP, Oracle, and MS Dynamics focused research capabilities
+  - Platform-specific role detection (Salesforce Admin, SAP Lead, Oracle DBA, etc.)
+  - Testing and migration requirement analysis for each platform
+  - AI-powered deep research across job boards, news, and company announcements
+  - Structured analysis of implementation projects, hiring signals, and QA needs
 
 ## Project Architecture
 - **Frontend:** React + Vite + TypeScript + Tailwind CSS

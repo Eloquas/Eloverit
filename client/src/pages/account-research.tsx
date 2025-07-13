@@ -21,6 +21,7 @@ export default function AccountResearch() {
   const [researchFilter, setResearchFilter] = useState("all");
   const [selectedResearch, setSelectedResearch] = useState<any>(null);
   const [manualCompany, setManualCompany] = useState("");
+  const [selectedPlatform, setSelectedPlatform] = useState("");
 
   const { data: prospects = [] } = useQuery({
     queryKey: ["/api/prospects"],
@@ -46,8 +47,8 @@ export default function AccountResearch() {
   });
 
   const researchCompanyMutation = useMutation({
-    mutationFn: async (companyName: string) => {
-      const response = await apiRequest("POST", "/api/account-research/generate", { companyName });
+    mutationFn: async ({ companyName, platform }: { companyName: string, platform?: string }) => {
+      const response = await apiRequest("POST", "/api/account-research/generate", { companyName, platform });
       return response.json();
     },
     onSuccess: (data) => {
@@ -66,8 +67,8 @@ export default function AccountResearch() {
     }
   });
 
-  const handleResearchCompany = (companyName: string) => {
-    researchCompanyMutation.mutate(companyName);
+  const handleResearchCompany = (companyName: string, platform?: string) => {
+    researchCompanyMutation.mutate({ companyName, platform });
   };
 
   const calculateIntentScore = (research: any) => {
@@ -186,9 +187,10 @@ export default function AccountResearch() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="existing" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="existing">From Prospects</TabsTrigger>
               <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+              <TabsTrigger value="platform">Platform Focus</TabsTrigger>
             </TabsList>
             
             <TabsContent value="existing" className="space-y-4">
@@ -248,6 +250,69 @@ export default function AccountResearch() {
                     <>
                       <TrendingUp className="w-4 h-4 mr-2" />
                       Research Company
+                    </>
+                  )}
+                </Button>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="platform" className="space-y-4">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    placeholder="Enter company name..."
+                    value={manualCompany}
+                    onChange={(e) => setManualCompany(e.target.value)}
+                  />
+                  <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select platform focus..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="salesforce">Salesforce Platform</SelectItem>
+                      <SelectItem value="sap">SAP Platform</SelectItem>
+                      <SelectItem value="oracle">Oracle Platform</SelectItem>
+                      <SelectItem value="dynamics">MS Dynamics Platform</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                  <h4 className="font-medium text-purple-900 mb-2">Platform-Specific Research Focus:</h4>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-center text-purple-700">
+                      <Target className="w-4 h-4 mr-2" />
+                      Platform roles & initiatives
+                    </div>
+                    <div className="flex items-center text-purple-700">
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Testing & QA requirements
+                    </div>
+                    <div className="flex items-center text-purple-700">
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      Migration projects
+                    </div>
+                    <div className="flex items-center text-purple-700">
+                      <Users className="w-4 h-4 mr-2" />
+                      Implementation teams
+                    </div>
+                  </div>
+                </div>
+                
+                <Button 
+                  onClick={() => manualCompany && selectedPlatform && handleResearchCompany(manualCompany, selectedPlatform)}
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                  disabled={!manualCompany || !selectedPlatform || researchCompanyMutation.isPending}
+                >
+                  {researchCompanyMutation.isPending ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Analyzing {selectedPlatform?.toUpperCase()} Intelligence...
+                    </>
+                  ) : (
+                    <>
+                      <Target className="w-4 h-4 mr-2" />
+                      Generate {selectedPlatform?.toUpperCase()} Research
                     </>
                   )}
                 </Button>
