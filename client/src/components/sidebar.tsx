@@ -82,6 +82,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       badge: "AI"
     },
     {
+      label: "Microlearning",
+      href: "/microlearning",
+      icon: Target,
+      active: location === "/microlearning",
+      badge: "NEW"
+    },
+    {
       label: "Achievements",
       href: "/achievements",
       icon: Trophy,

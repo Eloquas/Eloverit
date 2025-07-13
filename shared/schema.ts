@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, varchar, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, jsonb, varchar, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -263,6 +263,52 @@ export type User = typeof users.$inferSelect;
 export type InsertSession = z.infer<typeof insertSessionSchema>;
 export type Session = typeof sessions.$inferSelect;
 
+// Call Assessment schema
+export const callAssessments = pgTable("call_assessments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  callId: varchar("call_id", { length: 255 }).notNull(),
+  date: varchar("date", { length: 50 }),
+  summary: text("summary"),
+  participants: jsonb("participants").notNull(),
+  grading: jsonb("grading").notNull(),
+  actionItems: jsonb("action_items").notNull(),
+  coachingNotes: jsonb("coaching_notes").notNull(),
+  sentimentAnalysis: jsonb("sentiment_analysis").notNull(),
+  talkTimeEstimation: jsonb("talk_time_estimation").notNull(),
+  processingTimeMs: integer("processing_time_ms"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Microlearning modules
+export const microlearningModules = pgTable("microlearning_modules", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  skillArea: varchar("skill_area", { length: 100 }).notNull(), // rapport_trust, discovery_depth, etc.
+  moduleType: varchar("module_type", { length: 50 }).notNull(), // video, article, exercise, quiz
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  content: jsonb("content").notNull(), // flexible content structure
+  duration: integer("duration").notNull(), // in minutes
+  difficulty: varchar("difficulty", { length: 20 }).notNull(), // beginner, intermediate, advanced
+  isCompleted: boolean("is_completed").default(false),
+  completedAt: timestamp("completed_at"),
+  score: integer("score"), // for quizzes/exercises
+  createdAt: timestamp("created_at").defaultNow(),
+  triggeredBy: varchar("triggered_by", { length: 100 }), // call_assessment, manual, achievement
+});
+
+export const microlearningProgress = pgTable("microlearning_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  moduleId: integer("module_id").references(() => microlearningModules.id),
+  startedAt: timestamp("started_at").defaultNow(),
+  lastAccessedAt: timestamp("last_accessed_at").defaultNow(),
+  progressPercentage: integer("progress_percentage").default(0),
+  timeSpent: integer("time_spent").default(0), // in seconds
+  currentSection: integer("current_section").default(0),
+});
+
 // Onboarding schema
 export const onboardingResponses = pgTable("onboarding_responses", {
   id: serial("id").primaryKey(),
@@ -292,6 +338,43 @@ export const insertOnboardingResponseSchema = createInsertSchema(onboardingRespo
 
 export type InsertOnboardingResponse = z.infer<typeof insertOnboardingResponseSchema>;
 export type OnboardingResponse = typeof onboardingResponses.$inferSelect;
+
+// Call Assessment types
+export type CallAssessment = typeof callAssessments.$inferSelect;
+export type InsertCallAssessment = typeof callAssessments.$inferInsert;
+
+// Microlearning types
+export type MicrolearningModule = typeof microlearningModules.$inferSelect;
+export type InsertMicrolearningModule = typeof microlearningModules.$inferInsert;
+export type MicrolearningProgress = typeof microlearningProgress.$inferSelect;
+export type InsertMicrolearningProgress = typeof microlearningProgress.$inferInsert;
+
+// Additional relations for new tables
+export const callAssessmentsRelations = relations(callAssessments, ({ one }) => ({
+  user: one(users, {
+    fields: [callAssessments.userId],
+    references: [users.id],
+  }),
+}));
+
+export const microlearningModulesRelations = relations(microlearningModules, ({ one, many }) => ({
+  user: one(users, {
+    fields: [microlearningModules.userId],
+    references: [users.id],
+  }),
+  progress: many(microlearningProgress),
+}));
+
+export const microlearningProgressRelations = relations(microlearningProgress, ({ one }) => ({
+  user: one(users, {
+    fields: [microlearningProgress.userId],
+    references: [users.id],
+  }),
+  module: one(microlearningModules, {
+    fields: [microlearningProgress.moduleId],
+    references: [microlearningModules.id],
+  }),
+}));
 
 // Relations
 export const userRelations = relations(users, ({ many }) => ({
@@ -400,29 +483,4 @@ export const registerSchema = z.object({
 export type LoginRequest = z.infer<typeof loginSchema>;
 export type RegisterRequest = z.infer<typeof registerSchema>;
 
-// Call Assessment Schema
-export const callAssessments = pgTable("call_assessments", {
-  id: serial("id").primaryKey(),
-  callId: text("call_id").notNull().unique(),
-  date: text("date").notNull(),
-  title: text("title"),
-  summary: text("summary").notNull(),
-  participants: json("participants").notNull(), // Array of CallParticipant
-  actionItems: json("action_items").notNull(), // Array of ActionItem
-  grading: json("grading").notNull(), // SalesGrading object
-  coachingNotes: json("coaching_notes").notNull(), // Array of CoachingNote
-  transcript: text("transcript"),
-  processedAt: timestamp("processed_at").defaultNow(),
-  processingTimeMs: integer("processing_time_ms").notNull(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => [
-  index("call_assessments_user_id_idx").on(table.userId),
-]);
 
-export type CallAssessment = typeof callAssessments.$inferSelect;
-export const insertCallAssessmentSchema = createInsertSchema(callAssessments).omit({
-  id: true,
-  createdAt: true,
-});
-export type InsertCallAssessment = z.infer<typeof insertCallAssessmentSchema>;

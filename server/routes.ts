@@ -17,6 +17,7 @@ import { linkedInPostGenerator } from "./linkedin-posts";
 import { eloquasOutreachEngine } from "./outreach-engine";
 import { achievementSystem } from "./achievements";
 import { callAssessmentEngine } from "./call-assessment";
+import { microlearningService } from "./microlearning";
 import { googleDriveService } from './google-drive';
 import { platformResearchEngine } from './platform-research';
 import { hybridResearchEngine } from './hybrid-research';
@@ -1906,6 +1907,93 @@ Keep it conversational and human - like one professional helping another.`;
     } catch (error) {
       console.error("Error fetching stats:", error);
       res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // Microlearning Routes
+  app.get("/api/microlearning/modules", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const modules = await microlearningService.getPersonalizedModules(userId);
+      res.json(modules);
+    } catch (error) {
+      console.error("Error fetching modules:", error);
+      res.status(500).json({ message: "Failed to fetch modules" });
+    }
+  });
+
+  app.get("/api/microlearning/recommended", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const modules = await microlearningService.getRecommendedModules(userId);
+      res.json(modules);
+    } catch (error) {
+      console.error("Error fetching recommended modules:", error);
+      res.status(500).json({ message: "Failed to fetch recommended modules" });
+    }
+  });
+
+  app.post("/api/microlearning/modules/:moduleId/start", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const moduleId = parseInt(req.params.moduleId);
+      const progress = await microlearningService.startModule(userId, moduleId);
+      res.json(progress);
+    } catch (error) {
+      console.error("Error starting module:", error);
+      res.status(500).json({ message: "Failed to start module" });
+    }
+  });
+
+  app.put("/api/microlearning/modules/:moduleId/progress", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const moduleId = parseInt(req.params.moduleId);
+      const { progressPercentage, currentSection, timeSpent } = req.body;
+      
+      await microlearningService.updateProgress(
+        userId,
+        moduleId,
+        progressPercentage,
+        currentSection,
+        timeSpent
+      );
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating progress:", error);
+      res.status(500).json({ message: "Failed to update progress" });
+    }
+  });
+
+  app.post("/api/microlearning/modules/:moduleId/complete", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const moduleId = parseInt(req.params.moduleId);
+      const { score } = req.body;
+      
+      await microlearningService.completeModule(userId, moduleId, score);
+      
+      // Record achievement for completing module
+      const { AchievementSystem } = await import("./achievements");
+      const achievementSystem = new AchievementSystem();
+      await achievementSystem.recordActivity(userId, 'module_completed', { moduleId, score });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error completing module:", error);
+      res.status(500).json({ message: "Failed to complete module" });
+    }
+  });
+
+  app.get("/api/microlearning/analytics", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const analytics = await microlearningService.getLearningAnalytics(userId);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching learning analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
     }
   });
 
