@@ -43,8 +43,13 @@ export function useAuth() {
       return response.json();
     },
     onSuccess: (data) => {
+      // Store token in localStorage for subsequent API calls
+      localStorage.setItem("authToken", data.token);
+      
+      // Update user data in cache
       queryClient.setQueryData(["/api/auth/me"], data.user);
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      
       toast({
         title: "Welcome back!",
         description: "Successfully logged in",
@@ -88,6 +93,9 @@ export function useAuth() {
       await apiRequest("POST", "/api/auth/logout");
     },
     onSuccess: () => {
+      // Clear token from localStorage
+      localStorage.removeItem("authToken");
+      
       queryClient.removeQueries();
       queryClient.setQueryData(["/api/auth/me"], null);
       toast({
@@ -97,6 +105,7 @@ export function useAuth() {
     },
     onError: (error: Error) => {
       // Still clear local state even if logout API fails
+      localStorage.removeItem("authToken");
       queryClient.removeQueries();
       queryClient.setQueryData(["/api/auth/me"], null);
       toast({

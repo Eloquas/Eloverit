@@ -20,7 +20,7 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 export default function Login() {
-  const { login, isLoginPending, error } = useAuth();
+  const { login, isLoginPending, error, isAuthenticated } = useAuth();
   const [location, setLocation] = useLocation();
 
   const form = useForm<LoginForm>({
@@ -31,14 +31,19 @@ export default function Login() {
     },
   });
 
-  const onSubmit = (data: LoginForm) => {
-    login(data);
+  const onSubmit = async (data: LoginForm) => {
+    try {
+      await login(data);
+      // Redirect to dashboard after successful login
+      setLocation("/");
+    } catch (err) {
+      // Error handling is done in the mutation
+    }
   };
 
-  // Redirect to dashboard after successful login
-  const { isAuthenticated } = useAuth();
+  // Redirect authenticated users
   if (isAuthenticated) {
-    setLocation("/dashboard");
+    setLocation("/");
     return null;
   }
 
