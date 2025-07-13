@@ -6,15 +6,21 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Search, TrendingUp, Users, Briefcase, ArrowLeft, RefreshCw, Eye } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Building2, Search, TrendingUp, Users, Briefcase, ArrowLeft, RefreshCw, Eye, BarChart3, Target, Clock, CheckCircle, AlertTriangle, ExternalLink, Star } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { motion } from "framer-motion";
 
 export default function AccountResearch() {
   const { toast } = useToast();
   const [selectedCompany, setSelectedCompany] = useState("");
   const [researchFilter, setResearchFilter] = useState("all");
+  const [selectedResearch, setSelectedResearch] = useState<any>(null);
+  const [manualCompany, setManualCompany] = useState("");
 
   const { data: prospects = [] } = useQuery({
     queryKey: ["/api/prospects"],
@@ -30,6 +36,7 @@ export default function AccountResearch() {
   const filteredResearch = accountResearch.filter((research: any) => {
     if (researchFilter === "pending") return research.researchQuality === "pending";
     if (researchFilter === "excellent") return research.researchQuality === "excellent";
+    if (researchFilter === "high-intent") return calculateIntentScore(research) >= 75;
     if (researchFilter === "recent") {
       const researchDate = new Date(research.researchDate);
       const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -61,6 +68,56 @@ export default function AccountResearch() {
 
   const handleResearchCompany = (companyName: string) => {
     researchCompanyMutation.mutate(companyName);
+  };
+
+  const calculateIntentScore = (research: any) => {
+    let score = 0;
+    const systems = parseJsonArray(research.currentSystems);
+    const postings = parseJsonArray(research.recentJobPostings);
+    const initiatives = parseJsonArray(research.initiatives);
+    
+    // QA hiring activity (40%)
+    const qaKeywords = ['qa', 'quality', 'test', 'automation', 'testing'];
+    const qaPostings = postings.filter((posting: string) => 
+      qaKeywords.some(keyword => posting.toLowerCase().includes(keyword))
+    );
+    score += Math.min((qaPostings.length / 3) * 40, 40);
+    
+    // Testing initiatives (30%)
+    const testingInitiatives = initiatives.filter((init: string) =>
+      qaKeywords.some(keyword => init.toLowerCase().includes(keyword))
+    );
+    score += Math.min((testingInitiatives.length / 2) * 30, 30);
+    
+    // Enterprise systems (20%)
+    const enterpriseSystems = ['salesforce', 'sap', 'oracle', 'dynamics', 'workday'];
+    const hasEnterpriseSystems = systems.some((system: string) =>
+      enterpriseSystems.some(es => system.toLowerCase().includes(es))
+    );
+    if (hasEnterpriseSystems) score += 20;
+    
+    // Quality challenges (10%)
+    const painPoints = parseJsonArray(research.painPoints);
+    const qualityChallenges = painPoints.filter((pain: string) =>
+      ['quality', 'bugs', 'testing', 'reliability'].some(keyword => 
+        pain.toLowerCase().includes(keyword)
+      )
+    );
+    score += Math.min((qualityChallenges.length / 2) * 10, 10);
+    
+    return Math.round(score);
+  };
+
+  const getIntentColor = (score: number) => {
+    if (score >= 75) return "text-green-600 bg-green-50";
+    if (score >= 50) return "text-yellow-600 bg-yellow-50";
+    return "text-gray-600 bg-gray-50";
+  };
+
+  const getIntentLabel = (score: number) => {
+    if (score >= 75) return "High Intent";
+    if (score >= 50) return "Medium Intent";
+    return "Low Intent";
   };
 
   const formatDate = (dateString: string) => {
@@ -120,77 +177,176 @@ export default function AccountResearch() {
       </div>
 
       {/* Research Generation Card */}
-      <Card>
+      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
         <CardHeader>
-          <CardTitle className="flex items-center">
+          <CardTitle className="flex items-center text-blue-900">
             <Search className="w-5 h-5 mr-2" />
             Generate Account Research
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center space-x-4">
-            <Select value={selectedCompany} onValueChange={setSelectedCompany}>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Select a company to research..." />
-              </SelectTrigger>
-              <SelectContent>
-                {companies.map((company) => (
-                  <SelectItem key={company} value={company}>
-                    {company}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <Tabs defaultValue="existing" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="existing">From Prospects</TabsTrigger>
+              <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+            </TabsList>
             
-            <Button 
-              onClick={() => selectedCompany && handleResearchCompany(selectedCompany)}
-              disabled={!selectedCompany || researchCompanyMutation.isPending}
-            >
-              {researchCompanyMutation.isPending ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Researching...
-                </>
-              ) : (
-                <>
-                  <TrendingUp className="w-4 h-4 mr-2" />
-                  Generate Research
-                </>
-              )}
-            </Button>
-          </div>
+            <TabsContent value="existing" className="space-y-4">
+              <div className="flex items-center space-x-4">
+                <Select value={selectedCompany} onValueChange={setSelectedCompany}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select a company to research..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {companies.map((company) => (
+                      <SelectItem key={company} value={company}>
+                        {company}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Button 
+                  onClick={() => selectedCompany && handleResearchCompany(selectedCompany)}
+                  disabled={!selectedCompany || researchCompanyMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {researchCompanyMutation.isPending ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Researching...
+                    </>
+                  ) : (
+                    <>
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      Generate Research
+                    </>
+                  )}
+                </Button>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="manual" className="space-y-4">
+              <div className="flex items-center space-x-4">
+                <Input
+                  placeholder="Enter company name..."
+                  value={manualCompany}
+                  onChange={(e) => setManualCompany(e.target.value)}
+                  className="flex-1"
+                />
+                <Button 
+                  onClick={() => manualCompany && handleResearchCompany(manualCompany)}
+                  disabled={!manualCompany || researchCompanyMutation.isPending}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  {researchCompanyMutation.isPending ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Researching...
+                    </>
+                  ) : (
+                    <>
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      Research Company
+                    </>
+                  )}
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
           
-          <div className="mt-4 text-sm text-gray-600">
-            <p>Research includes:</p>
-            <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>Recent job postings for QA, D365, SAP, and enterprise systems roles</li>
-              <li>Current technology initiatives and system migrations</li>
-              <li>Key decision makers and organizational structure</li>
-              <li>Pain points and challenges in enterprise systems</li>
-            </ul>
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h4 className="font-medium text-blue-900 mb-2">Research Includes:</h4>
+            <div className="grid grid-cols-2 gap-2 text-sm text-blue-700">
+              <div className="flex items-center">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                QA & Testing Job Postings
+              </div>
+              <div className="flex items-center">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Enterprise Systems Analysis
+              </div>
+              <div className="flex items-center">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Digital Transformation Initiatives
+              </div>
+              <div className="flex items-center">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                QA Automation Intent Scoring
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center space-x-4">
-            <span className="text-sm font-medium text-gray-700">Filter by:</span>
-            <Select value={researchFilter} onValueChange={setResearchFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Research</SelectItem>
-                <SelectItem value="recent">Recent (7 days)</SelectItem>
-                <SelectItem value="excellent">High Quality</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Research Overview & Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-800">Total Companies</p>
+                <p className="text-2xl font-bold text-green-900">{accountResearch.length}</p>
+              </div>
+              <Building2 className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-blue-50 to-sky-50 border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-800">High Intent</p>
+                <p className="text-2xl font-bold text-blue-900">
+                  {accountResearch.filter((r: any) => calculateIntentScore(r) >= 75).length}
+                </p>
+              </div>
+              <Target className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-800">Recent Research</p>
+                <p className="text-2xl font-bold text-purple-900">
+                  {accountResearch.filter((r: any) => {
+                    const researchDate = new Date(r.researchDate);
+                    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+                    return researchDate > weekAgo;
+                  }).length}
+                </p>
+              </div>
+              <Clock className="h-8 w-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-200">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-4">
+              <div className="flex-1">
+                <label className="text-sm font-medium text-yellow-800">Filter:</label>
+                <Select value={researchFilter} onValueChange={setResearchFilter}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Research</SelectItem>
+                    <SelectItem value="recent">Recent (7 days)</SelectItem>
+                    <SelectItem value="excellent">High Quality</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="high-intent">High Intent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Research Results */}
       {filteredResearch.length === 0 ? (
@@ -209,102 +365,318 @@ export default function AccountResearch() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredResearch.map((research: any) => (
-            <Card key={research.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{research.companyName}</CardTitle>
-                  <div className="flex items-center space-x-2">
-                    <Badge className={getQualityColor(research.researchQuality)}>
-                      {research.researchQuality}
-                    </Badge>
-                    <span className="text-sm text-gray-500">
-                      {formatDate(research.researchDate)}
-                    </span>
-                  </div>
-                </div>
-                
-                {research.industry && (
-                  <p className="text-sm text-gray-600">{research.industry}</p>
-                )}
-              </CardHeader>
-              
-              <CardContent className="space-y-4">
-                {/* Current Systems */}
-                {research.currentSystems && (
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2 flex items-center">
-                      <Briefcase className="w-4 h-4 mr-2" />
-                      Current Systems
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {parseJsonArray(research.currentSystems).map((system: string, index: number) => (
-                        <Badge key={index} variant="outline">{system}</Badge>
-                      ))}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredResearch.map((research: any, index: number) => {
+            const intentScore = calculateIntentScore(research);
+            return (
+              <motion.div
+                key={research.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer group"
+                      onClick={() => setSelectedResearch(research)}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">
+                        {research.companyName}
+                      </CardTitle>
+                      <div className="flex items-center space-x-2">
+                        <Badge className={`${getIntentColor(intentScore)} font-medium`}>
+                          {getIntentLabel(intentScore)} ({intentScore})
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
-                )}
+                    
+                    <div className="flex items-center justify-between">
+                      {research.industry && (
+                        <p className="text-sm text-gray-600">{research.industry}</p>
+                      )}
+                      <div className="flex items-center space-x-2">
+                        <Badge className={getQualityColor(research.researchQuality)} variant="outline">
+                          {research.researchQuality}
+                        </Badge>
+                        <span className="text-xs text-gray-500">
+                          {formatDate(research.researchDate)}
+                        </span>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-4">
+                    {/* Intent Score Visualization */}
+                    <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">QA Automation Intent</span>
+                        <span className="text-sm font-bold text-blue-600">{intentScore}/100</span>
+                      </div>
+                      <Progress value={intentScore} className="h-2" />
+                    </div>
 
-                {/* Recent Job Postings */}
-                {research.recentJobPostings && (
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2 flex items-center">
-                      <Users className="w-4 h-4 mr-2" />
-                      Recent Job Postings
-                    </h4>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      {parseJsonArray(research.recentJobPostings).slice(0, 3).map((posting: string, index: number) => (
-                        <div key={index} className="p-2 bg-gray-50 rounded text-xs">
-                          {posting}
+                    {/* Quick Stats Grid */}
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="text-center p-2 bg-gray-50 rounded">
+                        <div className="font-bold text-blue-600">
+                          {parseJsonArray(research.currentSystems).length}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Initiatives */}
-                {research.initiatives && (
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2 flex items-center">
-                      <TrendingUp className="w-4 h-4 mr-2" />
-                      Current Initiatives
-                    </h4>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      {parseJsonArray(research.initiatives).slice(0, 2).map((initiative: string, index: number) => (
-                        <div key={index} className="p-2 bg-blue-50 rounded text-xs">
-                          {initiative}
+                        <div className="text-xs text-gray-600">Systems</div>
+                      </div>
+                      <div className="text-center p-2 bg-gray-50 rounded">
+                        <div className="font-bold text-green-600">
+                          {parseJsonArray(research.recentJobPostings).length}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Pain Points */}
-                {research.painPoints && (
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Key Pain Points</h4>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      {parseJsonArray(research.painPoints).slice(0, 2).map((painPoint: string, index: number) => (
-                        <div key={index} className="p-2 bg-orange-50 rounded text-xs">
-                          {painPoint}
+                        <div className="text-xs text-gray-600">Job Postings</div>
+                      </div>
+                      <div className="text-center p-2 bg-gray-50 rounded">
+                        <div className="font-bold text-purple-600">
+                          {parseJsonArray(research.initiatives).length}
                         </div>
-                      ))}
+                        <div className="text-xs text-gray-600">Initiatives</div>
+                      </div>
+                      <div className="text-center p-2 bg-gray-50 rounded">
+                        <div className="font-bold text-orange-600">
+                          {parseJsonArray(research.painPoints).length}
+                        </div>
+                        <div className="text-xs text-gray-600">Pain Points</div>
+                      </div>
                     </div>
-                  </div>
-                )}
 
-                <div className="pt-4 border-t">
-                  <Button variant="outline" size="sm" className="w-full">
-                    <Eye className="w-4 h-4 mr-2" />
-                    View Full Research Report
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    {/* Top Systems Preview */}
+                    {research.currentSystems && (
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                          <Briefcase className="w-4 h-4 mr-2" />
+                          Key Systems
+                        </h4>
+                        <div className="flex flex-wrap gap-1">
+                          {parseJsonArray(research.currentSystems).slice(0, 3).map((system: string, index: number) => (
+                            <Badge key={index} variant="secondary" className="text-xs">{system}</Badge>
+                          ))}
+                          {parseJsonArray(research.currentSystems).length > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{parseJsonArray(research.currentSystems).length - 3} more
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="pt-4 border-t">
+                      <Button variant="outline" size="sm" className="w-full group-hover:bg-blue-50 group-hover:border-blue-300">
+                        <Eye className="w-4 h-4 mr-2" />
+                        View Full Analysis
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
         </div>
       )}
+
+      {/* Company Detail Modal */}
+      <Dialog open={!!selectedResearch} onOpenChange={() => setSelectedResearch(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {selectedResearch && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Building2 className="w-6 h-6 text-blue-600" />
+                    <span>{selectedResearch.companyName}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge className={`${getIntentColor(calculateIntentScore(selectedResearch))} font-medium`}>
+                      QA Intent: {calculateIntentScore(selectedResearch)}/100
+                    </Badge>
+                    <Badge className={getQualityColor(selectedResearch.researchQuality)}>
+                      {selectedResearch.researchQuality}
+                    </Badge>
+                  </div>
+                </DialogTitle>
+                <DialogDescription>
+                  {selectedResearch.industry} • Researched {formatDate(selectedResearch.researchDate)}
+                </DialogDescription>
+              </DialogHeader>
+
+              <Tabs defaultValue="overview" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="systems">Systems</TabsTrigger>
+                  <TabsTrigger value="hiring">Hiring Activity</TabsTrigger>
+                  <TabsTrigger value="initiatives">Initiatives</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="overview" className="space-y-6">
+                  {/* Intent Score Breakdown */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <BarChart3 className="w-5 h-5 mr-2" />
+                        QA Automation Intent Analysis
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Overall Intent Score</span>
+                          <span className="text-2xl font-bold text-blue-600">
+                            {calculateIntentScore(selectedResearch)}/100
+                          </span>
+                        </div>
+                        <Progress value={calculateIntentScore(selectedResearch)} className="h-3" />
+                        
+                        <div className="grid grid-cols-2 gap-4 mt-4">
+                          <div className="p-3 bg-blue-50 rounded-lg">
+                            <div className="text-sm font-medium text-blue-800">QA Hiring Activity</div>
+                            <div className="text-xs text-blue-600 mt-1">Weight: 40%</div>
+                          </div>
+                          <div className="p-3 bg-green-50 rounded-lg">
+                            <div className="text-sm font-medium text-green-800">Testing Initiatives</div>
+                            <div className="text-xs text-green-600 mt-1">Weight: 30%</div>
+                          </div>
+                          <div className="p-3 bg-purple-50 rounded-lg">
+                            <div className="text-sm font-medium text-purple-800">Enterprise Systems</div>
+                            <div className="text-xs text-purple-600 mt-1">Weight: 20%</div>
+                          </div>
+                          <div className="p-3 bg-orange-50 rounded-lg">
+                            <div className="text-sm font-medium text-orange-800">Quality Challenges</div>
+                            <div className="text-xs text-orange-600 mt-1">Weight: 10%</div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Recent Company Changes */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <AlertTriangle className="w-5 h-5 mr-2" />
+                        Recent Changes & Signals
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
+                          <TrendingUp className="w-5 h-5 text-blue-600 mt-0.5" />
+                          <div>
+                            <div className="font-medium text-blue-900">Active QA Hiring</div>
+                            <div className="text-sm text-blue-700">
+                              {parseJsonArray(selectedResearch.recentJobPostings).filter((posting: string) =>
+                                ['qa', 'quality', 'test'].some(keyword => posting.toLowerCase().includes(keyword))
+                              ).length} QA-related positions posted recently
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start space-x-3 p-3 bg-green-50 rounded-lg">
+                          <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                          <div>
+                            <div className="font-medium text-green-900">Enterprise Systems Integration</div>
+                            <div className="text-sm text-green-700">
+                              Multiple enterprise systems requiring QA automation support
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start space-x-3 p-3 bg-orange-50 rounded-lg">
+                          <Target className="w-5 h-5 text-orange-600 mt-0.5" />
+                          <div>
+                            <div className="font-medium text-orange-900">Digital Transformation Focus</div>
+                            <div className="text-sm text-orange-700">
+                              {parseJsonArray(selectedResearch.initiatives).length} active technology initiatives
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="systems" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Current Technology Stack</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {parseJsonArray(selectedResearch.currentSystems).map((system: string, index: number) => (
+                          <div key={index} className="p-3 bg-gray-50 rounded-lg border">
+                            <div className="font-medium text-gray-900">{system}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="hiring" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Recent Job Postings</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {parseJsonArray(selectedResearch.recentJobPostings).map((posting: string, index: number) => (
+                          <div key={index} className="p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
+                            <div className="text-sm text-gray-700">{posting}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="initiatives" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Current Initiatives & Pain Points</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-6">
+                        <div>
+                          <h4 className="font-medium text-gray-900 mb-3">Active Initiatives</h4>
+                          <div className="space-y-2">
+                            {parseJsonArray(selectedResearch.initiatives).map((initiative: string, index: number) => (
+                              <div key={index} className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                                <div className="text-sm text-blue-900">{initiative}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-medium text-gray-900 mb-3">Key Pain Points</h4>
+                          <div className="space-y-2">
+                            {parseJsonArray(selectedResearch.painPoints).map((painPoint: string, index: number) => (
+                              <div key={index} className="p-3 bg-orange-50 rounded-lg border-l-4 border-orange-500">
+                                <div className="text-sm text-orange-900">{painPoint}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+
+              <div className="flex justify-between items-center pt-4 border-t">
+                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  <Star className="w-4 h-4" />
+                  <span>Data verified by PDL • Last updated {formatDate(selectedResearch.researchDate)}</span>
+                </div>
+                <Button onClick={() => setSelectedResearch(null)}>
+                  Close
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

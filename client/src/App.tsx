@@ -49,9 +49,8 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/dashboard" component={Dashboard} />
-        <Route path="/prospects" component={Dashboard} />
         <Route path="/content" component={GeneratedContent} />
-        <Route path="/research" component={AccountResearch} />
+        <Route path="/account-research" component={AccountResearch} />
         <Route path="/cadences" component={EmailCadences} />
         <Route path="/eloquas-ai" component={EloquasAI} />
         <Route path="/linkedin-posts" component={LinkedInPosts} />

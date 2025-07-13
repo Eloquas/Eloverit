@@ -48,13 +48,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       active: location === "/",
       badge: null
     },
-    {
-      label: "Prospects",
-      href: "/prospects",
-      icon: Users,
-      active: location === "/prospects",
-      badge: "77"
-    },
+
     {
       label: "Account Research",
       href: "/account-research",
