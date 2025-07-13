@@ -1910,6 +1910,28 @@ Keep it conversational and human - like one professional helping another.`;
     }
   });
 
+  // Google Drive Routes
+  app.get("/api/google-drive/transcripts", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const transcripts = await googleDriveService.listRecentTranscripts();
+      res.json(transcripts);
+    } catch (error) {
+      console.error("Error fetching transcripts from Google Drive:", error);
+      res.status(500).json({ message: "Failed to fetch transcripts from Google Drive" });
+    }
+  });
+
+  app.get("/api/google-drive/file/:fileId", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { fileId } = req.params;
+      const content = await googleDriveService.getFileContent(fileId);
+      res.json({ content });
+    } catch (error) {
+      console.error("Error fetching file content:", error);
+      res.status(500).json({ message: "Failed to fetch file content" });
+    }
+  });
+
   // Microlearning Routes
   app.get("/api/microlearning/modules", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {

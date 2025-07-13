@@ -9,8 +9,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Upload, FileText, Brain, Users, TrendingUp, ExternalLink, MessageSquare, Target, Calendar, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, FileText, Brain, Users, TrendingUp, ExternalLink, MessageSquare, Target, Calendar, CheckCircle2, AlertCircle, Cloud, FolderOpen } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface CallParticipant {
   name: string;
@@ -71,8 +72,18 @@ interface AssessmentStats {
   avgProcessingTime: number;
 }
 
+interface DriveFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  size: string;
+  modifiedTime: string;
+  webViewLink: string;
+}
+
 export default function CallAssessment() {
   const [activeTab, setActiveTab] = useState('upload');
+  const [selectedDriveFile, setSelectedDriveFile] = useState<DriveFile | null>(null);
   const [showProcessModal, setShowProcessModal] = useState(false);
   const [uploadMethod, setUploadMethod] = useState<'file' | 'text'>('file');
   const [transcriptText, setTranscriptText] = useState('');
@@ -83,6 +94,24 @@ export default function CallAssessment() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  // Fetch Google Drive transcripts
+  const { data: driveTranscripts = [], isLoading: driveLoading } = useQuery<DriveFile[]>({
+    queryKey: ['/api/google-drive/transcripts'],
+  });
+
+  // Fetch file content from Google Drive
+  const fetchDriveContent = useMutation({
+    mutationFn: async (fileId: string) => {
+      const response = await apiRequest(`/api/google-drive/file/${fileId}`);
+      return response.content;
+    },
+    onSuccess: (content) => {
+      setTranscriptText(content);
+      setActiveTab('process');
+    },
+  });
 
   // Fetch demo assessment for preview
   const { data: demoAssessment, isLoading: demoLoading } = useQuery({
@@ -534,6 +563,7 @@ export default function CallAssessment() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="upload">Upload & Process</TabsTrigger>
+          <TabsTrigger value="drive">Google Drive</TabsTrigger>
           <TabsTrigger value="results">Assessment Results</TabsTrigger>
           <TabsTrigger value="history">Call History</TabsTrigger>
         </TabsList>
@@ -679,6 +709,101 @@ export default function CallAssessment() {
                   )}
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="drive" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Cloud className="w-5 h-5" />
+                Google Drive Transcripts
+              </CardTitle>
+              <CardDescription>
+                Select a transcript from your Google Drive to analyze
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {driveLoading ? (
+                <div className="text-center py-8">
+                  <Cloud className="w-8 h-8 animate-pulse mx-auto mb-2 text-gray-400" />
+                  <p className="text-gray-600">Loading transcripts from Google Drive...</p>
+                </div>
+              ) : driveTranscripts.length > 0 ? (
+                <div className="space-y-3">
+                  {driveTranscripts.map((file) => (
+                    <div
+                      key={file.id}
+                      className={`p-4 border rounded-lg cursor-pointer transition-colors hover:bg-gray-50 ${
+                        selectedDriveFile?.id === file.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                      }`}
+                      onClick={() => setSelectedDriveFile(file)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          <FolderOpen className="w-5 h-5 text-blue-600 mt-0.5" />
+                          <div>
+                            <h4 className="font-medium text-gray-900">{file.name}</h4>
+                            <p className="text-sm text-gray-600">
+                              Modified: {new Date(file.modifiedTime).toLocaleDateString()}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {file.mimeType} • {parseInt(file.size) > 0 ? `${(parseInt(file.size) / 1024).toFixed(1)} KB` : 'Unknown size'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(file.webViewLink, '_blank');
+                            }}
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {selectedDriveFile && (
+                    <div className="mt-6 pt-4 border-t">
+                      <Button
+                        onClick={() => fetchDriveContent.mutate(selectedDriveFile.id)}
+                        disabled={fetchDriveContent.isPending}
+                        className="w-full"
+                      >
+                        {fetchDriveContent.isPending ? (
+                          <>
+                            <Cloud className="w-4 h-4 mr-2 animate-spin" />
+                            Loading transcript...
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="w-4 h-4 mr-2" />
+                            Load & Process Transcript
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FolderOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No transcripts found</h3>
+                  <p className="text-gray-600 mb-4">
+                    No transcript files found in your Google Drive. Make sure you have files containing 
+                    "transcript", "call", or "meeting" in the filename.
+                  </p>
+                  <Button variant="outline" onClick={() => setActiveTab('upload')}>
+                    Upload manually instead
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
