@@ -67,35 +67,35 @@ export class CallAssessmentEngine {
   private categoryPlatformMap = {
     'CRM Update': {
       platform: 'Salesforce',
-      link: 'https://salesforce.com/opportunity/placeholder'
+      link: 'https://salesforce.com'
     },
     'Customer Follow-Up': {
       platform: 'Eloquas Messaging',
-      link: 'https://eloquas.ai/follow-up-composer'
+      link: '/linkedin-messaging'
     },
     'Demo/Meeting Scheduling': {
       platform: 'Outlook Calendar',
-      link: 'https://outlook.office.com/calendar/event/new'
+      link: 'https://outlook.office.com/calendar'
     },
     'Documentation Request': {
       platform: 'Avo Automation Docs',
-      link: 'https://avoautomation.com/resources/d365'
+      link: 'https://avoautomation.com/resources'
     },
     'Internal Coordination': {
       platform: 'Internal Platform',
-      link: 'https://internal.platform/action-item'
+      link: '/dashboard'
     },
     'Champion Development': {
-      platform: 'Coaching Tool',
-      link: 'https://coaching.platform/champion-plan'
+      platform: 'Microlearning',
+      link: '/microlearning'
     },
     'Objection Handling': {
       platform: 'Knowledge Base',
-      link: 'https://kb.company.com/objections/handling'
+      link: '/account-research'
     },
     'Competitive Intel': {
-      platform: 'CI Dashboard',
-      link: 'https://ci.company.com/competitor/placeholder'
+      platform: 'Platform Discovery',
+      link: '/account-research'
     }
   };
 

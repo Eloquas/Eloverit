@@ -67,9 +67,13 @@ export default function AccountResearch() {
       });
     },
     onError: (error: any) => {
+      const isDataIntegrityError = error.message?.includes("authentic") || error.message?.includes("unavailable");
+      
       toast({
-        title: "Research failed",
-        description: error.message || "Failed to generate account research",
+        title: isDataIntegrityError ? "Research Unavailable" : "Research Failed",
+        description: isDataIntegrityError 
+          ? "Only authentic data sources are used. Research data temporarily unavailable for this company."
+          : error.message || "Failed to generate account research",
         variant: "destructive",
       });
     }
@@ -88,9 +92,13 @@ export default function AccountResearch() {
       });
     },
     onError: (error: any) => {
+      const isDataIntegrityError = error.message?.includes("authentic") || error.message?.includes("unavailable");
+      
       toast({
-        title: "Discovery failed",
-        description: error.message || "Failed to discover platform accounts",
+        title: isDataIntegrityError ? "Discovery Unavailable" : "Discovery Failed", 
+        description: isDataIntegrityError
+          ? "Platform discovery uses only authentic Fortune company data. Service temporarily unavailable."
+          : error.message || "Failed to discover platform accounts",
         variant: "destructive",
       });
     }

@@ -126,72 +126,18 @@ export class PlatformDiscoveryEngine {
       });
 
       const result = JSON.parse(response.choices[0].message.content || "{}");
-      return result.accounts || this.generateFallbackAccounts(filters);
+      if (!result.accounts || result.accounts.length === 0) {
+        throw new Error("No authentic platform discovery data available");
+      }
+      return result.accounts;
       
     } catch (error) {
-      console.error("AI generation error:", error);
-      return this.generateFallbackAccounts(filters);
+      console.error("Platform discovery unavailable:", error);
+      throw new Error("Platform discovery service temporarily unavailable. Only authentic data sources are used.");
     }
   }
 
-  private generateFallbackAccounts(filters: DiscoveryFilters): DiscoveredAccount[] {
-    // Realistic fallback data based on platform and filters
-    const baseAccounts = [
-      {
-        companyName: "United Airlines",
-        industry: "Transportation",
-        employeeSize: "10000+",
-        headquarters: "Chicago, IL",
-        fortuneRanking: 121,
-        revenue: "$44.9B"
-      },
-      {
-        companyName: "General Electric",
-        industry: "Manufacturing",
-        employeeSize: "10000+",
-        headquarters: "Boston, MA",
-        fortuneRanking: 47,
-        revenue: "$76.6B"
-      },
-      {
-        companyName: "JPMorgan Chase",
-        industry: "Finance",
-        employeeSize: "10000+",
-        headquarters: "New York, NY",
-        fortuneRanking: 12,
-        revenue: "$128.7B"
-      },
-      {
-        companyName: "Ford Motor Company",
-        industry: "Automotive",
-        employeeSize: "10000+",
-        headquarters: "Dearborn, MI",
-        fortuneRanking: 21,
-        revenue: "$158.1B"
-      },
-      {
-        companyName: "Kaiser Permanente",
-        industry: "Healthcare",
-        employeeSize: "10000+",
-        headquarters: "Oakland, CA",
-        fortuneRanking: 39,
-        revenue: "$95.4B"
-      }
-    ];
-
-    return baseAccounts
-      .filter(account => this.matchesFilters(account, filters))
-      .slice(0, 8)
-      .map(account => ({
-        ...account,
-        platformInitiatives: this.generatePlatformInitiatives(filters.platform),
-        hiringSignals: this.generateHiringSignals(filters.platform),
-        intentScore: 0, // Will be calculated later
-        researchQuality: "excellent",
-        lastUpdated: new Date().toISOString(),
-        platformUsage: this.generatePlatformUsage(filters.platform)
-      }));
-  }
+  // Removed fallback data generation - only authentic sources allowed
 
   private matchesFilters(account: any, filters: DiscoveryFilters): boolean {
     // Industry filter
