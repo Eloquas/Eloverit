@@ -99,20 +99,22 @@ export class CallAssessmentEngine {
     const startTime = Date.now();
     
     try {
-      // Validate transcript
-      if (!transcript || transcript.trim().length < 50) {
+      // Clean and validate transcript
+      const cleanTranscript = this.cleanTranscript(transcript);
+      
+      if (!cleanTranscript || cleanTranscript.trim().length < 50) {
         return {
           success: false,
-          error: 'Transcript too short or empty',
+          error: 'Transcript too short or empty. Please ensure your transcript has at least 50 characters.',
           processing_time_ms: Date.now() - startTime
         };
       }
 
       // Extract participants from transcript if not provided
-      const participants = this.extractParticipants(transcript, metadata?.participants);
+      const participants = this.extractParticipants(cleanTranscript, metadata?.participants);
       
       // Generate AI analysis
-      const assessment = await this.generateAssessment(transcript, metadata, participants);
+      const assessment = await this.generateAssessment(cleanTranscript, metadata, participants);
       
       const processingTime = Date.now() - startTime;
       
@@ -120,6 +122,7 @@ export class CallAssessmentEngine {
         success: true,
         assessment: {
           ...assessment,
+          transcript: cleanTranscript,
           processing_time_ms: processingTime,
           processed_at: new Date().toISOString()
         },
@@ -129,10 +132,22 @@ export class CallAssessmentEngine {
       console.error('Call assessment failed:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        error: error instanceof Error ? error.message : 'Analysis failed. Please check your transcript format and try again.',
         processing_time_ms: Date.now() - startTime
       };
     }
+  }
+
+  private cleanTranscript(transcript: string): string {
+    if (!transcript) return '';
+    
+    // Remove common file artifacts and clean up formatting
+    return transcript
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .replace(/^\uFEFF/, '') // Remove BOM
+      .replace(/[^\x00-\x7F]/g, '') // Remove non-ASCII characters that might cause issues
+      .trim();
   }
 
   private extractParticipants(transcript: string, providedParticipants?: string[]): string[] {

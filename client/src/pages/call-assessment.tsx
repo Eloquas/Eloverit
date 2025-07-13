@@ -115,11 +115,23 @@ export default function CallAssessment() {
     onSuccess: (result) => {
       setCurrentAssessment(result); // Store the assessment result
       queryClient.invalidateQueries({ queryKey: ['/api/call-assessment/history'] });
-      setShowProcessModal(false);
       setSelectedFile(null);
       setTranscriptText('');
       setCallTitle('');
+      setCallDate('');
       setActiveTab('results'); // Switch to results tab to show assessment
+      
+      toast({
+        title: "Assessment Complete",
+        description: `Processed call in ${result.processing_time_ms || 0}ms with ${result.action_items?.length || 0} action items`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Processing Failed",
+        description: error.message || "Failed to process transcript. Please try again.",
+        variant: "destructive",
+      });
     }
   });
 
@@ -133,16 +145,47 @@ export default function CallAssessment() {
 
   const handleProcessTranscript = () => {
     if (uploadMethod === 'file' && selectedFile) {
+      // Validate file type and size
+      const allowedTypes = ['.md', '.rtf', '.txt', '.doc', '.docx'];
+      const fileExtension = '.' + selectedFile.name.split('.').pop()?.toLowerCase();
+      
+      if (!allowedTypes.includes(fileExtension)) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload a .md, .rtf, .txt, .doc, or .docx file",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (selectedFile.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: "File too large",
+          description: "Please upload a file smaller than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
       processTranscriptMutation.mutate({
         file: selectedFile,
-        title: callTitle,
-        date: callDate
+        title: callTitle || selectedFile.name.replace(/\.[^/.]+$/, ''),
+        date: callDate || new Date().toISOString().split('T')[0]
       });
     } else if (uploadMethod === 'text' && transcriptText.trim()) {
+      if (transcriptText.trim().length < 50) {
+        toast({
+          title: "Transcript too short",
+          description: "Please provide at least 50 characters of transcript text",
+          variant: "destructive",
+        });
+        return;
+      }
+
       processTranscriptMutation.mutate({
         transcript: transcriptText,
-        title: callTitle || 'Sales Call',
-        date: callDate
+        title: callTitle || `Call Assessment ${new Date().toLocaleDateString()}`,
+        date: callDate || new Date().toISOString().split('T')[0]
       });
     }
   };
@@ -433,18 +476,51 @@ export default function CallAssessment() {
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="transcript-file">Transcript File</Label>
-                      <input
-                        id="transcript-file"
-                        type="file"
-                        accept=".md,.rtf,.txt"
-                        onChange={handleFileUpload}
-                        ref={fileInputRef}
-                        className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                      />
+                      <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Local File Upload */}
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-blue-500 transition-colors">
+                          <input
+                            id="transcript-file"
+                            type="file"
+                            accept=".md,.rtf,.txt,.doc,.docx"
+                            onChange={handleFileUpload}
+                            ref={fileInputRef}
+                            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Upload from computer (.md, .rtf, .txt, .docx)</p>
+                        </div>
+                        
+                        {/* Google Drive Integration */}
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-green-500 transition-colors">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full text-sm"
+                            onClick={() => {
+                              // TODO: Implement Google Drive picker
+                              alert('Google Drive integration coming soon');
+                            }}
+                          >
+                            <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
+                              <path fill="#4285f4" d="M6 2L1 12l5 10h12l5-10L18 2H6z"/>
+                              <path fill="#ea4335" d="M1 12l5-10v20z"/>
+                              <path fill="#34a853" d="M23 12l-5 10V2z"/>
+                            </svg>
+                            Import from Google Drive
+                          </Button>
+                          <p className="text-xs text-gray-500 mt-1">Access Google Docs, Drive files</p>
+                        </div>
+                      </div>
+                      
                       {selectedFile && (
-                        <p className="mt-2 text-sm text-green-600">
-                          Selected: {selectedFile.name}
-                        </p>
+                        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-sm text-green-700 font-medium">
+                            ✓ Selected: {selectedFile.name}
+                          </p>
+                          <p className="text-xs text-green-600">
+                            Size: {(selectedFile.size / 1024).toFixed(1)} KB
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>

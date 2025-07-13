@@ -1,0 +1,144 @@
+# Dynamics 365 + QA Automation ‑ **Outreach Content Kit**  
+*Drop‑in copy for Email ✉️ & LinkedIn 🔗*  
+
+---
+
+## 1. “Big‑Number” Proof‑Points 📊  
+
+| Metric | Figure | Source |
+|--------|--------|--------|
+| Annual downtime at 99.9 % SLA | **8.76 hours** |  [oai_citation:0‡uptime.is](https://uptime.is/complex?utm_source=chatgpt.com) |
+| Avg. enterprise cost of downtime | **\$9 000 / minute** |  [oai_citation:1‡Forbes](https://www.forbes.com/councils/forbestechcouncil/2024/04/10/the-true-cost-of-downtime-and-how-to-avoid-it/?utm_source=chatgpt.com) |
+| Annual financial hit to a D365 shop (8.76 h) | **≈ \$4.7 M** | derived |
+| Regression‑test cycle cut with Avo | **5 × faster** |  |
+| Script‑maintenance effort cut with Avo | **30‑50 %** |  |
+
+---
+
+## 2. Placeholder Legend 🔖  
+
+| Token | Replace with |
+|-------|--------------|
+| `{{first}}` | Recipient first name |
+| `{{company}}` | Recipient company |
+| `{{nextEvent}}` | Event title / date |
+| Feel free to insert additional tokens your site already supports. |
+
+---
+
+## 3. Cold‑Outbound Sequence (6 touches) 📧  
+
+> **Campaign ID:** `MSD365‑Cold‑6`  
+
+### Email 1 — “Numbers executives notice”  
+**Subject:** `{{company}} & $4.7 M nobody budgets for`  
+
+Hi {{first}},  
+
+99.9 % uptime still means **8.76 hours** of Dynamics downtime a year—≈**\$4.7 M** slipping out the door.  
+Teams that replaced manual tests with Avo’s self‑healing automation cut those outages in half while shipping **5 × faster**.  
+
+**What’s the single failure you never want to see in your next update cycle?**  
+
+---
+
+### Email 2 — “Velocity in real numbers”  
+**Subject:** `5× faster QA isn’t hype`  
+
+The last F&O release we touched shrank its full regression window from 10 days to 2—**5 ×** faster—without adding head‑count.  
+That freed **640 engineering hours** in a single quarter.  
+
+Curious which test suites you’d automate first at {{company}}?  
+
+---
+
+### Email 3 — “The maintenance drain”  
+**Subject:** `30‑50 % less script upkeep`  
+
+Dynamics updates break scripts; engineers patch them.  
+Our AI‑driven “self‑heal” slices that burden by **30‑50 %**.  
+
+Where could that reclaimed time move your roadmap forward?  
+
+---
+
+### Email 4 — “Why CFOs quiz QA on OPEX”  
+**Subject:** `QA’s hidden \$1 M OPEX lever`  
+
+Avo customers report **\$1 M‑plus** annual OPEX cuts from reduced manual testing. Finance notices.  
+
+How does QA show up in {{company}}’s FY‑26 cost‑take‑out plan?  
+
+---
+
+### Email 5 — “Social proof”  
+**Subject:** `Customer story: 0 Sev‑1s post‑go‑live`  
+
+A Fortune 250 D365 shop rolled updates to 27 countries with **zero** production defects after automating 3 600 scenarios.  
+
+Which module rollout keeps you up at night—Finance, SCM, or CE?  
+
+---
+
+### Email 6 — “Future‑state vision”  
+**Subject:** `What would progress look like by Aug 31?`  
+
+If in six weeks you could green‑light one metric—downtime, velocity, or OPEX—what would it be?  
+
+Happy to swap notes or send a 3‑min teardown, whichever saves you time.  
+
+---
+
+## 4. Event‑Related Mini‑Sequences 🎟️  
+
+### A. Webinar Invite (3 emails) — `Event‑Invite‑3`  
+
+| # | Subject | Body |
+|---|---------|------|
+|1|`Your next D365 update—de‑risked in 30 min`|{{company}}’s next update window is closer than it looks. We’ll walk through a playbook that slashed downtime by **4 h** for peers. Join us {{nextEvent}}?|
+|2|`Preview: the 4 graphs we’ll show`|You’ll see:<br>• Manual vs Automated cost curve<br>• 5× velocity chart<br>• Defect‑escape trend<br>• OPEX savings waterfall<br>Which graph matters most to you?|
+|3|`Seat saved (until EOD)`|Final nudge—registrations close tonight.<br>**Which one question would you like answered live?**|
+
+---
+
+### B. Post‑Event – “No Registration” — `Event‑Missed‑NoReg`  
+**Subject:** `(Video) How peers trimmed \$4.7 M downtime`  
+
+Know schedules explode. Here’s the 4‑min recap reel.  
+Jump to 1:43 for the **5 × velocity** slide.  
+
+**What’s the hardest metric for you to move right now—speed, coverage, or cost?**  
+
+---
+
+### C. Post‑Event – “Registered, No‑Show” — `Event‑NoShow`  
+Things happen. Prefer a **3‑min video** or a **15‑min live debrief**?  
+I’ll send whichever saves you clicks.  
+
+---
+
+### D. In‑Person Event Drive — `Event‑InPerson`  
+**Subject:** `Benchmark your Dynamics test suite in 10 min?`  
+
+{{first}}, will you be at *[Venue]*? I’m doing live tear‑downs of D365 test suites—10 minutes, results you keep.  
+
+**Day 1 AM or Day 2 PM** fit better?  
+
+---
+
+## 5. LinkedIn Post Snippet 🔗  
+
+> **8.76 h** of unplanned Dynamics downtime × **\$9 000/min** = **\$4.7 M** a year.  
+> Ship updates **5 × faster** and cut maintenance **30‑50 %** with AI‑driven QA.  
+> 🔗 *3‑min read*  
+
+---
+
+### How to Use  
+
+1. **Copy this entire markdown file** into your content library or CMS.  
+2. Swap `{{ }}` tokens via your existing variable‑replacement logic (no code change needed).  
+3. Pull stats from Section 1; update values later without touching copy.  
+4. Drop the LinkedIn snippet into your post generator endpoint.  
+
+*That’s it—single‑paste ready.*  

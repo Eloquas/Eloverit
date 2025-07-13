@@ -117,9 +117,15 @@ export class EloquasOutreachEngine {
   ): Promise<MessageTemplate> {
     const templateSpecs = this.getTemplateSpecifications(templateType);
     
-    const prompt = `You are Eloquas AI, a specialized sales outreach engine for QA and enterprise systems professionals.
+    // Use proven Dynamics 365 QA automation templates based on performance data
+    const d365Templates = this.getDynamics365Template(templateType, personalizationData);
+    if (d365Templates) {
+      return d365Templates;
+    }
 
-Generate a ${templateType.replace(/_/g, ' ')} email following this EXACT modular architecture:
+    const prompt = `You are Eloquas AI, a specialized sales outreach engine for Dynamics 365 QA automation.
+
+Generate a ${templateType.replace(/_/g, ' ')} email using proven Avo Automation messaging:
 
 PERSONALIZATION DATA:
 - Name: ${personalizationData.firstName} ${personalizationData.lastName}
@@ -127,30 +133,17 @@ PERSONALIZATION DATA:
 - Role: ${personalizationData.role}
 - Industry: ${personalizationData.industry}
 - Pain Points: ${personalizationData.painPoints.join(', ')}
-${personalizationData.recentAchievement ? `- Recent Achievement: ${personalizationData.recentAchievement}` : ''}
-${personalizationData.sharedConnection ? `- Shared Connection: ${personalizationData.sharedConnection}` : ''}
-${personalizationData.mutualInterest ? `- Mutual Interest: ${personalizationData.mutualInterest}` : ''}
-${personalizationData.eventName ? `- Event: ${personalizationData.eventName} on ${personalizationData.eventDate}` : ''}
 
-MODULAR ARCHITECTURE (follow precisely):
-1. **Subject/Hook**: Concise, curiosity-provoking line tailored to ${personalizationData.role} in ${personalizationData.industry}
-2. **Personalization Snippet**: Use name, company, role, and pain points naturally
-3. **Value Proposition**: One sentence core benefit (QA cycle time reduction, test automation, etc.)
-4. **Trust-Building Story**: 2-3 sentences with micro-story or analogy showing incremental impact
-5. **Call-to-Action**: Low-friction next step (10-minute chat, compare notes, etc.)
-6. **Signature**: Professional sender details with social proof
-
-TONE & STYLE:
-- Consultative & Friendly: Help first, sell second
-- Human & Non-Salesy: Avoid clichés and desperation
-- Trust-Building: Weave in empathy and authority
-- Concise: Target 40-80 words total
-- Balanced Professionalism: Approachable authority
+KEY MESSAGING FRAMEWORK:
+- 99.9% uptime = 8.76 hours downtime = $4.7M annual cost
+- Avo cuts testing time by 5x, reduces maintenance 30-50%
+- Self-healing automation prevents script breakage
+- Focus on Dynamics 365, QA automation, enterprise systems
 
 TEMPLATE TYPE: ${templateSpecs.description}
 CONTEXT: ${templateSpecs.context}
 
-Generate the email now with subject line and body:`;
+Generate email with subject and body (40-80 words max):`;
 
     try {
       const response = await openai.chat.completions.create({
@@ -262,6 +255,49 @@ Generate the email now with subject line and body:`;
     };
   }
 
+  private getDynamics365Template(templateType: MessageTemplate['type'], personalizationData: PersonalizationData): MessageTemplate | null {
+    const d365Templates = {
+      'general_outreach_1': {
+        subject: `${personalizationData.company} & $4.7M nobody budgets for`,
+        body: `Hi ${personalizationData.firstName},
+
+99.9% uptime still means **8.76 hours** of Dynamics downtime a year—≈**$4.7M** slipping out the door.
+Teams that replaced manual tests with Avo's self‑healing automation cut those outages in half while shipping **5× faster**.
+
+What's the single failure you never want to see in your next update cycle?
+
+Best,
+[Your Name]`
+      },
+      'general_outreach_2': {
+        subject: `5× faster QA isn't hype`,
+        body: `Hi ${personalizationData.firstName},
+
+The last F&O release we touched shrank its full regression window from 10 days to 2—**5× faster**—without adding head‑count.
+That freed **640 engineering hours** in a single quarter.
+
+Curious which test suites you'd automate first at ${personalizationData.company}?
+
+Best,
+[Your Name]`
+      }
+    };
+
+    const template = d365Templates[templateType as keyof typeof d365Templates];
+    if (!template) return null;
+
+    return {
+      id: `d365_${templateType}_${Date.now()}`,
+      type: templateType,
+      subject: template.subject,
+      body: template.body,
+      trustStoryScore: 85, // High score for proven templates
+      trustStoryNote: 'Using proven Dynamics 365 QA automation messaging',
+      suggestedTiming: this.getTemplateSpecifications(templateType).timing,
+      wordCount: template.body.split(/\s+/).filter(w => w.length > 0).length
+    };
+  }
+
   private calculateTrustStoryScore(body: string, personalizationData: PersonalizationData): number {
     let score = 50; // Base score
 
@@ -269,6 +305,11 @@ Generate the email now with subject line and body:`;
     if (body.includes(personalizationData.firstName)) score += 10;
     if (body.includes(personalizationData.company)) score += 10;
     if (personalizationData.painPoints.some(pain => body.toLowerCase().includes(pain.toLowerCase()))) score += 15;
+
+    // Check for proven D365/QA messaging
+    if (body.includes('8.76 hours') || body.includes('$4.7M')) score += 20;
+    if (body.includes('5× faster') || body.includes('30-50%')) score += 15;
+    if (body.includes('Dynamics') || body.includes('automation')) score += 10;
 
     // Check for trust-building elements
     if (body.match(/\b(experience|learned|discovered|found|helped|reduced|improved)\b/i)) score += 10;

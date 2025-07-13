@@ -16,6 +16,7 @@ import { linkedInPostGenerator } from "./linkedin-posts";
 import { eloquasOutreachEngine } from "./outreach-engine";
 import { achievementSystem } from "./achievements";
 import { callAssessmentEngine } from "./call-assessment";
+import { googleDriveService } from './google-drive';
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -784,56 +785,37 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
         return res.status(400).json({ message: "Company name is required" });
       }
 
-      // Enhanced AI-powered account research using enterprise knowledge
-      const researchPrompt = `Generate comprehensive account research for ${companyName}. Focus on enterprise systems, QA automation opportunities, and decision makers.
+      // Only use authentic data from PDL - no AI generation or hallucinations
+      try {
+        const pdlData = await pdlService.analyzeCompanyForSCIPAB(companyName);
+        
+        if (!pdlData || !pdlData.industry) {
+          return res.status(404).json({ 
+            message: "No authentic data available", 
+            error: "Cannot generate research without verified company data. Please try a different company or check spelling." 
+          });
+        }
 
-Research Requirements:
-1. Current enterprise systems (D365, SAP, Oracle, Salesforce, etc.)
-2. Recent job postings for QA, IT systems, enterprise applications roles
-3. Technology initiatives and system migrations
-4. Key decision makers in IT, QA, and enterprise systems
-5. Pain points related to software testing and quality assurance
+        const research = await storage.createAccountResearch({
+          companyName,
+          industry: pdlData.industry,
+          companySize: pdlData.companySize,
+          currentSystems: JSON.stringify(pdlData.systems || []),
+          recentJobPostings: JSON.stringify(pdlData.hiringPatterns || []),
+          initiatives: JSON.stringify(pdlData.initiatives || []),
+          painPoints: JSON.stringify(pdlData.painPoints || []),
+          decisionMakers: JSON.stringify([]), // Leave empty if no authentic data
+          researchQuality: "excellent" // PDL provides verified data only
+        });
 
-Provide structured JSON response with:
-{
-  "currentSystems": ["system1", "system2"],
-  "recentJobPostings": ["QA Manager - focus on test automation", "D365 Administrator - seeking testing expertise"],
-  "initiatives": ["SAP S/4HANA migration", "Quality assurance modernization"],
-  "painPoints": ["Manual testing bottlenecks", "Integration testing challenges"],
-  "decisionMakers": ["IT Director", "QA Manager", "Enterprise Systems Manager"],
-  "industry": "Manufacturing/Healthcare/Finance",
-  "companySize": "Mid-market (500-2000 employees)",
-  "researchQuality": "excellent"
-}`;
-
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          { 
-            role: "system", 
-            content: `You are a B2B research analyst specializing in enterprise systems and QA automation. Generate detailed, actionable research for ${companyName} focusing on software testing and enterprise systems opportunities.` 
-          },
-          { role: "user", content: researchPrompt }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.3,
-      });
-
-      const researchData = JSON.parse(response.choices[0].message.content || '{}');
-      
-      const research = await storage.createAccountResearch({
-        companyName,
-        industry: researchData.industry || null,
-        companySize: researchData.companySize || null,
-        currentSystems: JSON.stringify(researchData.currentSystems || []),
-        recentJobPostings: JSON.stringify(researchData.recentJobPostings || []),
-        initiatives: JSON.stringify(researchData.initiatives || []),
-        painPoints: JSON.stringify(researchData.painPoints || []),
-        decisionMakers: JSON.stringify(researchData.decisionMakers || []),
-        researchQuality: researchData.researchQuality || "good"
-      });
-
-      res.json({ message: "Account research generated successfully", companyName, research });
+        res.json({ message: "Account research generated successfully", companyName, research });
+      } catch (pdlError) {
+        console.error(`PDL research failed for ${companyName}:`, pdlError);
+        return res.status(503).json({ 
+          message: "Data source unavailable", 
+          error: "Unable to access authentic company data at this time. Please try again later." 
+        });
+      }
     } catch (error) {
       console.error("Account research error:", error);
       res.status(500).json({ message: "Failed to generate account research" });
@@ -956,18 +938,9 @@ Provide structured JSON response with:
           } catch (error) {
             console.error(`PDL research failed for ${prospect.company}:`, error);
             
-            // Fallback to limited research if PDL fails
-            accountResearch = await storage.createAccountResearch({
-              companyName: prospect.company,
-              industry: "Technology",
-              companySize: "Mid-market",
-              currentSystems: JSON.stringify(["Enterprise systems"]),
-              recentJobPostings: JSON.stringify(["QA and systems roles"]),
-              initiatives: JSON.stringify(["System modernization", "Quality improvement"]),
-              painPoints: JSON.stringify(["Manual testing bottlenecks", "Integration complexity"]),
-              decisionMakers: JSON.stringify(["QA Manager", "IT Director", "Systems Manager"]),
-              researchQuality: "limited"
-            });
+            // No fallback - only authentic data from PDL
+            console.warn(`Skipping ${prospect.company}: Cannot create research without authentic data source`);
+            accountResearch = null;
           }
         }
 
@@ -1466,25 +1439,31 @@ Keep it conversational and human - like one professional helping another.`;
       let metadata = {};
 
       if (req.file) {
-        // Handle file upload
-        const fileContent = req.file.buffer.toString('utf-8');
-        transcript = fileContent;
-        metadata = {
-          title: req.body.title || req.file.originalname,
-          date: req.body.date || new Date().toISOString().split('T')[0],
-          participants: req.body.participants ? JSON.parse(req.body.participants) : undefined
-        };
+        // Handle file upload with better error handling
+        try {
+          const fileContent = req.file.buffer.toString('utf-8');
+          transcript = fileContent;
+          metadata = {
+            title: req.body.title || req.file.originalname.replace(/\.[^/.]+$/, ''),
+            date: req.body.date || new Date().toISOString().split('T')[0],
+            participants: req.body.participants ? JSON.parse(req.body.participants) : undefined
+          };
+        } catch (fileError) {
+          return res.status(400).json({ error: "Failed to read uploaded file. Please ensure it's a valid text file." });
+        }
       } else if (req.body.transcript) {
         // Handle direct transcript text
         transcript = req.body.transcript;
         metadata = {
-          title: req.body.title,
-          date: req.body.date,
+          title: req.body.title || `Call Assessment ${new Date().toLocaleDateString()}`,
+          date: req.body.date || new Date().toISOString().split('T')[0],
           participants: req.body.participants
         };
       } else {
-        return res.status(400).json({ error: "Transcript is required" });
+        return res.status(400).json({ error: "Transcript is required. Please upload a file or paste transcript text." });
       }
+
+      console.log(`Processing transcript: ${transcript.length} characters, title: ${metadata.title}`);
 
       const result = await callAssessmentEngine.processCallTranscript(transcript, metadata);
       
@@ -1492,6 +1471,7 @@ Keep it conversational and human - like one professional helping another.`;
         return res.status(400).json({ error: result.error });
       }
 
+      console.log(`Assessment completed in ${result.processing_time_ms}ms`);
       res.json(result.assessment);
     } catch (error) {
       console.error('Call assessment failed:', error);
@@ -1524,6 +1504,39 @@ Keep it conversational and human - like one professional helping another.`;
     } catch (error) {
       console.error("Failed to fetch call history:", error);
       res.status(500).json({ error: "Failed to fetch call history" });
+    }
+  });
+
+  // Google Drive integration endpoints
+  app.get("/api/google-drive/files", async (req, res) => {
+    try {
+      const { search } = req.query;
+      const files = await googleDriveService.searchFiles(search as string || '');
+      res.json(files);
+    } catch (error) {
+      console.error("Failed to fetch Google Drive files:", error);
+      res.status(500).json({ error: "Failed to access Google Drive" });
+    }
+  });
+
+  app.get("/api/google-drive/files/:fileId/content", async (req, res) => {
+    try {
+      const { fileId } = req.params;
+      const content = await googleDriveService.getFileContent(fileId);
+      res.json({ content });
+    } catch (error) {
+      console.error("Failed to get file content:", error);
+      res.status(500).json({ error: "Failed to download file" });
+    }
+  });
+
+  app.get("/api/google-drive/transcripts", async (req, res) => {
+    try {
+      const transcripts = await googleDriveService.listRecentTranscripts();
+      res.json(transcripts);
+    } catch (error) {
+      console.error("Failed to list transcripts:", error);
+      res.status(500).json({ error: "Failed to list transcripts" });
     }
   });
 
