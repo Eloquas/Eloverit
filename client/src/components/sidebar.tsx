@@ -143,16 +143,16 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   return (
     <div className={`fixed left-0 top-0 h-full avo-glass border-r border-gray-100 transition-all duration-300 z-40 avo-shadow-soft ${
-      collapsed ? 'w-16' : 'w-64'
-    }`}>
+      collapsed ? 'w-16' : 'w-64 md:w-64'
+    } max-w-[90vw] md:max-w-none`}>
       {/* Header */}
       <div className="h-16 border-b border-gray-50 flex items-center justify-between px-4">
         {!collapsed && (
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 avo-gradient-blue rounded-xl flex items-center justify-center avo-shadow-soft">
+          <div className="flex items-center space-x-3 min-w-0">
+            <div className="w-8 h-8 avo-gradient-blue rounded-xl flex items-center justify-center avo-shadow-soft flex-shrink-0">
               <span className="text-white font-bold text-sm">P</span>
             </div>
-            <span className="text-lg font-bold avo-text-gradient">ProspectCopy</span>
+            <span className="text-lg font-bold avo-text-gradient truncate">ProspectCopy</span>
           </div>
         )}
         <Button
@@ -166,8 +166,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <div className="flex flex-col h-full pt-6">
-        <nav className="flex-1 px-3 space-y-2">
+      <div className="flex flex-col h-full pt-6 overflow-hidden">
+        <nav className="flex-1 px-3 space-y-2 overflow-y-auto max-h-[calc(100vh-200px)]">
           {navigationItems.map((item) => (
             <Link key={item.href} href={item.href}>
               <div className={`avo-sidebar-item ${item.active ? "active" : ""}`}>
@@ -182,9 +182,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   <item.icon className={`h-5 w-5 ${collapsed ? "" : "mr-3"}`} />
                   {!collapsed && (
                     <>
-                      <span className="flex-1 text-left font-medium">{item.label}</span>
+                      <span className="flex-1 text-left font-medium truncate">{item.label}</span>
                       {item.badge && (
-                        <Badge className="ml-2 text-xs avo-badge-blue">
+                        <Badge className="ml-2 text-xs avo-badge-blue flex-shrink-0">
                           {item.badge}
                         </Badge>
                       )}
