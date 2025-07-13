@@ -1,0 +1,94 @@
+🎯 Replit One-Shot Implementation Prompt
+
+Context & Objective:
+You’re enhancing the existing Call & Transcript Review feature within Eloquas on Replit. The existing feature (built with JavaScript, Python, Flask) already ingests text transcripts. Your objective is to update and improve it significantly by integrating GPT-4 Turbo (optimal balance of performance and cost efficiency) and adding advanced analytics such as categorized action items, call grading, sentiment, and preliminary tone inference.
+
+⸻
+
+✅ Functionality Overview:
+
+Current Feature:
+	•	Existing Call & Transcript grading/analysis section built with Flask, JavaScript frontend.
+	•	Basic text ingestion already configured.
+
+Enhanced Feature Goals:
+	1.	Transcript Analysis (via GPT-4 Turbo):
+	•	Categorize action items (Follow-up, CRM entry, Documentation, Schedule demo).
+	•	Generate call summary insights.
+	•	Grade calls on:
+	•	Rapport/trust-building
+	•	Discovery question depth
+	•	Tone match and succinctness
+	•	Storytelling effectiveness
+	•	Sentiment and urgency analysis.
+	2.	Preliminary Tone and Talk-Time Estimation:
+	•	Attempt to infer speaker tone and urgency from text (beta functionality).
+	•	Estimate talk-time distribution (as a beta, text-based inference).
+	3.	Webhook Integration:
+	•	Utilize existing webhook (Plot) stored in Replit secrets (PLOT_WEBHOOK_ID).
+	•	Confirm ingestion via Plot webhook is operational.
+	4.	Output Format (Web UI):
+	•	Categorized action items clearly listed.
+	•	Call grading presented as simple scorecards (numeric and color-coded).
+	•	Sentiment & urgency visualizations (basic charts, badges, or tags).
+	•	Inferred talk-time shown as percentage or ratio (beta).
+
+⸻
+
+📂 Technical Architecture & Integrations:
+	•	Backend: Flask (Python)
+	•	OpenAI API integration (GPT-4 Turbo, optimize prompt tokens for cost-efficiency)
+	•	Plot webhook integration (secret-based ingestion)
+	•	Frontend: JavaScript-based UI (existing framework)
+	•	Minimal modifications for new scorecard display, action item categorization, tone indicators
+	•	Existing Data Handling:
+	•	Keep existing transcript upload/file handling mechanisms intact.
+	•	Ensure backward compatibility with existing data structure.
+
+⸻
+
+🚩 Implementation Instructions:
+	•	Update existing Flask route handling transcript ingestion:
+	•	Integrate GPT-4 Turbo analysis logic with a clearly defined API prompt (outlined below).
+	•	Include handling for Plot webhook ingestion (PLOT_WEBHOOK_ID).
+	•	GPT-4 Turbo Prompt Structure (use verbatim for API call):
+
+Analyze the provided call transcript. Generate the following structured JSON output:
+{
+  "summary": "Brief, actionable summary (50-80 words)",
+  "action_items": [
+    {"category": "Follow-up | CRM Entry | Documentation | Demo Scheduling", "task": "Brief description of action", "urgency": "High | Medium | Low"}
+  ],
+  "call_grade": {
+    "rapport_trust": "1-10",
+    "discovery_depth": "1-10",
+    "tone_match_succinctness": "1-10",
+    "storytelling": "1-10",
+    "overall_score": "Average of above criteria"
+  },
+  "sentiment_analysis": {
+    "overall_sentiment": "Positive | Neutral | Negative",
+    "urgency_detected": "High | Medium | Low"
+  },
+  "talk_time_estimation": {
+    "rep_percentage": "Estimated % of total speaking",
+    "prospect_percentage": "Estimated % of total speaking"
+  }
+}
+
+
+	•	Frontend UI Modifications:
+	•	Create clear visual sections: Action Items, Call Grades, Sentiment Analysis, and Talk-Time Estimation.
+	•	Utilize existing UI patterns for consistency (minimal design adjustments required).
+
+⸻
+
+🚦Next Steps (After Initial Deployment):
+	•	Confirm successful Plot webhook integration.
+	•	Monitor GPT-4 Turbo usage for cost-efficiency.
+	•	Validate accuracy of beta “tone & talk-time” features and iterate based on user feedback.
+	•	Prepare for future integration with Chorus/Plaud APIs for audio/video analysis.
+
+⸻
+
+Ensure this implementation replaces the existing “Call & Transcript grading” section directly without creating redundancy or unnecessary new components.

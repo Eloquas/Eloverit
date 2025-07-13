@@ -1777,6 +1777,44 @@ Keep it conversational and human - like one professional helping another.`;
     }
   });
 
+  // Plot webhook endpoint for transcript ingestion
+  app.post("/api/call-assessment/plot-webhook", async (req, res) => {
+    try {
+      const webhookSecret = process.env.PLOT_WEBHOOK_ID;
+      const providedSecret = req.headers['x-webhook-secret'] || req.body.webhook_secret;
+      
+      // Verify webhook authenticity if secret is configured
+      if (webhookSecret && webhookSecret !== providedSecret) {
+        console.warn('Plot webhook unauthorized access attempt');
+        return res.status(401).json({ error: "Unauthorized webhook access" });
+      }
+
+      console.log('Processing Plot webhook data:', {
+        hasTranscript: !!req.body.transcript,
+        hasContent: !!req.body.content,
+        title: req.body.title,
+        timestamp: new Date().toISOString()
+      });
+
+      const result = await callAssessmentEngine.processPlotWebhook(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      console.log(`Plot webhook processing completed in ${result.processing_time_ms}ms`);
+      res.json({
+        success: true,
+        call_id: result.assessment?.call_id,
+        processing_time_ms: result.processing_time_ms,
+        message: "Transcript processed successfully via Plot webhook"
+      });
+    } catch (error) {
+      console.error('Plot webhook processing failed:', error);
+      res.status(500).json({ error: "Failed to process Plot webhook" });
+    }
+  });
+
   // Google Drive integration endpoints
   app.get("/api/google-drive/files", async (req, res) => {
     try {

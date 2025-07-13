@@ -22,18 +22,26 @@ interface CallParticipant {
 
 interface ActionItem {
   task: string;
-  category: string;
-  platform: string;
-  link: string;
+  category: 'Follow-up' | 'CRM Entry' | 'Documentation' | 'Demo Scheduling';
+  urgency: 'High' | 'Medium' | 'Low';
 }
 
 interface SalesGrading {
-  rapport: number;
-  tone_match: number;
-  clarity: number;
-  discovery: number;
+  rapport_trust: number;
+  discovery_depth: number;
+  tone_match_succinctness: number;
   storytelling: number;
-  closing: number;
+  overall_score: number;
+}
+
+interface SentimentAnalysis {
+  overall_sentiment: 'Positive' | 'Neutral' | 'Negative';
+  urgency_detected: 'High' | 'Medium' | 'Low';
+}
+
+interface TalkTimeEstimation {
+  rep_percentage: number;
+  prospect_percentage: number;
 }
 
 interface CoachingNote {
@@ -49,6 +57,8 @@ interface CallAssessment {
   action_items: ActionItem[];
   grading: SalesGrading;
   coaching_notes: CoachingNote[];
+  sentiment_analysis: SentimentAnalysis;
+  talk_time_estimation: TalkTimeEstimation;
   transcript?: string;
   processed_at: string;
   processing_time_ms: number;
@@ -207,47 +217,28 @@ export default function CallAssessment() {
   };
 
   const getGradingColor = (score: number) => {
-    if (score >= 4) return 'text-green-600';
-    if (score >= 3) return 'text-yellow-600';
+    if (score >= 8) return 'text-green-600';
+    if (score >= 6) return 'text-yellow-600';
     return 'text-red-600';
   };
 
-  const renderGradingCard = (assessment: CallAssessment) => (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="w-5 h-5" />
-          Sales Behavior Grading
-        </CardTitle>
-        <CardDescription>Performance evaluation across key sales skills (1-5 scale)</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {Object.entries(assessment.grading).map(([skill, score]) => (
-          <div key={skill} className="flex items-center justify-between">
-            <span className="capitalize font-medium">
-              {skill.replace('_', ' ')}
-            </span>
-            <div className="flex items-center gap-3">
-              <Progress value={score * 20} className="w-24" />
-              <span className={`font-bold ${getGradingColor(score)}`}>
-                {score}/5
-              </span>
-            </div>
-          </div>
-        ))}
-        <div className="pt-2 border-t">
-          <div className="flex items-center justify-between font-semibold">
-            <span>Overall Average</span>
-            <span className={getGradingColor(
-              Object.values(assessment.grading).reduce((sum, score) => sum + score, 0) / 6
-            )}>
-              {(Object.values(assessment.grading).reduce((sum, score) => sum + score, 0) / 6).toFixed(1)}/5
-            </span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  const getUrgencyColor = (urgency: string) => {
+    switch (urgency) {
+      case 'High': return 'bg-red-100 text-red-800';
+      case 'Medium': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-green-100 text-green-800';
+    }
+  };
+
+  const getSentimentIcon = (sentiment: string) => {
+    switch (sentiment) {
+      case 'Positive': return '😊';
+      case 'Negative': return '😟';
+      default: return '😐';
+    }
+  };
+
+
 
   const renderParticipantsCard = (assessment: CallAssessment) => (
     <Card>
@@ -296,27 +287,18 @@ export default function CallAssessment() {
           <CheckCircle2 className="w-5 h-5" />
           Action Items ({assessment.action_items.length})
         </CardTitle>
-        <CardDescription>Next steps organized by platform and category</CardDescription>
+        <CardDescription>Categorized next steps with urgency levels</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {assessment.action_items.map((item, index) => (
           <div key={index} className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
             <div className="flex items-start justify-between mb-2">
               <h4 className="font-medium text-gray-900">{item.task}</h4>
-              <ExternalLink className="w-4 h-4 text-gray-400" />
+              <Badge className={getUrgencyColor(item.urgency)}>{item.urgency}</Badge>
             </div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2">
               <Badge variant="outline">{item.category}</Badge>
-              <Badge className="bg-blue-100 text-blue-800">{item.platform}</Badge>
             </div>
-            <a
-              href={item.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-            >
-              Open in {item.platform} →
-            </a>
           </div>
         ))}
       </CardContent>
@@ -346,6 +328,122 @@ export default function CallAssessment() {
             </p>
           </div>
         ))}
+      </CardContent>
+    </Card>
+  );
+
+  const renderSentimentAnalysisCard = (assessment: CallAssessment) => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <TrendingUp className="w-5 h-5" />
+          Sentiment & Urgency Analysis
+        </CardTitle>
+        <CardDescription>Overall call sentiment and urgency detection</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-center p-4 bg-gray-50 rounded-lg">
+            <div className="text-2xl mb-2">{getSentimentIcon(assessment.sentiment_analysis.overall_sentiment)}</div>
+            <div className="font-medium">{assessment.sentiment_analysis.overall_sentiment} Sentiment</div>
+          </div>
+          <div className="text-center p-4 bg-gray-50 rounded-lg">
+            <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getUrgencyColor(assessment.sentiment_analysis.urgency_detected)}`}>
+              {assessment.sentiment_analysis.urgency_detected} Urgency
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderTalkTimeCard = (assessment: CallAssessment) => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="w-5 h-5" />
+          Talk-Time Estimation (Beta)
+        </CardTitle>
+        <CardDescription>Estimated speaking time distribution</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Sales Rep</span>
+              <span className="font-medium">{assessment.talk_time_estimation.rep_percentage}%</span>
+            </div>
+            <Progress value={assessment.talk_time_estimation.rep_percentage} className="h-3" />
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Prospect</span>
+              <span className="font-medium">{assessment.talk_time_estimation.prospect_percentage}%</span>
+            </div>
+            <Progress value={assessment.talk_time_estimation.prospect_percentage} className="h-3" />
+          </div>
+          <div className="text-xs text-gray-500 italic">
+            * Beta feature: Text-based inference may not be fully accurate
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderCallGradingCard = (assessment: CallAssessment) => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Target className="w-5 h-5" />
+          Call Performance Analysis
+        </CardTitle>
+        <CardDescription>Sales skills assessment (1-10 scale)</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="text-center p-4 bg-blue-50 rounded-lg">
+            <div className="text-3xl font-bold text-blue-600">{assessment.grading.overall_score}/10</div>
+            <div className="text-sm text-blue-700">Overall Score</div>
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Rapport & Trust Building</span>
+                <span className={`text-lg font-bold ${getGradingColor(assessment.grading.rapport_trust)}`}>
+                  {assessment.grading.rapport_trust}/10
+                </span>
+              </div>
+              <Progress value={(assessment.grading.rapport_trust / 10) * 100} className="h-2" />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Discovery Question Depth</span>
+                <span className={`text-lg font-bold ${getGradingColor(assessment.grading.discovery_depth)}`}>
+                  {assessment.grading.discovery_depth}/10
+                </span>
+              </div>
+              <Progress value={(assessment.grading.discovery_depth / 10) * 100} className="h-2" />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Tone Match & Succinctness</span>
+                <span className={`text-lg font-bold ${getGradingColor(assessment.grading.tone_match_succinctness)}`}>
+                  {assessment.grading.tone_match_succinctness}/10
+                </span>
+              </div>
+              <Progress value={(assessment.grading.tone_match_succinctness / 10) * 100} className="h-2" />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Storytelling Effectiveness</span>
+                <span className={`text-lg font-bold ${getGradingColor(assessment.grading.storytelling)}`}>
+                  {assessment.grading.storytelling}/10
+                </span>
+              </div>
+              <Progress value={(assessment.grading.storytelling / 10) * 100} className="h-2" />
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
@@ -398,9 +496,9 @@ export default function CallAssessment() {
                   <p className="text-sm text-gray-600">Avg Performance</p>
                   <p className="text-2xl font-bold">
                     {historyData.stats.avgGrading ? 
-                      (Object.values(historyData.stats.avgGrading).reduce((a: number, b: number) => a + b, 0) / 6).toFixed(1) 
+                      historyData.stats.avgGrading.overall_score.toFixed(1)
                       : 'N/A'
-                    }/5
+                    }/10
                   </p>
                 </div>
               </div>
@@ -619,7 +717,12 @@ export default function CallAssessment() {
                     {/* Results Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       {renderParticipantsCard(assessment)}
-                      {renderGradingCard(assessment)}
+                      {renderCallGradingCard(assessment)}
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {renderSentimentAnalysisCard(assessment)}
+                      {renderTalkTimeCard(assessment)}
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
