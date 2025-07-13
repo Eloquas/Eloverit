@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProspectSchema, contentGenerationSchema, csvUploadSchema } from "@shared/schema";
+import { AuthService, authenticateToken, requireAdmin, type AuthenticatedRequest } from "./auth";
+import { insertProspectSchema, contentGenerationSchema, csvUploadSchema, loginSchema, registerSchema } from "@shared/schema";
 import { z } from "zod";
 import OpenAI from "openai";
 import multer from "multer";
@@ -26,16 +27,119 @@ const openai = new OpenAI({
 const upload = multer({ storage: multer.memoryStorage() });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Get all prospects
-  app.get("/api/prospects", async (req, res) => {
+  // Authentication routes
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = loginSchema.parse(req.body);
+      const result = await AuthService.login(email, password);
+      
+      if (!result) {
+        return res.status(401).json({ error: "Invalid email or password" });
+      }
+
+      // Set session cookie
+      res.cookie('sessionId', result.sessionId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+
+      res.json({
+        user: {
+          id: result.user.id,
+          email: result.user.email,
+          firstName: result.user.firstName,
+          lastName: result.user.lastName,
+          role: result.user.role,
+          profileImageUrl: result.user.profileImageUrl
+        },
+        token: result.token
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Validation error", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Login failed" });
+      }
+    }
+  });
+
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const userData = registerSchema.parse(req.body);
+      const result = await AuthService.register(userData);
+      
+      if (!result) {
+        return res.status(409).json({ error: "User already exists" });
+      }
+
+      // Set session cookie
+      res.cookie('sessionId', result.sessionId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+
+      res.status(201).json({
+        user: {
+          id: result.user.id,
+          email: result.user.email,
+          firstName: result.user.firstName,
+          lastName: result.user.lastName,
+          role: result.user.role,
+          profileImageUrl: result.user.profileImageUrl
+        },
+        token: result.token
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Validation error", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Registration failed" });
+      }
+    }
+  });
+
+  app.post("/api/auth/logout", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const sessionId = req.cookies?.sessionId;
+      if (sessionId) {
+        await AuthService.logout(sessionId);
+      }
+      res.clearCookie('sessionId');
+      res.json({ message: "Logged out successfully" });
+    } catch (error) {
+      res.status(500).json({ error: "Logout failed" });
+    }
+  });
+
+  app.get("/api/auth/me", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+    
+    res.json({
+      id: req.user.id,
+      email: req.user.email,
+      firstName: req.user.firstName,
+      lastName: req.user.lastName,
+      role: req.user.role,
+      profileImageUrl: req.user.profileImageUrl
+    });
+  });
+
+  // Protected routes - require authentication
+  // Get all prospects (user-scoped)
+  app.get("/api/prospects", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const { search } = req.query;
+      const userId = req.user!.id;
       let prospects;
       
       if (search && typeof search === "string") {
-        prospects = await storage.searchProspects(search);
+        prospects = await storage.searchProspects(search, userId);
       } else {
-        prospects = await storage.getProspects();
+        prospects = await storage.getProspects(userId);
       }
       
       res.json(prospects);
@@ -44,11 +148,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get single prospect
-  app.get("/api/prospects/:id", async (req, res) => {
+  // Get single prospect (user-scoped)
+  app.get("/api/prospects/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const prospect = await storage.getProspect(id);
+      const userId = req.user!.id;
+      const prospect = await storage.getProspect(id, userId);
       
       if (!prospect) {
         return res.status(404).json({ message: "Prospect not found" });
@@ -60,10 +165,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create single prospect
-  app.post("/api/prospects", async (req, res) => {
+  // Create single prospect (user-scoped)
+  app.post("/api/prospects", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const validatedData = insertProspectSchema.parse(req.body);
+      const userId = req.user!.id;
+      const validatedData = insertProspectSchema.parse({ ...req.body, userId });
       const prospect = await storage.createProspect(validatedData);
       res.status(201).json(prospect);
     } catch (error) {

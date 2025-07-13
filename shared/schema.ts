@@ -1,9 +1,39 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, varchar, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
+
+// Users table for authentication
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  passwordHash: varchar("password_hash", { length: 255 }),
+  firstName: varchar("first_name", { length: 100 }),
+  lastName: varchar("last_name", { length: 100 }),
+  role: varchar("role", { length: 50 }).notNull().default("rep"), // 'rep', 'admin'
+  linkedinId: varchar("linkedin_id", { length: 100 }),
+  linkedinProfile: json("linkedin_profile"),
+  profileImageUrl: varchar("profile_image_url", { length: 500 }),
+  isActive: boolean("is_active").default(true),
+  lastLoginAt: timestamp("last_login_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("users_email_idx").on(table.email),
+  index("users_linkedin_id_idx").on(table.linkedinId),
+]);
+
+// Session storage for authentication
+export const sessions = pgTable("sessions", {
+  id: varchar("id", { length: 255 }).primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 export const prospects = pgTable("prospects", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
   name: text("name").notNull(),
   email: text("email").notNull(),
   company: text("company").notNull(),
@@ -17,11 +47,16 @@ export const prospects = pgTable("prospects", {
   accountPriority: text("account_priority").default("medium"), // high, medium, low
   lastResearchDate: timestamp("last_research_date"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("prospects_user_id_idx").on(table.userId),
+  index("prospects_email_idx").on(table.email),
+  index("prospects_company_idx").on(table.company),
+]);
 
 // New table for account-level research and intelligence
 export const accountResearch = pgTable("account_research", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
   companyName: text("company_name").notNull(),
   industry: text("industry"),
   companySize: text("company_size"),
@@ -32,12 +67,15 @@ export const accountResearch = pgTable("account_research", {
   decisionMakers: text("decision_makers"), // JSON array of key contacts
   researchDate: timestamp("research_date").notNull().defaultNow(),
   researchQuality: text("research_quality").default("pending"), // excellent, good, fair, pending
-});
+}, (table) => [
+  index("account_research_user_id_idx").on(table.userId),
+]);
 
 // New table for email cadence management
 export const emailCadences = pgTable("email_cadences", {
   id: serial("id").primaryKey(),
-  prospectId: integer("prospect_id").notNull(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  prospectId: integer("prospect_id").notNull().references(() => prospects.id),
   cadenceName: text("cadence_name").notNull(), // Brand Awareness D365, SAP Enterprise, etc.
   currentStep: integer("current_step").notNull().default(1),
   totalSteps: integer("total_steps").notNull().default(6),
@@ -45,12 +83,15 @@ export const emailCadences = pgTable("email_cadences", {
   nextSendDate: timestamp("next_send_date"),
   status: text("status").notNull().default("active"), // active, paused, completed
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("email_cadences_user_id_idx").on(table.userId),
+]);
 
 export const generatedContent = pgTable("generated_content", {
   id: serial("id").primaryKey(),
-  prospectId: integer("prospect_id").notNull(),
-  cadenceId: integer("cadence_id"), // Link to email cadence if part of sequence
+  userId: integer("user_id").notNull().references(() => users.id),
+  prospectId: integer("prospect_id").notNull().references(() => prospects.id),
+  cadenceId: integer("cadence_id").references(() => emailCadences.id), // Link to email cadence if part of sequence
   type: text("type").notNull(), // email, linkedin
   subject: text("subject"),
   content: text("content").notNull(),
@@ -101,6 +142,17 @@ export const insertEmailCadenceSchema = createInsertSchema(emailCadences).omit({
   createdAt: true,
 });
 
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastLoginAt: true,
+});
+
+export const insertSessionSchema = createInsertSchema(sessions).omit({
+  createdAt: true,
+});
+
 export type InsertProspect = z.infer<typeof insertProspectSchema>;
 export type Prospect = typeof prospects.$inferSelect;
 export type InsertGeneratedContent = z.infer<typeof insertGeneratedContentSchema>;
@@ -109,6 +161,35 @@ export type InsertAccountResearch = z.infer<typeof insertAccountResearchSchema>;
 export type AccountResearch = typeof accountResearch.$inferSelect;
 export type InsertEmailCadence = z.infer<typeof insertEmailCadenceSchema>;
 export type EmailCadence = typeof emailCadences.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+export type InsertSession = z.infer<typeof insertSessionSchema>;
+export type Session = typeof sessions.$inferSelect;
+
+// Relations
+export const userRelations = relations(users, ({ many }) => ({
+  prospects: many(prospects),
+  accountResearch: many(accountResearch),
+  emailCadences: many(emailCadences),
+  generatedContent: many(generatedContent),
+  sessions: many(sessions),
+}));
+
+export const prospectRelations = relations(prospects, ({ one, many }) => ({
+  user: one(users, {
+    fields: [prospects.userId],
+    references: [users.id],
+  }),
+  emailCadences: many(emailCadences),
+  generatedContent: many(generatedContent),
+}));
+
+export const sessionRelations = relations(sessions, ({ one }) => ({
+  user: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
+}));
 
 // Enhanced form schemas for new features
 export const contentGenerationSchema = z.object({
@@ -175,6 +256,23 @@ export const csvUploadSchema = z.object({
   systemsExperience: z.string().optional(),
 });
 
+// Authentication schemas
+export const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
+
+export const registerSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  role: z.enum(["rep", "admin"]).default("rep"),
+});
+
+export type LoginRequest = z.infer<typeof loginSchema>;
+export type RegisterRequest = z.infer<typeof registerSchema>;
+
 // Call Assessment Schema
 export const callAssessments = pgTable("call_assessments", {
   id: serial("id").primaryKey(),
@@ -189,9 +287,11 @@ export const callAssessments = pgTable("call_assessments", {
   transcript: text("transcript"),
   processedAt: timestamp("processed_at").defaultNow(),
   processingTimeMs: integer("processing_time_ms").notNull(),
-  userId: integer("user_id").notNull(),
+  userId: integer("user_id").notNull().references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("call_assessments_user_id_idx").on(table.userId),
+]);
 
 export type CallAssessment = typeof callAssessments.$inferSelect;
 export const insertCallAssessmentSchema = createInsertSchema(callAssessments).omit({

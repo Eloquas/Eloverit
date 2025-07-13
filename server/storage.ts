@@ -3,6 +3,9 @@ import {
   generatedContent, 
   accountResearch, 
   emailCadences,
+  users,
+  sessions,
+  callAssessments,
   type Prospect, 
   type InsertProspect, 
   type GeneratedContent, 
@@ -10,43 +13,63 @@ import {
   type AccountResearch,
   type InsertAccountResearch,
   type EmailCadence,
-  type InsertEmailCadence
+  type InsertEmailCadence,
+  type User,
+  type InsertUser,
+  type Session,
+  type InsertSession,
+  type CallAssessment,
+  type InsertCallAssessment
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, sql, count, like, or } from "drizzle-orm";
+import { eq, sql, count, like, or, and } from "drizzle-orm";
 
 export interface IStorage {
-  // Prospect management
-  getProspects(): Promise<Prospect[]>;
-  getProspect(id: number): Promise<Prospect | undefined>;
+  // User authentication
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
+  
+  // Session management
+  createSession(session: InsertSession): Promise<Session>;
+  getSession(id: string): Promise<Session | undefined>;
+  deleteSession(id: string): Promise<boolean>;
+  
+  // Prospect management (user-scoped)
+  getProspects(userId: number): Promise<Prospect[]>;
+  getProspect(id: number, userId: number): Promise<Prospect | undefined>;
   createProspect(prospect: InsertProspect): Promise<Prospect>;
-  updateProspect(id: number, prospect: Partial<InsertProspect>): Promise<Prospect | undefined>;
-  deleteProspect(id: number): Promise<boolean>;
+  updateProspect(id: number, prospect: Partial<InsertProspect>, userId: number): Promise<Prospect | undefined>;
+  deleteProspect(id: number, userId: number): Promise<boolean>;
   createProspects(prospects: InsertProspect[]): Promise<Prospect[]>;
-  searchProspects(query: string): Promise<Prospect[]>;
+  searchProspects(query: string, userId: number): Promise<Prospect[]>;
   
-  // Generated content management
-  getGeneratedContent(): Promise<(GeneratedContent & { prospectName: string; prospectCompany: string })[]>;
-  getGeneratedContentByProspect(prospectId: number): Promise<GeneratedContent[]>;
+  // Generated content management (user-scoped)
+  getGeneratedContent(userId: number): Promise<(GeneratedContent & { prospectName: string; prospectCompany: string })[]>;
+  getGeneratedContentByProspect(prospectId: number, userId: number): Promise<GeneratedContent[]>;
   createGeneratedContent(content: InsertGeneratedContent): Promise<GeneratedContent>;
-  deleteGeneratedContent(id: number): Promise<boolean>;
+  deleteGeneratedContent(id: number, userId: number): Promise<boolean>;
   
-  // Account research management
-  getAccountResearch(): Promise<AccountResearch[]>;
-  getAccountResearchByCompany(companyName: string): Promise<AccountResearch | undefined>;
+  // Account research management (user-scoped)
+  getAccountResearch(userId: number): Promise<AccountResearch[]>;
+  getAccountResearchByCompany(companyName: string, userId: number): Promise<AccountResearch | undefined>;
   createAccountResearch(research: InsertAccountResearch): Promise<AccountResearch>;
-  updateAccountResearch(id: number, research: Partial<InsertAccountResearch>): Promise<AccountResearch | undefined>;
-  deleteAccountResearch(id: number): Promise<boolean>;
+  updateAccountResearch(id: number, research: Partial<InsertAccountResearch>, userId: number): Promise<AccountResearch | undefined>;
+  deleteAccountResearch(id: number, userId: number): Promise<boolean>;
   
-  // Email cadence management
-  getEmailCadences(): Promise<(EmailCadence & { prospectName: string; prospectCompany: string })[]>;
-  getEmailCadencesByProspect(prospectId: number): Promise<EmailCadence[]>;
+  // Email cadence management (user-scoped)
+  getEmailCadences(userId: number): Promise<(EmailCadence & { prospectName: string; prospectCompany: string })[]>;
+  getEmailCadencesByProspect(prospectId: number, userId: number): Promise<EmailCadence[]>;
   createEmailCadence(cadence: InsertEmailCadence): Promise<EmailCadence>;
-  updateEmailCadence(id: number, cadence: Partial<InsertEmailCadence>): Promise<EmailCadence | undefined>;
-  deleteEmailCadence(id: number): Promise<boolean>;
+  updateEmailCadence(id: number, cadence: Partial<InsertEmailCadence>, userId: number): Promise<EmailCadence | undefined>;
+  deleteEmailCadence(id: number, userId: number): Promise<boolean>;
   
-  // Stats
-  getStats(): Promise<{
+  // Call assessments (user-scoped)
+  getCallAssessments(userId: number): Promise<CallAssessment[]>;
+  createCallAssessment(assessment: InsertCallAssessment): Promise<CallAssessment>;
+  
+  // Stats (user-scoped)
+  getStats(userId: number): Promise<{
     totalProspects: number;
     emailsGenerated: number;
     linkedinMessages: number;
@@ -54,15 +77,68 @@ export interface IStorage {
     activeCadences: number;
     researchedAccounts: number;
   }>;
+  
+  // Admin functions
+  getAllUsers(): Promise<User[]>;
+  getAllStats(): Promise<{
+    totalUsers: number;
+    totalProspects: number;
+    totalContent: number;
+    totalCallAssessments: number;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
-  async getProspects(): Promise<Prospect[]> {
-    return await db.select().from(prospects);
+  // User authentication methods
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
   }
 
-  async getProspect(id: number): Promise<Prospect | undefined> {
-    const [prospect] = await db.select().from(prospects).where(eq(prospects.id, id));
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async updateUser(id: number, updateUser: Partial<InsertUser>): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set(updateUser)
+      .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
+  }
+
+  // Session management methods
+  async createSession(insertSession: InsertSession): Promise<Session> {
+    const [session] = await db
+      .insert(sessions)
+      .values(insertSession)
+      .returning();
+    return session;
+  }
+
+  async getSession(id: string): Promise<Session | undefined> {
+    const [session] = await db.select().from(sessions).where(eq(sessions.id, id));
+    return session || undefined;
+  }
+
+  async deleteSession(id: string): Promise<boolean> {
+    const result = await db.delete(sessions).where(eq(sessions.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Prospect methods (user-scoped)
+  async getProspects(userId: number): Promise<Prospect[]> {
+    return await db.select().from(prospects).where(eq(prospects.userId, userId));
+  }
+
+  async getProspect(id: number, userId: number): Promise<Prospect | undefined> {
+    const [prospect] = await db.select().from(prospects)
+      .where(and(eq(prospects.id, id), eq(prospects.userId, userId)));
     return prospect || undefined;
   }
 
@@ -74,17 +150,18 @@ export class DatabaseStorage implements IStorage {
     return prospect;
   }
 
-  async updateProspect(id: number, updateData: Partial<InsertProspect>): Promise<Prospect | undefined> {
+  async updateProspect(id: number, updateProspect: Partial<InsertProspect>, userId: number): Promise<Prospect | undefined> {
     const [prospect] = await db
       .update(prospects)
-      .set(updateData)
-      .where(eq(prospects.id, id))
+      .set(updateProspect)
+      .where(and(eq(prospects.id, id), eq(prospects.userId, userId)))
       .returning();
     return prospect || undefined;
   }
 
-  async deleteProspect(id: number): Promise<boolean> {
-    const result = await db.delete(prospects).where(eq(prospects.id, id));
+  async deleteProspect(id: number, userId: number): Promise<boolean> {
+    const result = await db.delete(prospects)
+      .where(and(eq(prospects.id, id), eq(prospects.userId, userId)));
     return (result.rowCount ?? 0) > 0;
   }
 
@@ -96,33 +173,44 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async searchProspects(query: string): Promise<Prospect[]> {
-    const lowerQuery = `%${query.toLowerCase()}%`;
+  async searchProspects(query: string, userId: number): Promise<Prospect[]> {
     return await db.select().from(prospects).where(
-      sql`LOWER(name) LIKE ${lowerQuery} OR 
-          LOWER(email) LIKE ${lowerQuery} OR 
-          LOWER(company) LIKE ${lowerQuery} OR 
-          LOWER(position) LIKE ${lowerQuery}`
+      and(
+        eq(prospects.userId, userId),
+        or(
+          like(prospects.name, `%${query}%`),
+          like(prospects.email, `%${query}%`),
+          like(prospects.company, `%${query}%`),
+          like(prospects.position, `%${query}%`)
+        )
+      )
     );
   }
 
-  async getGeneratedContent(): Promise<(GeneratedContent & { prospectName: string; prospectCompany: string })[]> {
+  // Generated content methods (user-scoped)
+  async getGeneratedContent(userId: number): Promise<(GeneratedContent & { prospectName: string; prospectCompany: string })[]> {
     const result = await db
       .select({
         id: generatedContent.id,
+        userId: generatedContent.userId,
         prospectId: generatedContent.prospectId,
+        cadenceId: generatedContent.cadenceId,
         type: generatedContent.type,
         subject: generatedContent.subject,
         content: generatedContent.content,
         tone: generatedContent.tone,
         cta: generatedContent.cta,
         context: generatedContent.context,
+        cadenceStep: generatedContent.cadenceStep,
+        contentPurpose: generatedContent.contentPurpose,
+        resourceOffered: generatedContent.resourceOffered,
         createdAt: generatedContent.createdAt,
         prospectName: prospects.name,
         prospectCompany: prospects.company
       })
       .from(generatedContent)
       .leftJoin(prospects, eq(generatedContent.prospectId, prospects.id))
+      .where(eq(generatedContent.userId, userId))
       .orderBy(generatedContent.createdAt);
     
     return result.map(item => ({
@@ -132,11 +220,11 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getGeneratedContentByProspect(prospectId: number): Promise<GeneratedContent[]> {
+  async getGeneratedContentByProspect(prospectId: number, userId: number): Promise<GeneratedContent[]> {
     return await db
       .select()
       .from(generatedContent)
-      .where(eq(generatedContent.prospectId, prospectId))
+      .where(and(eq(generatedContent.prospectId, prospectId), eq(generatedContent.userId, userId)))
       .orderBy(generatedContent.createdAt);
   }
 
@@ -148,21 +236,24 @@ export class DatabaseStorage implements IStorage {
     return content;
   }
 
-  async deleteGeneratedContent(id: number): Promise<boolean> {
-    const result = await db.delete(generatedContent).where(eq(generatedContent.id, id));
+  async deleteGeneratedContent(id: number, userId: number): Promise<boolean> {
+    const result = await db.delete(generatedContent)
+      .where(and(eq(generatedContent.id, id), eq(generatedContent.userId, userId)));
     return (result.rowCount ?? 0) > 0;
   }
 
-  // Account research methods
-  async getAccountResearch(): Promise<AccountResearch[]> {
-    return await db.select().from(accountResearch).orderBy(accountResearch.researchDate);
+  // Account research methods (user-scoped)
+  async getAccountResearch(userId: number): Promise<AccountResearch[]> {
+    return await db.select().from(accountResearch)
+      .where(eq(accountResearch.userId, userId))
+      .orderBy(accountResearch.researchDate);
   }
 
-  async getAccountResearchByCompany(companyName: string): Promise<AccountResearch | undefined> {
+  async getAccountResearchByCompany(companyName: string, userId: number): Promise<AccountResearch | undefined> {
     const [research] = await db
       .select()
       .from(accountResearch)
-      .where(eq(accountResearch.companyName, companyName));
+      .where(and(eq(accountResearch.companyName, companyName), eq(accountResearch.userId, userId)));
     return research || undefined;
   }
 
@@ -174,25 +265,27 @@ export class DatabaseStorage implements IStorage {
     return research;
   }
 
-  async updateAccountResearch(id: number, updateData: Partial<InsertAccountResearch>): Promise<AccountResearch | undefined> {
+  async updateAccountResearch(id: number, updateData: Partial<InsertAccountResearch>, userId: number): Promise<AccountResearch | undefined> {
     const [research] = await db
       .update(accountResearch)
       .set(updateData)
-      .where(eq(accountResearch.id, id))
+      .where(and(eq(accountResearch.id, id), eq(accountResearch.userId, userId)))
       .returning();
     return research || undefined;
   }
 
-  async deleteAccountResearch(id: number): Promise<boolean> {
-    const result = await db.delete(accountResearch).where(eq(accountResearch.id, id));
+  async deleteAccountResearch(id: number, userId: number): Promise<boolean> {
+    const result = await db.delete(accountResearch)
+      .where(and(eq(accountResearch.id, id), eq(accountResearch.userId, userId)));
     return (result.rowCount ?? 0) > 0;
   }
 
-  // Email cadence methods
-  async getEmailCadences(): Promise<(EmailCadence & { prospectName: string; prospectCompany: string })[]> {
+  // Email cadence methods (user-scoped)
+  async getEmailCadences(userId: number): Promise<(EmailCadence & { prospectName: string; prospectCompany: string })[]> {
     const result = await db
       .select({
         id: emailCadences.id,
+        userId: emailCadences.userId,
         prospectId: emailCadences.prospectId,
         cadenceName: emailCadences.cadenceName,
         currentStep: emailCadences.currentStep,
@@ -206,6 +299,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(emailCadences)
       .leftJoin(prospects, eq(emailCadences.prospectId, prospects.id))
+      .where(eq(emailCadences.userId, userId))
       .orderBy(emailCadences.createdAt);
     
     return result.map(item => ({
@@ -215,11 +309,11 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getEmailCadencesByProspect(prospectId: number): Promise<EmailCadence[]> {
+  async getEmailCadencesByProspect(prospectId: number, userId: number): Promise<EmailCadence[]> {
     return await db
       .select()
       .from(emailCadences)
-      .where(eq(emailCadences.prospectId, prospectId))
+      .where(and(eq(emailCadences.prospectId, prospectId), eq(emailCadences.userId, userId)))
       .orderBy(emailCadences.createdAt);
   }
 
@@ -231,21 +325,38 @@ export class DatabaseStorage implements IStorage {
     return cadence;
   }
 
-  async updateEmailCadence(id: number, updateData: Partial<InsertEmailCadence>): Promise<EmailCadence | undefined> {
+  async updateEmailCadence(id: number, updateData: Partial<InsertEmailCadence>, userId: number): Promise<EmailCadence | undefined> {
     const [cadence] = await db
       .update(emailCadences)
       .set(updateData)
-      .where(eq(emailCadences.id, id))
+      .where(and(eq(emailCadences.id, id), eq(emailCadences.userId, userId)))
       .returning();
     return cadence || undefined;
   }
 
-  async deleteEmailCadence(id: number): Promise<boolean> {
-    const result = await db.delete(emailCadences).where(eq(emailCadences.id, id));
+  async deleteEmailCadence(id: number, userId: number): Promise<boolean> {
+    const result = await db.delete(emailCadences)
+      .where(and(eq(emailCadences.id, id), eq(emailCadences.userId, userId)));
     return (result.rowCount ?? 0) > 0;
   }
 
-  async getStats(): Promise<{
+  // Call assessment methods (user-scoped)
+  async getCallAssessments(userId: number): Promise<CallAssessment[]> {
+    return await db.select().from(callAssessments)
+      .where(eq(callAssessments.userId, userId))
+      .orderBy(callAssessments.createdAt);
+  }
+
+  async createCallAssessment(insertAssessment: InsertCallAssessment): Promise<CallAssessment> {
+    const [assessment] = await db
+      .insert(callAssessments)
+      .values(insertAssessment)
+      .returning();
+    return assessment;
+  }
+
+  // Stats methods (user-scoped)
+  async getStats(userId: number): Promise<{
     totalProspects: number;
     emailsGenerated: number;
     linkedinMessages: number;
@@ -253,25 +364,64 @@ export class DatabaseStorage implements IStorage {
     activeCadences: number;
     researchedAccounts: number;
   }> {
-    const [prospectCount] = await db.select({ count: count() }).from(prospects);
-    const [cadenceCount] = await db.select({ count: count() }).from(emailCadences).where(eq(emailCadences.status, "active"));
-    const [researchCount] = await db.select({ count: count() }).from(accountResearch);
-    const allContent = await db.select().from(generatedContent);
-    
-    const totalProspects = prospectCount?.count || 0;
-    const emailsGenerated = allContent.filter(c => c.type === "email").length;
-    const linkedinMessages = allContent.filter(c => c.type === "linkedin").length;
-    const successRate = totalProspects > 0 ? Math.round((allContent.length / totalProspects) * 100) : 0;
-    const activeCadences = cadenceCount?.count || 0;
-    const researchedAccounts = researchCount?.count || 0;
+    const [
+      prospectsCount,
+      emailsCount,
+      linkedinCount,
+      cadencesCount,
+      researchCount
+    ] = await Promise.all([
+      db.select({ count: count() }).from(prospects).where(eq(prospects.userId, userId)),
+      db.select({ count: count() }).from(generatedContent).where(
+        and(eq(generatedContent.userId, userId), eq(generatedContent.type, "email"))
+      ),
+      db.select({ count: count() }).from(generatedContent).where(
+        and(eq(generatedContent.userId, userId), eq(generatedContent.type, "linkedin"))
+      ),
+      db.select({ count: count() }).from(emailCadences).where(
+        and(eq(emailCadences.userId, userId), eq(emailCadences.status, "active"))
+      ),
+      db.select({ count: count() }).from(accountResearch).where(eq(accountResearch.userId, userId))
+    ]);
 
     return {
-      totalProspects,
-      emailsGenerated,
-      linkedinMessages,
-      successRate,
-      activeCadences,
-      researchedAccounts
+      totalProspects: prospectsCount[0]?.count ?? 0,
+      emailsGenerated: emailsCount[0]?.count ?? 0,
+      linkedinMessages: linkedinCount[0]?.count ?? 0,
+      successRate: 0.15, // Mock success rate
+      activeCadences: cadencesCount[0]?.count ?? 0,
+      researchedAccounts: researchCount[0]?.count ?? 0,
+    };
+  }
+
+  // Admin methods
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(users.createdAt);
+  }
+
+  async getAllStats(): Promise<{
+    totalUsers: number;
+    totalProspects: number;
+    totalContent: number;
+    totalCallAssessments: number;
+  }> {
+    const [
+      usersCount,
+      prospectsCount,
+      contentCount,
+      assessmentsCount
+    ] = await Promise.all([
+      db.select({ count: count() }).from(users),
+      db.select({ count: count() }).from(prospects),
+      db.select({ count: count() }).from(generatedContent),
+      db.select({ count: count() }).from(callAssessments)
+    ]);
+
+    return {
+      totalUsers: usersCount[0]?.count ?? 0,
+      totalProspects: prospectsCount[0]?.count ?? 0,
+      totalContent: contentCount[0]?.count ?? 0,
+      totalCallAssessments: assessmentsCount[0]?.count ?? 0,
     };
   }
 }

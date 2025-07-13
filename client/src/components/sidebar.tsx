@@ -2,6 +2,16 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Home, 
   Users, 
@@ -16,7 +26,9 @@ import {
   Zap,
   Sparkles,
   Send,
-  Trophy
+  Trophy,
+  User,
+  LogOut
 } from "lucide-react";
 
 interface SidebarProps {
@@ -26,6 +38,7 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const [location] = useLocation();
+  const { user, logout } = useAuth();
 
   const navigationItems = [
     {
@@ -204,19 +217,100 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </div>
         )}
 
-        {/* Settings */}
+        {/* User Profile & Settings */}
         <div className="p-3 border-t border-gray-100">
-          <Link href="/settings">
-            <Button
-              variant="ghost"
-              className={`w-full justify-start text-gray-600 hover:text-primary hover:bg-avo-blue-50 ${
-                collapsed ? "px-2" : "px-3"
-              }`}
-            >
-              <Settings className={`h-5 w-5 ${collapsed ? "" : "mr-3"}`} />
-              {!collapsed && "Settings"}
-            </Button>
-          </Link>
+          {!collapsed && user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start p-3 mb-2 text-gray-600 hover:text-primary hover:bg-avo-blue-50"
+                >
+                  <Avatar className="h-8 w-8 mr-3">
+                    <AvatarImage src={user.profileImageUrl} />
+                    <AvatarFallback className="bg-primary text-white">
+                      {user.firstName?.[0]}{user.lastName?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 text-left">
+                    <div className="font-medium text-sm">{user.firstName} {user.lastName}</div>
+                    <div className="text-xs text-gray-500 capitalize">{user.role}</div>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" side="top">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout} className="text-red-600">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          
+          {/* Collapsed user profile */}
+          {collapsed && user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="w-full p-2 mb-2 text-gray-600 hover:text-primary hover:bg-avo-blue-50"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.profileImageUrl} />
+                    <AvatarFallback className="bg-primary text-white text-xs">
+                      {user.firstName?.[0]}{user.lastName?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" side="right">
+                <DropdownMenuLabel>
+                  {user.firstName} {user.lastName}
+                  <div className="text-xs text-gray-500 font-normal capitalize">{user.role}</div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout} className="text-red-600">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          {/* Settings for non-authenticated or fallback */}
+          {!user && (
+            <Link href="/settings">
+              <Button
+                variant="ghost"
+                className={`w-full justify-start text-gray-600 hover:text-primary hover:bg-avo-blue-50 ${
+                  collapsed ? "px-2" : "px-3"
+                }`}
+              >
+                <Settings className={`h-5 w-5 ${collapsed ? "" : "mr-3"}`} />
+                {!collapsed && "Settings"}
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </div>
