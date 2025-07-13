@@ -16,7 +16,7 @@ This repository contains two complementary platforms:
 - **Target Roles:** Manager+ level positions in QA, CRM, ERP, D365, SAP, Oracle, enterprise systems
 
 ## Recent Changes (Last Updated: January 13, 2025)
-- ✅ **Enhanced AI System:** Integrated comprehensive Avo Automation knowledge base with specific QA metrics (80% testing time reduction, 60% faster releases, 40% fewer bugs)
+- ✅ **Enhanced Corporate Messaging:** Integrated D365 corporate impact metrics ($4.7M downtime risk, $1.2M OPEX savings, $9K/minute CRM failures, 640 engineering hours freed per quarter) with thought-provoking business questions
 - ✅ **Advanced Tone Selection:** 10 AI-powered tone options with prospect-based recommendations
 - ✅ **Loading Indicators:** Fixed UX with proper loading states and progress notifications
 - ✅ **Content Management:** Added dedicated page for viewing, searching, and exporting all generated content
