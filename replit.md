@@ -34,7 +34,7 @@ This repository contains two complementary platforms:
   - Optimized for fast loading on 3G networks
   - LinkedIn OAuth integration preserved on mobile devices
 - ✅ **Grouped Navigation System (January 2025):** Modern sidebar with collapsible groups
-  - Sales Engines group containing LinkedIn Posts, Eloquas AI, and Outreach MVP
+  - Outbound Engine group containing LinkedIn Messaging, Email Messaging, and Cadence and Delivery
   - Expandable/collapsible navigation with hover tooltips for collapsed state
   - Visual indicators for active states and grouped items
   - Enhanced UX with gradient backgrounds and modern transitions
@@ -44,6 +44,12 @@ This repository contains two complementary platforms:
   - Testing and migration requirement analysis for each platform
   - AI-powered deep research across job boards, news, and company announcements
   - Structured analysis of implementation projects, hiring signals, and QA needs
+- ✅ **Hybrid Research Engine (January 2025):** Comprehensive intelligence combining multiple data sources
+  - PDL API integration for structured company data when available
+  - AI-powered web research across job boards, news, press releases, and industry publications
+  - Intelligent data synthesis combining structured and unstructured insights
+  - Quality scoring system (0-100) based on data completeness and authenticity
+  - Fallback capabilities ensuring research completion even with limited data sources
 
 ## Project Architecture
 - **Frontend:** React + Vite + TypeScript + Tailwind CSS

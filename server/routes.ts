@@ -19,6 +19,7 @@ import { achievementSystem } from "./achievements";
 import { callAssessmentEngine } from "./call-assessment";
 import { googleDriveService } from './google-drive';
 import { platformResearchEngine } from './platform-research';
+import { hybridResearchEngine } from './hybrid-research';
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -937,35 +938,40 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
         }
       }
 
-      // Standard PDL research for general company research
+      // Hybrid research combining PDL and AI web research
       try {
-        const pdlData = await pdlService.analyzeCompanyForSCIPAB(companyName);
+        const hybridData = await hybridResearchEngine.conductHybridResearch(companyName);
         
-        if (!pdlData || !pdlData.industry) {
-          return res.status(404).json({ 
-            message: "No authentic data available", 
-            error: "Cannot generate research without verified company data. Please try a different company or check spelling." 
-          });
-        }
-
         const research = await storage.createAccountResearch({
           companyName,
-          industry: pdlData.industry,
-          companySize: pdlData.companySize,
-          currentSystems: JSON.stringify(pdlData.systems || []),
-          recentJobPostings: JSON.stringify(pdlData.hiringPatterns || []),
-          initiatives: JSON.stringify(pdlData.initiatives || []),
-          painPoints: JSON.stringify(pdlData.painPoints || []),
+          industry: hybridData.pdlData?.industry || 'Research-based analysis',
+          companySize: hybridData.pdlData?.companySize || 'Unknown',
+          currentSystems: JSON.stringify(hybridData.combinedInsights.keyInitiatives || []),
+          recentJobPostings: JSON.stringify(hybridData.combinedInsights.hiringSignals || []),
+          initiatives: JSON.stringify(hybridData.combinedInsights.keyInitiatives || []),
+          painPoints: JSON.stringify(hybridData.combinedInsights.testingOpportunities || []),
           decisionMakers: JSON.stringify([]),
-          researchQuality: "excellent"
+          researchQuality: hybridData.researchQuality >= 70 ? "excellent" : 
+                          hybridData.researchQuality >= 40 ? "good" : "fair"
         });
 
-        res.json({ message: "Account research generated successfully", companyName, research });
-      } catch (pdlError) {
-        console.error(`PDL research failed for ${companyName}:`, pdlError);
+        res.json({ 
+          message: "Hybrid research completed successfully", 
+          companyName, 
+          research,
+          hybridData: {
+            dataSource: hybridData.dataSource,
+            researchQuality: hybridData.researchQuality,
+            pdlDataAvailable: !!hybridData.pdlData,
+            aiResearchCompleted: !!hybridData.aiResearch,
+            keyInsights: hybridData.combinedInsights
+          }
+        });
+      } catch (hybridError) {
+        console.error(`Hybrid research failed for ${companyName}:`, hybridError);
         return res.status(503).json({ 
-          message: "Data source unavailable", 
-          error: "Unable to access authentic company data at this time. Please try again later." 
+          message: "Research unavailable", 
+          error: "Unable to access research data at this time. Please try again later." 
         });
       }
     } catch (error) {
