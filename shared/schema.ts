@@ -263,6 +263,36 @@ export type User = typeof users.$inferSelect;
 export type InsertSession = z.infer<typeof insertSessionSchema>;
 export type Session = typeof sessions.$inferSelect;
 
+// Onboarding schema
+export const onboardingResponses = pgTable("onboarding_responses", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  role: varchar("role", { length: 50 }),
+  experienceLevel: varchar("experience_level", { length: 50 }),
+  primaryGoals: text("primary_goals").array(),
+  company: varchar("company", { length: 255 }),
+  teamSize: varchar("team_size", { length: 50 }),
+  currentTools: text("current_tools").array(),
+  painPoints: text("pain_points").array(),
+  preferences: json("preferences").$type<{
+    emailFrequency: string;
+    communicationStyle: string;
+    automationLevel: string;
+  }>(),
+  completedAt: timestamp("completed_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertOnboardingResponseSchema = createInsertSchema(onboardingResponses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertOnboardingResponse = z.infer<typeof insertOnboardingResponseSchema>;
+export type OnboardingResponse = typeof onboardingResponses.$inferSelect;
+
 // Relations
 export const userRelations = relations(users, ({ many }) => ({
   prospects: many(prospects),

@@ -6,6 +6,7 @@ import {
   users,
   sessions,
   callAssessments,
+  onboardingResponses,
   type Prospect, 
   type InsertProspect, 
   type GeneratedContent, 
@@ -19,7 +20,9 @@ import {
   type Session,
   type InsertSession,
   type CallAssessment,
-  type InsertCallAssessment
+  type InsertCallAssessment,
+  type OnboardingResponse,
+  type InsertOnboardingResponse
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, count, like, or, and } from "drizzle-orm";
@@ -67,6 +70,10 @@ export interface IStorage {
   // Call assessments (user-scoped)
   getCallAssessments(userId: number): Promise<CallAssessment[]>;
   createCallAssessment(assessment: InsertCallAssessment): Promise<CallAssessment>;
+  
+  // Onboarding management (user-scoped)
+  getOnboardingResponse(userId: number): Promise<OnboardingResponse | undefined>;
+  createOnboardingResponse(onboarding: InsertOnboardingResponse): Promise<OnboardingResponse>;
   
   // Stats (user-scoped)
   getStats(userId: number): Promise<{
@@ -423,6 +430,20 @@ export class DatabaseStorage implements IStorage {
       totalContent: contentCount[0]?.count ?? 0,
       totalCallAssessments: assessmentsCount[0]?.count ?? 0,
     };
+  }
+
+  // Onboarding methods
+  async getOnboardingResponse(userId: number): Promise<OnboardingResponse | undefined> {
+    const [response] = await db.select().from(onboardingResponses).where(eq(onboardingResponses.userId, userId));
+    return response || undefined;
+  }
+
+  async createOnboardingResponse(onboarding: InsertOnboardingResponse): Promise<OnboardingResponse> {
+    const [response] = await db
+      .insert(onboardingResponses)
+      .values(onboarding)
+      .returning();
+    return response;
   }
 }
 

@@ -20,6 +20,85 @@ import { callAssessmentEngine } from "./call-assessment";
 import { googleDriveService } from './google-drive';
 import { platformResearchEngine } from './platform-research';
 import { hybridResearchEngine } from './hybrid-research';
+import { insertOnboardingResponseSchema, type InsertOnboardingResponse } from "@shared/schema";
+
+// AI-powered onboarding recommendations function
+function generateOnboardingRecommendations(data: InsertOnboardingResponse): {
+  recommendedFeatures: string[];
+  personalizedTips: string[];
+  suggestedWorkflow: string[];
+  automationLevel: string;
+} {
+  const recommendations = {
+    recommendedFeatures: [] as string[],
+    personalizedTips: [] as string[],
+    suggestedWorkflow: [] as string[],
+    automationLevel: data.preferences?.automationLevel || 'balanced'
+  };
+
+  // Role-based recommendations
+  if (data.role === 'sales-rep' || data.role === 'sales-manager') {
+    recommendations.recommendedFeatures.push('LinkedIn Messaging', 'Email Messaging', 'Account Research');
+    recommendations.personalizedTips.push('Start with account research to understand your prospects better');
+    recommendations.suggestedWorkflow.push('1. Research target accounts', '2. Generate personalized messages', '3. Track engagement');
+  }
+
+  if (data.role === 'marketing') {
+    recommendations.recommendedFeatures.push('LinkedIn Messaging', 'Generated Content', 'Analytics');
+    recommendations.personalizedTips.push('Focus on content generation and performance tracking');
+    recommendations.suggestedWorkflow.push('1. Generate marketing content', '2. Track performance metrics', '3. Optimize messaging');
+  }
+
+  // Goal-based recommendations
+  if (data.primaryGoals?.includes('generate-leads')) {
+    recommendations.recommendedFeatures.push('Account Research', 'Cadence and Delivery');
+    recommendations.personalizedTips.push('Use account research to identify high-value prospects');
+  }
+
+  if (data.primaryGoals?.includes('improve-emails')) {
+    recommendations.recommendedFeatures.push('Email Messaging', 'Call Assessment');
+    recommendations.personalizedTips.push('Analyze call transcripts to improve email personalization');
+  }
+
+  if (data.primaryGoals?.includes('automate-outreach')) {
+    recommendations.recommendedFeatures.push('Cadence and Delivery', 'Achievements');
+    recommendations.personalizedTips.push('Set up automated cadences to scale your outreach');
+  }
+
+  // Experience-based recommendations
+  if (data.experienceLevel === 'beginner') {
+    recommendations.personalizedTips.push('Start with the dashboard to get familiar with the platform');
+    recommendations.suggestedWorkflow.unshift('0. Complete the interactive tour');
+  }
+
+  if (data.experienceLevel === 'advanced') {
+    recommendations.recommendedFeatures.push('Call Assessment', 'Analytics', 'Achievements');
+    recommendations.personalizedTips.push('Leverage advanced analytics to optimize your sales process');
+  }
+
+  // Team size recommendations
+  if (data.teamSize === 'solo') {
+    recommendations.personalizedTips.push('Focus on automation to maximize individual productivity');
+  } else if (data.teamSize === 'large' || data.teamSize === 'enterprise') {
+    recommendations.recommendedFeatures.push('Analytics', 'Achievements');
+    recommendations.personalizedTips.push('Use team analytics to identify best practices and share them');
+  }
+
+  // Pain point solutions
+  if (data.painPoints?.includes('Low email response rates')) {
+    recommendations.personalizedTips.push('Use AI-powered email generation for better personalization');
+  }
+
+  if (data.painPoints?.includes('Time-consuming manual research')) {
+    recommendations.personalizedTips.push('Account research feature can save hours of manual work');
+  }
+
+  // Remove duplicates and limit recommendations
+  recommendations.recommendedFeatures = [...new Set(recommendations.recommendedFeatures)].slice(0, 4);
+  recommendations.personalizedTips = [...new Set(recommendations.personalizedTips)].slice(0, 3);
+
+  return recommendations;
+}
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -1756,6 +1835,41 @@ Keep it conversational and human - like one professional helping another.`;
     } catch (error) {
       console.error("Error fetching stats:", error);
       res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // Onboarding completion endpoint
+  app.post('/api/onboarding/complete', authenticateToken, async (req, res) => {
+    try {
+      const data = insertOnboardingResponseSchema.parse({
+        ...req.body,
+        userId: req.user.id
+      });
+
+      // Generate personalized recommendations based on onboarding data
+      const recommendations = generateOnboardingRecommendations(data);
+      
+      const response = await storage.createOnboardingResponse(data);
+      
+      res.json({ 
+        message: "Onboarding completed successfully",
+        response,
+        recommendations 
+      });
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      res.status(500).json({ message: "Failed to complete onboarding" });
+    }
+  });
+
+  // Get user's onboarding response
+  app.get('/api/onboarding/response', authenticateToken, async (req, res) => {
+    try {
+      const response = await storage.getOnboardingResponse(req.user.id);
+      res.json(response);
+    } catch (error) {
+      console.error('Error fetching onboarding response:', error);
+      res.status(500).json({ message: "Failed to fetch onboarding response" });
     }
   });
 

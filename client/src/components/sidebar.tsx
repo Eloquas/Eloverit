@@ -68,13 +68,6 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       badge: null
     },
     {
-      label: "Email Cadences",
-      href: "/email-cadences",
-      icon: Mail,
-      active: location === "/email-cadences",
-      badge: "18"
-    },
-    {
       label: "Generated Content",
       href: "/generated-content",
       icon: FileText,

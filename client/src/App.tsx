@@ -11,7 +11,7 @@ import { Loader2 } from "lucide-react";
 import Dashboard from "@/pages/dashboard";
 import GeneratedContent from "@/pages/generated-content";
 import AccountResearch from "@/pages/account-research";
-import EmailCadences from "@/pages/email-cadences";
+import Onboarding from "@/pages/onboarding";
 import { EloquasAI } from "@/pages/eloquas-ai";
 import LinkedInPosts from "@/pages/linkedin-posts";
 import Achievements from "@/pages/achievements";
@@ -51,7 +51,7 @@ function Router() {
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/content" component={GeneratedContent} />
         <Route path="/account-research" component={AccountResearch} />
-        <Route path="/cadences" component={EmailCadences} />
+        <Route path="/onboarding" component={Onboarding} />
         <Route path="/eloquas-ai" component={EloquasAI} />
         <Route path="/linkedin-posts" component={LinkedInPosts} />
         <Route path="/achievements" component={Achievements} />
