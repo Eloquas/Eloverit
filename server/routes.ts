@@ -1646,6 +1646,67 @@ Keep it conversational and human - like one professional helping another.`;
     }
   });
 
+  // Achievement routes
+  app.get("/api/achievements", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const { AchievementSystem } = await import("./achievements");
+      const achievementSystem = new AchievementSystem();
+      const result = await achievementSystem.getUserAchievements(userId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+      res.status(500).json({ message: "Failed to fetch achievements" });
+    }
+  });
+
+  app.get("/api/achievements/leaderboard", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const timeframe = req.query.timeframe as 'daily' | 'weekly' | 'monthly' | 'all-time' || 'weekly';
+      const { AchievementSystem } = await import("./achievements");
+      const achievementSystem = new AchievementSystem();
+      const leaderboard = await achievementSystem.getLeaderboard(timeframe);
+      res.json(leaderboard);
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+      res.status(500).json({ message: "Failed to fetch leaderboard" });
+    }
+  });
+
+  app.post("/api/achievements/activity", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const { activityType, metadata } = req.body;
+      const { AchievementSystem } = await import("./achievements");
+      const achievementSystem = new AchievementSystem();
+      const newAchievements = await achievementSystem.recordActivity(userId, activityType, metadata);
+      res.json({ newAchievements });
+    } catch (error) {
+      console.error("Error recording activity:", error);
+      res.status(500).json({ message: "Failed to record activity" });
+    }
+  });
+
+  app.get("/api/achievements/stats", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const { AchievementSystem } = await import("./achievements");
+      const achievementSystem = new AchievementSystem();
+      const stats = await achievementSystem.getUserStats(userId);
+      const levelProgression = achievementSystem.calculateLevelProgression(stats.totalPoints);
+      const streakData = achievementSystem.calculateStreakData(userId);
+      
+      res.json({
+        ...stats,
+        ...levelProgression,
+        streakData
+      });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

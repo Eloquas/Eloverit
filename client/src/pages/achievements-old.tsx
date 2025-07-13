@@ -4,10 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Star, Zap, TrendingUp, Award, Target, Crown, Flame, Medal, Gift, Sparkles, ArrowUp } from 'lucide-react';
+import { Trophy, Star, Zap, TrendingUp, Award, Target, Clock, Users, ChevronRight, Crown, Fire, Medal, Gift, Sparkles, ArrowUp, TrendingDown } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -32,6 +32,8 @@ interface UserAchievement extends Achievement {
   progressText?: string;
   unlockedAt?: string;
   isNew?: boolean;
+  rarity?: 'common' | 'rare' | 'epic' | 'legendary';
+  estimatedTimeToComplete?: string;
 }
 
 interface UserStats {
@@ -160,7 +162,7 @@ const LevelProgressCard = ({ stats }: { stats: any }) => (
       <div className="space-y-3">
         <div className="flex justify-between text-sm">
           <span>{stats.totalPoints} XP</span>
-          <span>{stats.pointsForNextLevel || stats.totalPoints + stats.xpToNextLevel} XP</span>
+          <span>{stats.pointsForNextLevel} XP</span>
         </div>
         <div className="relative">
           <Progress value={stats.levelProgressPercentage} className="h-3 bg-white/20" />
@@ -186,7 +188,7 @@ const StreakCard = ({ streakData }: { streakData: any }) => (
       <div className="flex items-center justify-between">
         <div>
           <CardTitle className="text-xl flex items-center gap-2">
-            <Flame className="h-6 w-6" />
+            <Fire className="h-6 w-6" />
             {streakData.currentStreak} Day Streak
           </CardTitle>
           <CardDescription className="text-orange-100">{streakData.streakLevel}</CardDescription>
@@ -221,14 +223,14 @@ export default function Achievements() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showUnlockedOnly, setShowUnlockedOnly] = useState(false);
   const [notifications, setNotifications] = useState<UserAchievement[]>([]);
-  const [selectedAchievement, setSelectedAchievement] = useState<UserAchievement | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedAchievement, setSelectedAchievement] = useState<UserAchievement | null>(null);
 
   // Fetch achievements data
   const { data: achievementsData, isLoading: achievementsLoading } = useQuery({
     queryKey: ['/api/achievements'],
-    refetchInterval: 30000,
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   // Fetch user stats
@@ -240,7 +242,7 @@ export default function Achievements() {
   // Fetch leaderboard
   const { data: leaderboard, isLoading: leaderboardLoading } = useQuery({
     queryKey: ['/api/achievements/leaderboard'],
-    refetchInterval: 60000,
+    refetchInterval: 60000, // Refresh every minute
   });
 
   // Activity recording mutation
@@ -326,6 +328,15 @@ export default function Achievements() {
     return achievement.category === selectedCategory;
   });
 
+  const getRarityColor = (rarity: string) => {
+    switch (rarity) {
+      case 'legendary': return 'border-purple-500 bg-purple-50 text-purple-900';
+      case 'epic': return 'border-orange-500 bg-orange-50 text-orange-900';
+      case 'rare': return 'border-blue-500 bg-blue-50 text-blue-900';
+      default: return 'border-gray-300 bg-gray-50 text-gray-900';
+    }
+  };
+
   const getTierColor = (tier: string) => {
     switch (tier) {
       case 'platinum': return 'bg-gray-100 text-gray-800 border-gray-300';
@@ -359,9 +370,7 @@ export default function Achievements() {
       {/* Header with User Progress */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Achievements & Progress
-          </h1>
+          <h1 className="text-3xl font-bold gradient-text">Achievements & Progress</h1>
           <p className="text-gray-600 mt-2">Track your sales performance and unlock rewards</p>
         </div>
         <div className="text-right">
@@ -663,6 +672,246 @@ export default function Achievements() {
           )}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <TrendingUp className="w-8 h-8 text-green-500" />
+              <span className="text-2xl font-bold text-green-600">{stats.highestTrustScore}</span>
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-2">Best Trust Score</h3>
+            <div className="space-y-2">
+              <Progress value={stats.highestTrustScore} className="h-2" />
+              <div className="flex justify-between text-xs text-gray-600">
+                <span>Story Score: {stats.bestStoryScore}/20</span>
+                <span>{stats.totalEmails} emails sent</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="space-y-6">
+        <div className="flex justify-between items-center">
+          <TabsList>
+            <TabsTrigger value="all">All Achievements</TabsTrigger>
+            <TabsTrigger value="engagement">Engagement</TabsTrigger>
+            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="performance">Performance</TabsTrigger>
+            <TabsTrigger value="milestone">Milestones</TabsTrigger>
+            <TabsTrigger value="special">Special</TabsTrigger>
+          </TabsList>
+          
+          <div className="flex items-center space-x-4">
+            <label className="flex items-center space-x-2 text-sm">
+              <input
+                type="checkbox"
+                checked={showUnlockedOnly}
+                onChange={(e) => setShowUnlockedOnly(e.target.checked)}
+                className="rounded"
+              />
+              <span>Show unlocked only</span>
+            </label>
+          </div>
+        </div>
+
+        <TabsContent value={selectedCategory} className="space-y-6">
+          {/* Achievement Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredAchievements.map((achievement) => (
+              <Card 
+                key={achievement.id} 
+                className={`cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg ${
+                  achievement.unlocked ? 'border-green-300 bg-green-50' : 'border-gray-200'
+                } ${achievement.isNew ? 'animate-pulse border-yellow-400' : ''}`}
+                onClick={() => setSelectedAchievement(achievement)}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">{achievement.icon}</span>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{achievement.name}</h3>
+                        <p className="text-xs text-gray-600">{achievement.description}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge className={getTierColor(achievement.tier)}>
+                        {achievement.tier}
+                      </Badge>
+                      <div className="text-xs text-gray-600 mt-1">{achievement.points} XP</div>
+                    </div>
+                  </div>
+
+                  {!achievement.unlocked && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs text-gray-600">
+                        <span>Progress</span>
+                        <span>{achievement.progressText || `${achievement.progressPercentage || 0}%`}</span>
+                      </div>
+                      <Progress value={achievement.progressPercentage || 0} className="h-2" />
+                      {achievement.estimatedTimeToComplete && (
+                        <div className="flex items-center text-xs text-gray-500">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {achievement.estimatedTimeToComplete}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {achievement.unlocked && achievement.unlockedAt && (
+                    <div className="flex items-center text-xs text-green-600">
+                      <Trophy className="w-3 h-3 mr-1" />
+                      Unlocked {new Date(achievement.unlockedAt).toLocaleDateString()}
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center mt-4">
+                    <Badge variant="outline" className="flex items-center space-x-1">
+                      {getCategoryIcon(achievement.category)}
+                      <span className="capitalize">{achievement.category}</span>
+                    </Badge>
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {filteredAchievements.length === 0 && (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Trophy className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No achievements found</h3>
+                <p className="text-gray-600">
+                  {showUnlockedOnly 
+                    ? "You haven't unlocked any achievements in this category yet." 
+                    : "No achievements match your current filter."}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Leaderboard */}
+          {leaderboard.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Team Leaderboard
+                </CardTitle>
+                <CardDescription>See how you stack up against your teammates</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {leaderboard.slice(0, 10).map((user) => (
+                    <div key={user.userId} className="flex items-center justify-between p-3 rounded-lg border">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                          user.rank === 1 ? 'bg-yellow-100 text-yellow-800' :
+                          user.rank === 2 ? 'bg-gray-100 text-gray-800' :
+                          user.rank === 3 ? 'bg-orange-100 text-orange-800' :
+                          'bg-blue-100 text-blue-800'
+                        }`}>
+                          #{user.rank}
+                        </div>
+                        <div>
+                          <div className="font-semibold">{user.name}</div>
+                          <div className="text-sm text-gray-600">Level {user.level}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-blue-600">{user.points} XP</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Achievement Detail Modal */}
+      {selectedAchievement && (
+        <Dialog open={!!selectedAchievement} onOpenChange={() => setSelectedAchievement(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center space-x-3">
+                <span className="text-3xl">{selectedAchievement.icon}</span>
+                <div>
+                  <div>{selectedAchievement.name}</div>
+                  <div className="text-sm text-gray-600 font-normal">{selectedAchievement.description}</div>
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <Badge className={getTierColor(selectedAchievement.tier)}>
+                  {selectedAchievement.tier.toUpperCase()}
+                </Badge>
+                <div className="text-lg font-bold text-blue-600">
+                  {selectedAchievement.points} XP
+                </div>
+              </div>
+
+              {!selectedAchievement.unlocked && (
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span>Progress to unlock</span>
+                    <span>{selectedAchievement.progressText || `${selectedAchievement.progressPercentage || 0}%`}</span>
+                  </div>
+                  <Progress value={selectedAchievement.progressPercentage || 0} className="h-3" />
+                  {selectedAchievement.estimatedTimeToComplete && (
+                    <div className="text-sm text-gray-600">
+                      Estimated time: {selectedAchievement.estimatedTimeToComplete}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {selectedAchievement.unlocked && (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center text-green-800">
+                    <Trophy className="w-4 h-4 mr-2" />
+                    <span className="font-semibold">Achievement Unlocked!</span>
+                  </div>
+                  {selectedAchievement.unlockedAt && (
+                    <div className="text-sm text-green-600 mt-1">
+                      Completed on {new Date(selectedAchievement.unlockedAt).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-between items-center pt-4 border-t">
+                <Badge variant="outline" className="flex items-center space-x-1">
+                  {getCategoryIcon(selectedAchievement.category)}
+                  <span className="capitalize">{selectedAchievement.category}</span>
+                </Badge>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setSelectedAchievement(null)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Achievement Unlock Animation */}
+      {showUnlockAnimation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg p-8 text-center animate-bounce">
+            <Trophy className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Achievement Unlocked!</h2>
+            <p className="text-gray-600">Check your achievements to see what you've earned</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

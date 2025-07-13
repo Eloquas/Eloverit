@@ -122,6 +122,103 @@ export const generatedContent = pgTable("generated_content", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// User achievements tracking
+export const userAchievements = pgTable("user_achievements", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  achievementId: varchar("achievement_id", { length: 100 }).notNull(),
+  unlockedAt: timestamp("unlocked_at").notNull().defaultNow(),
+  isNew: boolean("is_new").default(true),
+  progress: integer("progress").default(0),
+  metadata: json("metadata"), // Additional data for achievement tracking
+}, (table) => [
+  index("user_achievements_user_id_idx").on(table.userId),
+  index("user_achievements_achievement_id_idx").on(table.achievementId),
+]);
+
+// User statistics for gamification
+export const userStats = pgTable("user_stats", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id).unique(),
+  totalPoints: integer("total_points").default(0),
+  level: integer("level").default(1),
+  currentStreak: integer("current_streak").default(0),
+  longestStreak: integer("longest_streak").default(0),
+  totalEmails: integer("total_emails").default(0),
+  totalLinkedInPosts: integer("total_linkedin_posts").default(0),
+  totalCallsAnalyzed: integer("total_calls_analyzed").default(0),
+  totalCampaigns: integer("total_campaigns").default(0),
+  highestTrustScore: integer("highest_trust_score").default(0),
+  bestStoryScore: integer("best_story_score").default(0),
+  weeklyActivity: integer("weekly_activity").default(0),
+  monthlyActivity: integer("monthly_activity").default(0),
+  totalLoginDays: integer("total_login_days").default(0),
+  lastActivityDate: timestamp("last_activity_date"),
+  streakUpdatedAt: timestamp("streak_updated_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("user_stats_user_id_idx").on(table.userId),
+]);
+
+// Activity log for achievement triggers
+export const activityLog = pgTable("activity_log", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  activityType: varchar("activity_type", { length: 100 }).notNull(),
+  activityData: json("activity_data"),
+  pointsEarned: integer("points_earned").default(0),
+  triggerAchievements: text("trigger_achievements"), // JSON array of achievement IDs triggered
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("activity_log_user_id_idx").on(table.userId),
+  index("activity_log_activity_type_idx").on(table.activityType),
+]);
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  prospects: many(prospects),
+  generatedContent: many(generatedContent),
+  userAchievements: many(userAchievements),
+  stats: many(userStats),
+  activityLog: many(activityLog),
+}));
+
+export const userAchievementsRelations = relations(userAchievements, ({ one }) => ({
+  user: one(users, {
+    fields: [userAchievements.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userStatsRelations = relations(userStats, ({ one }) => ({
+  user: one(users, {
+    fields: [userStats.userId],
+    references: [users.id],
+  }),
+}));
+
+export const activityLogRelations = relations(activityLog, ({ one }) => ({
+  user: one(users, {
+    fields: [activityLog.userId],
+    references: [users.id],
+  }),
+}));
+
+// Types
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+export type Prospect = typeof prospects.$inferSelect;
+export type InsertProspect = typeof prospects.$inferInsert;
+export type GeneratedContent = typeof generatedContent.$inferSelect;
+export type InsertGeneratedContent = typeof generatedContent.$inferInsert;
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type InsertUserAchievement = typeof userAchievements.$inferInsert;
+export type UserStats = typeof userStats.$inferSelect;
+export type InsertUserStats = typeof userStats.$inferInsert;
+export type ActivityLog = typeof activityLog.$inferSelect;
+export type InsertActivityLog = typeof activityLog.$inferInsert;
+
 export const insertProspectSchema = createInsertSchema(prospects).omit({
   id: true,
   createdAt: true,
