@@ -1003,7 +1003,7 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
     }
   });
 
-  app.post("/api/account-research/generate", async (req, res) => {
+  app.post("/api/account-research/generate", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const { companyName, platform } = req.body;
       
@@ -1016,7 +1016,11 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
         try {
           const platformData = await platformResearchEngine.researchPlatformInitiatives(companyName, platform);
           
+          // Debug user authentication
+          console.log('Creating platform research for user:', req.user?.id, 'Company:', companyName, 'Platform:', platform);
+          
           const research = await storage.createAccountResearch({
+            userId: req.user!.id,
             companyName,
             industry: "Platform-focused research",
             companySize: "Unknown",
@@ -1060,7 +1064,11 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
       try {
         const hybridData = await hybridResearchEngine.conductHybridResearch(companyName);
         
+        // Debug user authentication
+        console.log('Creating account research for user:', req.user?.id, 'Company:', companyName);
+        
         const research = await storage.createAccountResearch({
+          userId: req.user!.id,
           companyName,
           industry: hybridData.pdlData?.industry || 'Research-based analysis',
           companySize: hybridData.pdlData?.companySize || 'Unknown',
@@ -1099,7 +1107,7 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
   });
 
   // Platform discovery endpoint
-  app.post("/api/account-research/platform-discovery", async (req, res) => {
+  app.post("/api/account-research/platform-discovery", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const filters = req.body;
       

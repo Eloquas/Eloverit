@@ -159,13 +159,14 @@ Return findings in this exact JSON structure:
         messages: [
           {
             role: "system",
-            content: "You are an expert enterprise systems research analyst who conducts comprehensive web research to identify real business initiatives, testing challenges, and technology implementations. You only report findings based on publicly available information."
+            content: "You are an expert enterprise systems research analyst who conducts comprehensive web research to identify real business initiatives, testing challenges, and technology implementations. You only report findings based on publicly available information. Always respond with valid JSON only, no markdown formatting."
           },
           {
             role: "user",
             content: researchPrompt
           }
         ],
+        response_format: { type: "json_object" },
         temperature: 0.1,
         max_tokens: 3000
       });
@@ -175,7 +176,16 @@ Return findings in this exact JSON structure:
         throw new Error("No response from OpenAI");
       }
 
-      return JSON.parse(response);
+      // Clean the response by removing markdown code blocks
+      const cleanedResponse = response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      
+      try {
+        return JSON.parse(cleanedResponse);
+      } catch (parseError) {
+        console.error('JSON parsing failed, raw response:', response);
+        console.error('Cleaned response:', cleanedResponse);
+        throw parseError;
+      }
 
     } catch (error) {
       console.error(`AI web research failed for ${companyName}:`, error);
