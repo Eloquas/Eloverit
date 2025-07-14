@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { AuthService, authenticateToken, requireAdmin, type AuthenticatedRequest } from "./auth";
+import { LinkedInAuthService } from "./linkedin-auth";
 import { insertProspectSchema, contentGenerationSchema, csvUploadSchema, loginSchema, registerSchema } from "@shared/schema";
 import { z } from "zod";
 import OpenAI from "openai";
@@ -210,6 +211,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       role: req.user.role,
       profileImageUrl: req.user.profileImageUrl
     });
+  });
+
+  // LinkedIn OAuth routes
+  app.get("/api/auth/linkedin", async (req, res) => {
+    try {
+      const authUrl = LinkedInAuthService.getAuthUrl();
+      res.redirect(authUrl);
+    } catch (error) {
+      res.status(500).json({ error: "LinkedIn authentication not configured" });
+    }
+  });
+
+  app.get("/api/auth/linkedin/callback", async (req, res) => {
+    try {
+      const { code } = req.query;
+      
+      if (!code) {
+        return res.status(400).json({ error: "No authorization code provided" });
+      }
+
+      const result = await LinkedInAuthService.processLinkedInCallback(code as string);
+      
+      // Set session cookie
+      res.cookie('sessionId', result.sessionId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+
+      // Redirect to dashboard with token
+      res.redirect(`/?token=${result.token}`);
+    } catch (error) {
+      console.error('LinkedIn callback error:', error);
+      res.status(500).json({ error: "LinkedIn authentication failed" });
+    }
   });
 
   // Protected routes - require authentication

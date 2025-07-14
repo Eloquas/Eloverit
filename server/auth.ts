@@ -72,6 +72,49 @@ export class AuthService {
     return { user, token, sessionId };
   }
 
+  static async linkedInLogin(linkedInProfile: any): Promise<{ user: User; token: string; sessionId: string } | null> {
+    const { id, firstName, lastName, emailAddress, pictureUrl } = linkedInProfile;
+    
+    // Check if LinkedIn user already exists
+    let user = await storage.getUserByLinkedInId(id);
+    
+    if (!user) {
+      // Create new user from LinkedIn profile
+      user = await storage.createUser({
+        email: emailAddress,
+        linkedinId: id,
+        linkedinProfile: linkedInProfile,
+        firstName: firstName,
+        lastName: lastName,
+        profileImageUrl: pictureUrl,
+        role: 'rep',
+        isActive: true
+      });
+    } else {
+      // Update existing user's LinkedIn profile
+      await storage.updateUser(user.id, {
+        linkedinProfile: linkedInProfile,
+        profileImageUrl: pictureUrl,
+        lastLoginAt: new Date()
+      });
+    }
+
+    // Create session
+    const sessionId = this.generateSessionId();
+    const expiresAt = new Date(Date.now() + SESSION_EXPIRY);
+    
+    await storage.createSession({
+      id: sessionId,
+      userId: user.id,
+      expiresAt
+    });
+
+    // Generate access token
+    const token = this.generateAccessToken(user);
+
+    return { user, token, sessionId };
+  }
+
   static async register(data: {
     email: string;
     password: string;

@@ -1,11 +1,11 @@
-# ProspectCopy & Eloquas AI - Dual Platform Repository
+# ProspectCopy & Eloverit.ai - Dual Platform Repository
 
 ## Project Overview
 This repository contains two complementary platforms:
 
 1. **ProspectCopy:** A comprehensive business communication automation platform that leverages AI to generate personalized email and LinkedIn outreach content for sales and marketing professionals, with specialized focus on enterprise systems and QA automation.
 
-2. **Eloquas AI:** A P2P outbound intelligence platform for AEs and BDRs in enterprise sales, featuring secure multi-user login, RBAC, proactive data agents, TrustScore/StoryScore systems, and automated job signal detection.
+2. **Eloverit.ai:** A P2P outbound intelligence platform for AEs and BDRs in enterprise sales, featuring secure multi-user login, RBAC, LinkedIn SSO, proactive data agents, TrustScore/StoryScore systems, and automated job signal detection.
 
 **Current State:** Production-ready demo system with authentic data validation, enhanced Dynamics 365 QA automation content, improved file upload handling, and refined UI/UX for Monday demo deployment.
 
@@ -15,7 +15,15 @@ This repository contains two complementary platforms:
 - **Content Strategy:** 6-email cadence starting with brand awareness, ending with strong CTA
 - **Target Roles:** Manager+ level positions in QA, CRM, ERP, D365, SAP, Oracle, enterprise systems
 
-## Recent Changes (Last Updated: January 13, 2025)
+## Recent Changes (Last Updated: January 14, 2025)
+- ✅ **Brand Refresh to Eloverit.ai:** Updated all branding from Eloquas AI to Eloverit.ai with new official color palette
+- ✅ **LinkedIn SSO Integration:** Complete OAuth implementation with LinkedIn authentication service
+- ✅ **Enhanced Authentication System:** Dual authentication support (email/password + LinkedIn SSO)
+- ✅ **Official Brand Colors:** Implemented Eloverit.ai gradient palette (Cyan Blue #36C8E8, Indigo Violet #6749EC, Deep Violet #4A3CD6)
+- ✅ **LinkedIn Authentication Backend:** Complete LinkedIn OAuth service with token exchange and profile management
+- ✅ **Updated UI Components:** Login/register pages with new branding and LinkedIn SSO buttons
+
+## Previous Changes (January 13, 2025)
 - ✅ **Mobile Navigation Fixed:** Implemented responsive hamburger menu overlay system that stays within screen parameters
 - ✅ **Enhanced Corporate Messaging:** Integrated D365 corporate impact metrics ($4.7M downtime risk, $1.2M OPEX savings, $9K/minute CRM failures, 640 engineering hours freed per quarter) with thought-provoking business questions
 - ✅ **Advanced Tone Selection:** 10 AI-powered tone options with prospect-based recommendations

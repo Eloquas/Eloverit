@@ -3,46 +3,47 @@
 @tailwind utilities;
 
 :root {
-  /* Avo Automation Design System Colors */
-  --background: hsl(0, 0%, 100%);
-  --foreground: hsl(218, 15%, 25%); /* Darker blue-gray for text */
-  --muted: hsl(220, 13%, 97%); /* Very light blue-gray backgrounds */
-  --muted-foreground: hsl(218, 10%, 50%);
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(218, 15%, 25%);
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(218, 15%, 25%);
-  --border: hsl(220, 13%, 88%); /* Light gray borders like Avo */
-  --input: hsl(220, 13%, 88%);
+  /* Eloverit.ai Official Brand Colors */
+  --background: hsl(48, 33%, 97%); /* Off-White Sand #FCFAF7 */
+  --foreground: hsl(218, 67%, 15%); /* Navy Blue #0F1F3C */
+  --muted: hsl(219, 67%, 97%); /* Light Mist #D9E3FF */
+  --muted-foreground: hsl(220, 21%, 65%); /* Slate #B8C2D3 */
+  --popover: hsl(48, 33%, 97%);
+  --popover-foreground: hsl(218, 67%, 15%);
+  --card: hsl(48, 33%, 97%);
+  --card-foreground: hsl(218, 67%, 15%);
+  --border: hsl(220, 21%, 88%); /* Cloud Gray #E6E8F0 */
+  --input: hsl(220, 21%, 88%);
   
-  /* Avo's signature blue color scheme */
-  --primary: hsl(214, 84%, 56%); /* Avo's primary blue #3B82F6 */
+  /* Eloverit gradient core colors */
+  --primary: hsl(196, 81%, 58%); /* Cyan Blue #36C8E8 */
   --primary-foreground: hsl(0, 0%, 100%);
-  --primary-dark: hsl(214, 84%, 46%); /* Darker blue for hover states */
+  --primary-dark: hsl(225, 84%, 65%); /* Indigo Violet #6749EC */
   
-  /* Professional secondary colors */
-  --secondary: hsl(250, 60%, 65%); /* Purple accent like Avo uses */
+  /* Gradient accent colors */
+  --secondary: hsl(232, 71%, 53%); /* Deep Violet #4A3CD6 */
   --secondary-foreground: hsl(0, 0%, 100%);
   
-  /* Success green matching Avo's palette */
-  --accent: hsl(142, 76%, 47%); /* Professional green #10B981 */
+  /* Action & text colors */
+  --accent: hsl(220, 50%, 22%); /* Midnight #1C2C54 */
   --accent-foreground: hsl(0, 0%, 100%);
   
-  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive: hsl(0, 72%, 69%); /* Coral Red #F56C6C */
   --destructive-foreground: hsl(0, 0%, 100%);
-  --ring: hsl(214, 84%, 56%);
-  --radius: 0.75rem; /* More rounded like Avo's design */
-  --surface: hsl(220, 13%, 97%);
-  --error: hsl(0, 84.2%, 60.2%);
+  --ring: hsl(196, 81%, 58%);
+  --radius: 0.75rem;
+  --surface: hsl(48, 33%, 97%);
+  --error: hsl(0, 72%, 69%);
   
-  /* Avo-specific colors */
-  --avo-blue-50: hsl(214, 100%, 97%);
-  --avo-blue-100: hsl(214, 95%, 93%);
-  --avo-blue-500: hsl(214, 84%, 56%);
-  --avo-blue-600: hsl(214, 84%, 46%);
-  --avo-purple-500: hsl(250, 60%, 65%);
-  --avo-green-500: hsl(142, 76%, 47%);
-  --avo-orange-500: hsl(25, 95%, 55%);
+  /* Eloverit-specific gradient colors */
+  --eloverit-cyan: hsl(196, 81%, 58%); /* #36C8E8 */
+  --eloverit-indigo: hsl(225, 84%, 65%); /* #6749EC */
+  --eloverit-violet: hsl(232, 71%, 53%); /* #4A3CD6 */
+  --eloverit-navy: hsl(218, 67%, 15%); /* #0F1F3C */
+  --eloverit-midnight: hsl(220, 50%, 22%); /* #1C2C54 */
+  --eloverit-bright-indigo: hsl(225, 100%, 81%); /* #93A8FF */
+  --eloverit-success: hsl(162, 73%, 60%); /* #4CE3B2 */
+  --eloverit-warning: hsl(0, 72%, 69%); /* #F56C6C */
 }
 
 .dark {
