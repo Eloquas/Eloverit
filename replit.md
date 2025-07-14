@@ -115,8 +115,9 @@ This repository contains two complementary platforms:
 - **Tone & Style Compliance:** Consultative, friendly, human, non-salesy, concise (40-80 words), balanced professionalism
 
 ✅ **Sales Call Assessment Agent (January 2025):** AI-powered transcript analysis with actionable insights following exact specification
+- **GPT-4.5 Turbo Integration:** Advanced transcript analysis using latest OpenAI model for enhanced accuracy
 - **Dual Input Methods:** File upload (.md, .rtf) and direct text paste for transcript processing
-- **Automated Signal Detection:** Extract and categorize action items into 8 platform-specific categories with placeholder links
+- **Automated Signal Detection:** Extract and categorize action items into 8 platform-specific categories with authentic platform links
 - **Speaker Analysis:** Sentiment (positive/neutral/negative), energy level (low/medium/high), influence scoring (1-10)
 - **Sales Performance Grading:** 6-skill evaluation (rapport, tone_match, clarity, discovery, storytelling, closing) on 1-5 scale
 - **Coaching Intelligence:** AI-powered coachable moment detection with specific quotes and improvement reasoning

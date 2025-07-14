@@ -242,7 +242,7 @@ Requirements:
 Analyze each speaker's sentiment, energy level, and influence score.`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo",
+      model: "gpt-4.5-turbo",
       messages: [
         {
           role: "system",
