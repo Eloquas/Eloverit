@@ -856,11 +856,24 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
     }
   });
 
+  // Get all account research for the authenticated user
+  app.get("/api/account-research", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const research = await storage.getAccountResearch(userId);
+      res.json(research);
+    } catch (error) {
+      console.error("Failed to fetch account research:", error);
+      res.status(500).json({ message: "Failed to fetch account research" });
+    }
+  });
+
   // Get account research by company name
-  app.get("/api/account-research/:companyName", async (req, res) => {
+  app.get("/api/account-research/:companyName", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const { companyName } = req.params;
-      const research = await storage.getAccountResearchByCompany(decodeURIComponent(companyName));
+      const userId = req.user!.id;
+      const research = await storage.getAccountResearchByCompany(decodeURIComponent(companyName), userId);
       
       if (!research) {
         return res.status(404).json({ message: "No research found for this company" });
