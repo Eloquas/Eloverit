@@ -25,7 +25,7 @@ import {
   type InsertOnboardingResponse
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, sql, count, like, or, and } from "drizzle-orm";
+import { eq, sql, count, like, or, and, desc } from "drizzle-orm";
 
 export interface IStorage {
   // User authentication
@@ -257,9 +257,12 @@ export class DatabaseStorage implements IStorage {
 
   // Account research methods (user-scoped)
   async getAccountResearch(userId: number): Promise<AccountResearch[]> {
-    return await db.select().from(accountResearch)
+    console.log('DatabaseStorage.getAccountResearch called with userId:', userId);
+    const results = await db.select().from(accountResearch)
       .where(eq(accountResearch.userId, userId))
-      .orderBy(accountResearch.researchDate);
+      .orderBy(desc(accountResearch.researchDate));
+    console.log('DatabaseStorage.getAccountResearch found entries:', results.length);
+    return results;
   }
 
   async getAccountResearchByCompany(companyName: string, userId: number): Promise<AccountResearch | undefined> {
