@@ -15,6 +15,7 @@ import ProspectIdentification from "@/pages/prospect-identification";
 import Onboarding from "@/pages/onboarding";
 import { EloquasAI } from "@/pages/eloquas-ai";
 import LinkedInPosts from "@/pages/linkedin-posts";
+import EloquasLinkedInPosts from "@/pages/eloquas-linkedin-posts";
 import Achievements from "@/pages/achievements";
 import OutreachMVP from "@/pages/outreach-mvp";
 import CallAssessment from "@/pages/call-assessment";
@@ -61,6 +62,7 @@ function Router() {
         <Route path="/onboarding" component={Onboarding} />
         <Route path="/eloquas-ai" component={EloquasAI} />
         <Route path="/linkedin-posts" component={LinkedInPosts} />
+        <Route path="/eloquas-linkedin-posts" component={EloquasLinkedInPosts} />
         <Route path="/achievements" component={Achievements} />
         <Route path="/outreach-mvp" component={OutreachMVP} />
         <Route path="/call-assessment" component={CallAssessment} />

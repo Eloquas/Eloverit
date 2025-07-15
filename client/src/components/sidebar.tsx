@@ -145,6 +145,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         badge: "AI"
       },
       {
+        label: "Eloquas LinkedIn Posts",
+        href: "/eloquas-linkedin-posts",
+        icon: MessageSquare,
+        active: location === "/eloquas-linkedin-posts",
+        badge: "NEW"
+      },
+      {
         label: "Email Messaging",
         href: "/eloquas-ai",
         icon: Sparkles,
