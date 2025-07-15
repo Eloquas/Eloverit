@@ -214,15 +214,6 @@ export default function AccountResearch() {
     }
   };
 
-  const parseJsonArray = (jsonString: string | null) => {
-    if (!jsonString) return [];
-    try {
-      return JSON.parse(jsonString);
-    } catch {
-      return [];
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
