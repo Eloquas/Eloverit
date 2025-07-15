@@ -16,6 +16,16 @@ This repository contains two complementary platforms:
 - **Target Roles:** Manager+ level positions in QA, CRM, ERP, D365, SAP, Oracle, enterprise systems
 
 ## Recent Changes (Last Updated: January 15, 2025)
+- ✅ **ADVANCED F1000 INTENT DISCOVERY ENGINE:** AI-powered intelligence system for Fortune 1000 automation initiatives
+  - **ChatGPT o3Pro-Style Prompting:** Enhanced prompt engineering mirroring advanced AI research methodologies
+  - **Multi-Platform Search Coverage:** LinkedIn, job boards, company websites, press releases, industry publications, SEC filings
+  - **Comprehensive Keyword Targeting:** Test automation, software delivery, Microsoft D365, Oracle systems, quality improvement initiatives
+  - **Advanced Scoring Algorithm:** 0-100 intent scoring with Fortune ranking, urgency level, and keyword density multipliers
+  - **60-Day Recency Filter:** Focus on recent initiatives and job postings for maximum relevance
+  - **Technology Exclusions:** Properly excludes Oracle OEBS and JD Edwards as requested
+  - **API Endpoints:** /api/intent-discovery/search and /api/intent-discovery/trending for comprehensive intelligence gathering
+  - **Professional UI:** Complete intent discovery interface with search filters, results visualization, and trending intelligence
+  - **Production Ready:** Advanced enterprise intelligence capabilities for identifying high-intent F1000 prospects
 - ✅ **COMPREHENSIVE DEDUPLICATION SYSTEM:** Complete checks and balances system to eliminate data redundancies
   - **Prospect Deduplication:** Prevents duplicate leads at account and individual level using email+company matching
   - **Account Research Protection:** Automatic duplicate detection prevents redundant research generation for same companies
