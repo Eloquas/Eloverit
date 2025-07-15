@@ -50,7 +50,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/dashboard" component={Dashboard} />
-        <Route path="/content" component={GeneratedContent} />
+        <Route path="/generated-content" component={GeneratedContent} />
         <Route path="/account-research" component={AccountResearch} />
         <Route path="/onboarding" component={Onboarding} />
         <Route path="/eloquas-ai" component={EloquasAI} />
