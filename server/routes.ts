@@ -12,7 +12,7 @@ import { Readable } from "stream";
 import * as XLSX from "xlsx";
 import { avoKnowledgeBase, qaMarketIntelligence, getPersonalizedAvoInsights } from "./avo-knowledge";
 import { enterpriseSystemsKnowledge, categorizeJobTitle, determineSeniorityLevel, identifySystemsExperience, getPersonalizedEnterpriseInsights } from "./enterprise-knowledge";
-import { scipabFramework, type SCIPABContext } from "./scipab-framework";
+import { buildSCIPABFramework, generateCadenceContent, type SCIPABContext } from "./scipab-framework";
 import { pdlService } from "./pdl-service";
 import { linkedInPostGenerator } from "./linkedin-posts";
 import { eloquasOutreachEngine } from "./outreach-engine";
@@ -1126,6 +1126,27 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
         // Debug user authentication
         console.log('Creating account research for user:', req.user?.id, 'Company:', companyName);
         
+        // Generate SCIPAB framework for QA automation value proposition
+        const scipabContext: SCIPABContext = {
+          prospect: {
+            name: 'Prospect',
+            position: 'Quality Engineer',
+            company: companyName,
+            seniority: 'Manager',
+            department: 'Quality Assurance'
+          },
+          accountResearch: {
+            initiatives: hybridData.combinedInsights.keyInitiatives || [],
+            systemsInUse: hybridData.pdlData?.technologies || [],
+            hiringPatterns: hybridData.combinedInsights.hiringSignals || [],
+            painPoints: hybridData.combinedInsights.testingOpportunities || [],
+            industry: hybridData.pdlData?.industry || 'Technology',
+            companySize: hybridData.pdlData?.companySize || 'Enterprise'
+          },
+          cadenceStep: 1
+        };
+        const scipabData = buildSCIPABFramework(scipabContext);
+
         const research = await storage.createAccountResearch({
           userId: req.user!.id,
           companyName,
@@ -1136,17 +1157,10 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
           initiatives: JSON.stringify(hybridData.combinedInsights.keyInitiatives || []),
           painPoints: JSON.stringify(hybridData.combinedInsights.testingOpportunities || []),
           decisionMakers: JSON.stringify([]),
+          scipabFramework: JSON.stringify(scipabData),
           researchQuality: hybridData.researchQuality >= 70 ? "excellent" : 
                           hybridData.researchQuality >= 40 ? "good" : "fair"
         });
-
-        // Generate SCIPAB framework for QA automation value proposition
-        const scipabEngine = new SCIPABFramework();
-        const scipabData = await scipabEngine.generateSCIPAB(
-          companyName, 
-          hybridData, 
-          platform || 'qa-automation'
-        );
 
         res.json({ 
           message: "Hybrid research completed successfully", 
