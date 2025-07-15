@@ -53,19 +53,27 @@ export const prospects = pgTable("prospects", {
   index("prospects_company_idx").on(table.company),
 ]);
 
-// New table for account-level research and intelligence
+// Enhanced table for account-level research and intelligence
 export const accountResearch = pgTable("account_research", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
   companyName: text("company_name").notNull(),
   industry: text("industry"),
   companySize: text("company_size"),
+  // Core Technology Systems (enhanced for enterprise systems)
   currentSystems: text("current_systems"), // JSON array of systems in use
+  proprietaryTechnologies: text("proprietary_technologies"), // JSON array of unique systems
+  // Enhanced research data
   recentJobPostings: text("recent_job_postings"), // JSON array of relevant postings
   initiatives: text("initiatives"), // JSON array of current initiatives
   painPoints: text("pain_points"), // JSON array of identified challenges
   decisionMakers: text("decision_makers"), // JSON array of key contacts
+  // SCIPAB/SPIN Framework Analysis
   scipabFramework: text("scipab_framework"), // JSON object with SCIPAB data
+  // Key Metrics Hypothesis
+  keyMetricsHypothesis: text("key_metrics_hypothesis"), // JSON object with business metrics they likely prioritize
+  businessPriorities: text("business_priorities"), // JSON array of likely priorities
+  // Metadata
   researchDate: timestamp("research_date").notNull().defaultNow(),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   researchQuality: text("research_quality").default("pending"), // excellent, good, fair, pending
@@ -73,6 +81,75 @@ export const accountResearch = pgTable("account_research", {
   index("account_research_user_id_idx").on(table.userId),
   index("account_research_company_idx").on(table.companyName),
 ]);
+
+// Enhanced contacts table for lead management within accounts
+export const contacts = pgTable("contacts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  accountResearchId: integer("account_research_id").references(() => accountResearch.id),
+  prospectId: integer("prospect_id").references(() => prospects.id),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  title: text("title"),
+  department: text("department"),
+  seniorityLevel: text("seniority_level"), // Manager, Director, VP, C-Level
+  linkedinUrl: text("linkedin_url"),
+  phoneNumber: text("phone_number"),
+  // Contact intelligence
+  roleType: text("role_type"), // technical, business, decision_maker, influencer
+  systemsExperience: text("systems_experience"), // JSON array
+  painPoints: text("pain_points"), // JSON array specific to this contact
+  personalizedNotes: text("personalized_notes"),
+  outreachPreference: text("outreach_preference").default("email"), // email, linkedin, phone
+  // Metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("contacts_user_id_idx").on(table.userId),
+  index("contacts_account_research_id_idx").on(table.accountResearchId),
+  index("contacts_email_idx").on(table.email),
+]);
+
+// Personalized outreach messages for contacts
+export const personalizedOutreach = pgTable("personalized_outreach", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  contactId: integer("contact_id").notNull().references(() => contacts.id),
+  messageType: text("message_type").notNull(), // email, linkedin
+  focusType: text("focus_type").notNull(), // trust, story, trust_story_combined
+  subject: text("subject"),
+  content: text("content").notNull(),
+  personalizationElements: text("personalization_elements"), // JSON array of what was personalized
+  generatedAt: timestamp("generated_at").notNull().defaultNow(),
+}, (table) => [
+  index("personalized_outreach_user_id_idx").on(table.userId),
+  index("personalized_outreach_contact_id_idx").on(table.contactId),
+]);
+
+// Relations for data consistency (contacts and outreach)
+export const enhancedUsersRelations = relations(users, ({ many }) => ({
+  prospects: many(prospects),
+  accountResearch: many(accountResearch),
+  contacts: many(contacts),
+  personalizedOutreach: many(personalizedOutreach),
+}));
+
+export const accountResearchRelations = relations(accountResearch, ({ one, many }) => ({
+  user: one(users, { fields: [accountResearch.userId], references: [users.id] }),
+  contacts: many(contacts),
+}));
+
+export const contactsRelations = relations(contacts, ({ one, many }) => ({
+  user: one(users, { fields: [contacts.userId], references: [users.id] }),
+  accountResearch: one(accountResearch, { fields: [contacts.accountResearchId], references: [accountResearch.id] }),
+  prospect: one(prospects, { fields: [contacts.prospectId], references: [prospects.id] }),
+  personalizedOutreach: many(personalizedOutreach),
+}));
+
+export const personalizedOutreachRelations = relations(personalizedOutreach, ({ one }) => ({
+  user: one(users, { fields: [personalizedOutreach.userId], references: [users.id] }),
+  contact: one(contacts, { fields: [personalizedOutreach.contactId], references: [contacts.id] }),
+}));
 
 // Search templates for weekly intel loops
 export const searchTemplates = pgTable("search_templates", {
@@ -362,6 +439,24 @@ export const insertOnboardingResponseSchema = createInsertSchema(onboardingRespo
 
 export type InsertOnboardingResponse = z.infer<typeof insertOnboardingResponseSchema>;
 export type OnboardingResponse = typeof onboardingResponses.$inferSelect;
+
+// Contact and outreach types
+export type Contact = typeof contacts.$inferSelect;
+export type InsertContact = typeof contacts.$inferInsert;
+export type PersonalizedOutreach = typeof personalizedOutreach.$inferSelect;
+export type InsertPersonalizedOutreach = typeof personalizedOutreach.$inferInsert;
+
+// Insert schemas for validation
+export const insertContactSchema = createInsertSchema(contacts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPersonalizedOutreachSchema = createInsertSchema(personalizedOutreach).omit({
+  id: true,
+  generatedAt: true,
+});
 
 // Call Assessment types
 export type CallAssessment = typeof callAssessments.$inferSelect;

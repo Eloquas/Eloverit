@@ -1,0 +1,61 @@
+ Core Requirements
+✅ 1. Account Research Tab
+Build an Account Research tab that clearly displays:
+
+Core Technology Systems:
+
+Clearly list relevant core technologies (Salesforce, SAP S/4, SAP ECC, MS Dynamics, MS CE, MS AX, MS BO, MS D365, Oracle EBS, Oracle ECC, JD Edwards, etc.).
+
+Include a clearly visible section for any identified proprietary technologies/systems unique to the account.
+
+SCIPAB/SPIN Framework Analysis:
+
+Display account information structured around the SCIPAB/SPIN framework (Situation, Complication, Implication, Positioning, Action, Benefit or Situation, Problem, Implication, Need-payoff).
+
+Clearly highlight this analysis in an organized format that sales reps can easily review.
+
+Hypothesis on Key Metrics:
+
+Clearly articulate a hypothesis about which business metrics or KPIs this particular account likely prioritizes or cares about most.
+
+✅ 2. Leads & Contacts Tab
+Build a separate Leads & Contacts tab that allows sales reps to explore individual contacts within an account and easily access tailored outreach strategies:
+
+Contact Tree View:
+
+Display all relevant leads/contacts organized neatly in a clear, collapsible tree structure.
+
+Allow sales reps to quickly navigate and select individual contacts.
+
+Generated Personalized Communications:
+
+For each selected lead/contact, automatically display two types of personalized messaging:
+
+A Sample Email tailored specifically to the selected contact.
+
+A Sample LinkedIn Message tailored to the selected contact's professional role and presumed interests.
+
+Allow the sales rep to choose among the following generation options clearly:
+
+Trust focused message
+
+Story focused message
+
+Trust + Story combined message
+
+Display these generated messages clearly within the UI once the rep selects the preferred type.
+
+🎨 Interface Preferences
+Maintain consistency with the existing user interface's look and feel (professional, clean, user-friendly).
+
+Ensure intuitive tab switching, clear labeling, and smooth interaction.
+
+📗 Languages Preferences
+Interaction with Replit Agent: English
+
+Application Interface: English
+
+🚀 Expected Outcome
+By clearly completing this task, the existing tool will empower sales representatives to efficiently research accounts, clearly understand the technology landscape and the strategic context of each account, precisely pinpoint high-potential leads, and smoothly generate targeted, role-specific outreach communications.
+
+✨ Begin building this clearly defined UI and functional experience for the Account and Lead Research page within the existing project now.

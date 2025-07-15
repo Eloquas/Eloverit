@@ -217,6 +217,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Enhanced Account Research API endpoints
+  
+  // Contact management endpoints
+  app.get("/api/contacts", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const contacts = await storage.getContacts(userId);
+      res.json(contacts);
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+      res.status(500).json({ error: "Failed to fetch contacts" });
+    }
+  });
+
+  app.get("/api/contacts/account/:accountId", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const accountId = parseInt(req.params.accountId);
+      const contacts = await storage.getContactsByAccount(accountId, userId);
+      res.json(contacts);
+    } catch (error) {
+      console.error("Error fetching contacts by account:", error);
+      res.status(500).json({ error: "Failed to fetch contacts by account" });
+    }
+  });
+
+  // Personalized outreach generation endpoint
+  app.post("/api/personalized-outreach/generate", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { contactId, messageType, focusType } = req.body;
+      const userId = req.user!.id;
+
+      // Get contact details from prospects (since we're using prospects as contacts for now)
+      const prospects = await storage.getProspects(userId);
+      const targetContact = prospects.find(p => p.id === contactId);
+      
+      if (!targetContact) {
+        return res.status(404).json({ error: "Contact not found" });
+      }
+
+      // Get account research for context
+      const accountResearch = await storage.getAccountResearch(userId);
+      const relevantResearch = accountResearch.find(r => 
+        r.companyName === targetContact.company
+      );
+
+      // Generate personalized message using OpenAI
+      let prompt = "";
+      let subject = "";
+
+      if (messageType === "email") {
+        if (focusType === "trust") {
+          subject = `Quick question about ${targetContact.company}'s testing initiatives`;
+          prompt = `Generate a trust-focused email for ${targetContact.name} (${targetContact.position}) at ${targetContact.company}.
+
+Trust elements to include:
+- Reference their specific role: ${targetContact.position}
+- Mention relevant industry experience
+- Reference company's technology stack: ${relevantResearch?.currentSystems || 'enterprise systems'}
+- Build credibility through shared connections or industry knowledge
+
+Keep it conversational, consultative, and under 150 words. Focus on building trust first, not selling.`;
+        } else if (focusType === "story") {
+          subject = `How a similar company solved their testing challenges`;
+          prompt = `Generate a story-focused email for ${targetContact.name} (${targetContact.position}).
+
+Story structure:
+- Hero: Similar company in their industry
+- Challenge: Testing bottlenecks, manual processes
+- Solution: QA automation implementation
+- Results: Specific metrics (80% testing time reduction, 60% faster releases)
+
+Make it relevant to their role as ${targetContact.position}. Keep under 150 words.`;
+        } else {
+          subject = `${targetContact.name}, thought you'd find this interesting`;
+          prompt = `Generate a combined trust + story email for ${targetContact.name} (${targetContact.position}).
+
+Structure:
+1. Trust anchor: Reference their expertise in ${targetContact.position}
+2. Story element: Similar company success story
+3. Relevant outcome: Specific to their role and industry
+4. Soft ask: Would they like to hear more
+
+Keep under 150 words, consultative tone.`;
+        }
+      } else { // LinkedIn message
+        prompt = `Generate a LinkedIn message for ${targetContact.name} (${targetContact.position}) with ${focusType} focus.
+        
+Keep under 300 characters for LinkedIn. ${focusType === "trust" ? "Focus on building credibility and common ground." : focusType === "story" ? "Share a relevant success story." : "Combine trust building with a brief success story."}`;
+      }
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: "You are a sales enablement AI focused on QA automation and enterprise systems. Generate professional, personalized outreach that builds trust and provides value."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 300
+      });
+
+      const generatedContent = response.choices[0]?.message?.content || "Failed to generate content";
+
+      // Return the generated outreach (we'll implement actual storage later if needed)
+      res.json({
+        contactId,
+        messageType,
+        focusType,
+        subject: messageType === "email" ? subject : undefined,
+        content: generatedContent,
+        personalizationElements: [
+          targetContact.position,
+          targetContact.company,
+          focusType
+        ]
+      });
+    } catch (error) {
+      console.error("Error generating personalized outreach:", error);
+      res.status(500).json({ error: "Failed to generate personalized outreach" });
+    }
+  });
+
   // LinkedIn OAuth routes
   app.get("/api/auth/linkedin", async (req, res) => {
     try {

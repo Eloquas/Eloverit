@@ -7,6 +7,8 @@ import {
   sessions,
   callAssessments,
   onboardingResponses,
+  contacts,
+  personalizedOutreach,
   type Prospect, 
   type InsertProspect, 
   type GeneratedContent, 
@@ -22,7 +24,11 @@ import {
   type CallAssessment,
   type InsertCallAssessment,
   type OnboardingResponse,
-  type InsertOnboardingResponse
+  type InsertOnboardingResponse,
+  type Contact,
+  type InsertContact,
+  type PersonalizedOutreach,
+  type InsertPersonalizedOutreach
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, count, like, or, and, desc } from "drizzle-orm";
@@ -92,6 +98,18 @@ export interface IStorage {
     researchedAccounts: number;
   }>;
   
+  // Contact management (user-scoped)
+  getContacts(userId: number): Promise<Contact[]>;
+  getContactsByAccount(accountResearchId: number, userId: number): Promise<Contact[]>;
+  createContact(contact: InsertContact): Promise<Contact>;
+  updateContact(id: number, contact: Partial<InsertContact>, userId: number): Promise<Contact | undefined>;
+  deleteContact(id: number, userId: number): Promise<boolean>;
+  
+  // Personalized outreach management (user-scoped)
+  getPersonalizedOutreach(contactId: number, userId: number): Promise<PersonalizedOutreach[]>;
+  createPersonalizedOutreach(outreach: InsertPersonalizedOutreach): Promise<PersonalizedOutreach>;
+  deletePersonalizedOutreach(id: number, userId: number): Promise<boolean>;
+
   // Admin functions
   getAllUsers(): Promise<User[]>;
   getAllStats(): Promise<{
@@ -485,6 +503,63 @@ export class DatabaseStorage implements IStorage {
       .values(onboarding)
       .returning();
     return response;
+  }
+
+  // Contact management methods (user-scoped)
+  async getContacts(userId: number): Promise<Contact[]> {
+    return await db.select().from(contacts)
+      .where(eq(contacts.userId, userId))
+      .orderBy(contacts.createdAt);
+  }
+
+  async getContactsByAccount(accountResearchId: number, userId: number): Promise<Contact[]> {
+    return await db.select().from(contacts)
+      .where(and(eq(contacts.accountResearchId, accountResearchId), eq(contacts.userId, userId)))
+      .orderBy(contacts.createdAt);
+  }
+
+  async createContact(insertContact: InsertContact): Promise<Contact> {
+    const [contact] = await db
+      .insert(contacts)
+      .values(insertContact)
+      .returning();
+    return contact;
+  }
+
+  async updateContact(id: number, updateData: Partial<InsertContact>, userId: number): Promise<Contact | undefined> {
+    const [contact] = await db
+      .update(contacts)
+      .set(updateData)
+      .where(and(eq(contacts.id, id), eq(contacts.userId, userId)))
+      .returning();
+    return contact || undefined;
+  }
+
+  async deleteContact(id: number, userId: number): Promise<boolean> {
+    const result = await db.delete(contacts)
+      .where(and(eq(contacts.id, id), eq(contacts.userId, userId)));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Personalized outreach methods (user-scoped)
+  async getPersonalizedOutreach(contactId: number, userId: number): Promise<PersonalizedOutreach[]> {
+    return await db.select().from(personalizedOutreach)
+      .where(and(eq(personalizedOutreach.contactId, contactId), eq(personalizedOutreach.userId, userId)))
+      .orderBy(personalizedOutreach.generatedAt);
+  }
+
+  async createPersonalizedOutreach(insertOutreach: InsertPersonalizedOutreach): Promise<PersonalizedOutreach> {
+    const [outreach] = await db
+      .insert(personalizedOutreach)
+      .values(insertOutreach)
+      .returning();
+    return outreach;
+  }
+
+  async deletePersonalizedOutreach(id: number, userId: number): Promise<boolean> {
+    const result = await db.delete(personalizedOutreach)
+      .where(and(eq(personalizedOutreach.id, id), eq(personalizedOutreach.userId, userId)));
+    return (result.rowCount ?? 0) > 0;
   }
 }
 
