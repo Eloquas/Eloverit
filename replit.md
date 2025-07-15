@@ -16,6 +16,11 @@ This repository contains two complementary platforms:
 - **Target Roles:** Manager+ level positions in QA, CRM, ERP, D365, SAP, Oracle, enterprise systems
 
 ## Recent Changes (Last Updated: January 15, 2025)
+- ✅ **CRITICAL CSV UPLOAD FIX:** Fixed database constraint violation error for lead list uploads
+  - **Authentication Middleware:** Added proper authentication middleware to prospects upload endpoint
+  - **User ID Assignment:** Fixed userId mapping in CSV upload to prevent null constraint violations
+  - **Data Structure Mapping:** Properly mapped CSV data to InsertProspect format with all required fields
+  - **Production Ready:** CSV upload now works correctly with proper user authentication and data persistence
 - ✅ **CRITICAL PLATFORM DISCOVERY ENGINE FIX:** Emergency debugging and resolution of account research system failures
   - **Intent Score Calculation:** Fixed TypeError in calculateIntentScore method with proper null handling and fallback data structures
   - **Demo Account Structure:** Restructured demo accounts to match DiscoveredAccount interface with proper platformInitiatives, hiringSignals, and platformUsage fields

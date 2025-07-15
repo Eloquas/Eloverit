@@ -197,6 +197,7 @@ export const authenticateToken = async (
 
   // Get user from database
   const user = await storage.getUserByEmail(decoded.email);
+  
   if (!user || !user.isActive) {
     res.status(403).json({ error: 'User not found or inactive' });
     return;

@@ -343,8 +343,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload CSV/Excel prospects
-  app.post("/api/prospects/upload", upload.single('file'), async (req, res) => {
+  app.post("/api/prospects/upload", authenticateToken, upload.single('file'), async (req: AuthenticatedRequest, res) => {
     try {
+      // Ensure user is authenticated
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication failed - user not found" });
+      }
+      
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
       }
@@ -450,7 +455,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const createdProspects = await storage.createProspects(validatedProspects);
+      // Add userId to each validated prospect and map to InsertProspect format
+      const userId = req.user!.id;
+      const prospectsWithUserId = validatedProspects.map(prospect => ({
+        userId,
+        name: prospect.name,
+        email: prospect.email,
+        company: prospect.company,
+        position: prospect.position,
+        status: "active" as const,
+        additionalInfo: prospect.additionalInfo || null,
+        jobTitleCategory: prospect.jobTitleCategory || null,
+        seniorityLevel: prospect.seniorityLevel || null,
+        systemsExperience: prospect.systemsExperience || null,
+        accountPriority: "medium" as const,
+        lastResearchDate: null
+      }));
+
+      const createdProspects = await storage.createProspects(prospectsWithUserId);
       
       let message = `Successfully uploaded ${createdProspects.length} prospects`;
       if (skippedRows.length > 0) {
