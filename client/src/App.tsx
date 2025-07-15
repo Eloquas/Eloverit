@@ -21,6 +21,8 @@ import CallAssessment from "@/pages/call-assessment";
 import MicrolearningPage from "@/pages/microlearning";
 import ResearchInsights from "@/pages/research-insights";
 import EmailCadences from "@/pages/email-cadences";
+import OrchestratorDashboard from "@/pages/orchestrator-dashboard";
+import Integrations from "@/pages/integrations";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -65,6 +67,8 @@ function Router() {
         <Route path="/microlearning" component={MicrolearningPage} />
         <Route path="/research-insights" component={ResearchInsights} />
         <Route path="/email-cadences" component={EmailCadences} />
+        <Route path="/orchestrator" component={OrchestratorDashboard} />
+        <Route path="/integrations" component={Integrations} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>

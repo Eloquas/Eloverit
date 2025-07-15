@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
+import { BackgroundProcessor } from "@/components/background-processor";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -31,6 +32,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           </div>
         </main>
       </div>
+      <BackgroundProcessor />
     </div>
   );
 }

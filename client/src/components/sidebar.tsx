@@ -32,7 +32,13 @@ import {
   User,
   LogOut,
   Layers,
-  Brain
+  Brain,
+  Workflow,
+  Network,
+  MessageSquare,
+  Award,
+  BookOpen,
+  TrendingUp
 } from "lucide-react";
 
 interface SidebarProps {
