@@ -424,8 +424,14 @@ export default function ProspectIdentification() {
       const formData = new FormData();
       formData.append('file', file);
       
+      // Get auth token from localStorage
+      const token = localStorage.getItem('token');
+      
       const response = await fetch('/api/prospects/upload', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formData,
       });
       
