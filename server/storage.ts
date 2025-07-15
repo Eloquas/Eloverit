@@ -54,6 +54,11 @@ export interface IStorage {
   createProspects(prospects: InsertProspect[]): Promise<Prospect[]>;
   searchProspects(query: string, userId: number): Promise<Prospect[]>;
   
+  // Deduplication methods
+  findDuplicateProspect(email: string, company: string, userId: number): Promise<Prospect | undefined>;
+  findDuplicateAccountResearch(companyName: string, userId: number): Promise<AccountResearch | undefined>;
+  createProspectsWithDeduplication(prospects: InsertProspect[]): Promise<{ created: Prospect[], duplicates: any[], skipped: any[] }>;
+  
   // Generated content management (user-scoped)
   getGeneratedContent(userId: number): Promise<(GeneratedContent & { prospectName: string; prospectCompany: string })[]>;
   getGeneratedContentByProspect(prospectId: number, userId: number): Promise<GeneratedContent[]>;
@@ -210,6 +215,73 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
+  // Deduplication methods implementation
+  async findDuplicateProspect(email: string, company: string, userId: number): Promise<Prospect | undefined> {
+    const [prospect] = await db.select().from(prospects)
+      .where(
+        and(
+          eq(prospects.userId, userId),
+          or(
+            eq(prospects.email, email),
+            and(
+              eq(prospects.company, company),
+              eq(prospects.name, email.split('@')[0]) // Basic name matching
+            )
+          )
+        )
+      );
+    return prospect || undefined;
+  }
+
+  async findDuplicateAccountResearch(companyName: string, userId: number): Promise<AccountResearch | undefined> {
+    const [research] = await db.select().from(accountResearch)
+      .where(
+        and(
+          eq(accountResearch.userId, userId),
+          eq(accountResearch.companyName, companyName)
+        )
+      );
+    return research || undefined;
+  }
+
+  async createProspectsWithDeduplication(insertProspects: InsertProspect[]): Promise<{ created: Prospect[], duplicates: any[], skipped: any[] }> {
+    const created: Prospect[] = [];
+    const duplicates: any[] = [];
+    const skipped: any[] = [];
+
+    for (const prospectData of insertProspects) {
+      try {
+        // Check for duplicate by email and company
+        const existingProspect = await this.findDuplicateProspect(
+          prospectData.email, 
+          prospectData.company, 
+          prospectData.userId
+        );
+
+        if (existingProspect) {
+          duplicates.push({
+            ...prospectData,
+            existingId: existingProspect.id,
+            reason: 'Duplicate email or company+name combination'
+          });
+        } else {
+          const [newProspect] = await db
+            .insert(prospects)
+            .values(prospectData)
+            .returning();
+          created.push(newProspect);
+        }
+      } catch (error) {
+        skipped.push({
+          ...prospectData,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    }
+
+    return { created, duplicates, skipped };
+  }
+
   async searchProspects(query: string, userId: number): Promise<Prospect[]> {
     return await db.select().from(prospects).where(
       and(
@@ -324,6 +396,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAccountResearch(insertResearch: InsertAccountResearch): Promise<AccountResearch> {
+    // Check for existing research first
+    const existingResearch = await this.findDuplicateAccountResearch(
+      insertResearch.companyName, 
+      insertResearch.userId
+    );
+
+    if (existingResearch) {
+      // Return existing research instead of creating duplicate
+      return existingResearch;
+    }
+
     const [research] = await db
       .insert(accountResearch)
       .values(insertResearch)

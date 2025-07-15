@@ -219,6 +219,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Enhanced Account Research API endpoints
   
+  // Duplicate management endpoints
+  app.get("/api/duplicates/check", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const { email, company, companyName } = req.query;
+
+      const duplicates = {
+        prospectDuplicate: null as any,
+        accountResearchDuplicate: null as any
+      };
+
+      // Check for prospect duplicates
+      if (email && company) {
+        duplicates.prospectDuplicate = await storage.findDuplicateProspect(
+          email as string, 
+          company as string, 
+          userId
+        );
+      }
+
+      // Check for account research duplicates
+      if (companyName) {
+        duplicates.accountResearchDuplicate = await storage.findDuplicateAccountResearch(
+          companyName as string, 
+          userId
+        );
+      }
+
+      res.json(duplicates);
+    } catch (error) {
+      console.error("Error checking for duplicates:", error);
+      res.status(500).json({ error: "Failed to check for duplicates" });
+    }
+  });
+
+  app.get("/api/duplicates/summary", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Get all prospects and group by company+email combination
+      const prospects = await storage.getProspects(userId);
+      const accountResearch = await storage.getAccountResearch(userId);
+      
+      // Find potential prospect duplicates
+      const prospectGroups = new Map<string, any[]>();
+      prospects.forEach(prospect => {
+        const key = `${prospect.email}-${prospect.company}`;
+        if (!prospectGroups.has(key)) {
+          prospectGroups.set(key, []);
+        }
+        prospectGroups.get(key)!.push(prospect);
+      });
+      
+      const duplicateProspects = Array.from(prospectGroups.values())
+        .filter(group => group.length > 1)
+        .map(group => ({
+          email: group[0].email,
+          company: group[0].company,
+          count: group.length,
+          prospects: group
+        }));
+
+      // Find potential account research duplicates
+      const companyGroups = new Map<string, any[]>();
+      accountResearch.forEach(research => {
+        const key = research.companyName.toLowerCase();
+        if (!companyGroups.has(key)) {
+          companyGroups.set(key, []);
+        }
+        companyGroups.get(key)!.push(research);
+      });
+      
+      const duplicateAccounts = Array.from(companyGroups.values())
+        .filter(group => group.length > 1)
+        .map(group => ({
+          companyName: group[0].companyName,
+          count: group.length,
+          research: group
+        }));
+
+      res.json({
+        duplicateProspects,
+        duplicateAccounts,
+        summary: {
+          totalProspects: prospects.length,
+          duplicateProspectGroups: duplicateProspects.length,
+          totalAccountResearch: accountResearch.length,
+          duplicateAccountGroups: duplicateAccounts.length
+        }
+      });
+    } catch (error) {
+      console.error("Error getting duplicate summary:", error);
+      res.status(500).json({ error: "Failed to get duplicate summary" });
+    }
+  });
+
   // Contact management endpoints
   app.get("/api/contacts", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
@@ -600,17 +696,23 @@ Keep under 300 characters for LinkedIn. ${focusType === "trust" ? "Focus on buil
         lastResearchDate: null
       }));
 
-      const createdProspects = await storage.createProspects(prospectsWithUserId);
+      // Use deduplication logic to prevent duplicate prospects
+      const result = await storage.createProspectsWithDeduplication(prospectsWithUserId);
       
-      let message = `Successfully uploaded ${createdProspects.length} prospects`;
-      if (skippedRows.length > 0) {
-        message += `. Skipped ${skippedRows.length} rows due to missing data.`;
+      let message = `Successfully uploaded ${result.created.length} new prospects`;
+      if (result.duplicates.length > 0) {
+        message += `. Found ${result.duplicates.length} duplicates (skipped)`;
+      }
+      if (skippedRows.length > 0 || result.skipped.length > 0) {
+        const totalSkipped = skippedRows.length + result.skipped.length;
+        message += `. Skipped ${totalSkipped} rows due to missing data or errors.`;
       }
 
       res.status(201).json({ 
         message,
-        prospects: createdProspects,
-        skipped: skippedRows.length > 0 ? skippedRows : undefined
+        prospects: result.created,
+        duplicates: result.duplicates,
+        skipped: [...skippedRows, ...result.skipped]
       });
     } catch (error) {
       console.error("Upload error:", error);

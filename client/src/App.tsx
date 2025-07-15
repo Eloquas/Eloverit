@@ -13,6 +13,7 @@ import GeneratedContent from "@/pages/generated-content";
 import AccountResearch from "@/pages/account-research";
 import EnhancedAccountResearch from "@/pages/enhanced-account-research";
 import ProspectIdentification from "@/pages/prospect-identification";
+import DuplicatesManagement from "@/pages/duplicates-management";
 import Onboarding from "@/pages/onboarding";
 import { EloquasAI } from "@/pages/eloquas-ai";
 import LinkedInPosts from "@/pages/linkedin-posts";
@@ -61,6 +62,7 @@ function Router() {
         <Route path="/generated-content" component={GeneratedContent} />
         <Route path="/account-research" component={AccountResearch} />
         <Route path="/enhanced-account-research" component={EnhancedAccountResearch} />
+        <Route path="/duplicates-management" component={DuplicatesManagement} />
         <Route path="/onboarding" component={Onboarding} />
         <Route path="/eloquas-ai" component={EloquasAI} />
         <Route path="/linkedin-posts" component={LinkedInPosts} />
