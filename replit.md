@@ -16,6 +16,10 @@ This repository contains two complementary platforms:
 - **Target Roles:** Manager+ level positions in QA, CRM, ERP, D365, SAP, Oracle, enterprise systems
 
 ## Recent Changes (Last Updated: January 14, 2025)
+- ✅ **Interactive Dashboard Insights:** Enhanced stats tiles with expandable insights, contextual recommendations, and actionable next steps
+- ✅ **Account Research Caching:** Weekly cache system prevents redundant research cycles and saves API costs
+- ✅ **Route Fix:** Resolved Generated Content page 404 error by correcting route mismatch
+- ✅ **API Route Conflicts:** Fixed duplicate account research endpoints causing data display issues
 - ✅ **Brand Refresh to Eloverit.ai:** Updated all branding from Eloquas AI to Eloverit.ai with new official color palette
 - ✅ **LinkedIn SSO Integration:** Complete OAuth implementation with LinkedIn authentication service
 - ✅ **Enhanced Authentication System:** Dual authentication support (email/password + LinkedIn SSO)
