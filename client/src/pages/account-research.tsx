@@ -42,6 +42,55 @@ export default function AccountResearch() {
   // Get unique companies from prospects
   const companies = [...new Set(prospects.map((p: any) => p.company))].sort();
 
+  // Helper function to parse JSON arrays safely
+  const parseJsonArray = (jsonString: string | null) => {
+    if (!jsonString) return [];
+    try {
+      return JSON.parse(jsonString);
+    } catch {
+      return [];
+    }
+  };
+
+  // Calculate intent score for a research entry
+  const calculateIntentScore = (research: any) => {
+    let score = 0;
+    const systems = parseJsonArray(research.currentSystems);
+    const postings = parseJsonArray(research.recentJobPostings);
+    const initiatives = parseJsonArray(research.initiatives);
+    
+    // QA hiring activity (40%)
+    const qaKeywords = ['qa', 'quality', 'test', 'automation', 'testing'];
+    const qaPostings = postings.filter((posting: string) => 
+      qaKeywords.some(keyword => posting.toLowerCase().includes(keyword))
+    );
+    score += Math.min((qaPostings.length / 3) * 40, 40);
+    
+    // Testing initiatives (30%)
+    const testingInitiatives = initiatives.filter((init: string) =>
+      qaKeywords.some(keyword => init.toLowerCase().includes(keyword))
+    );
+    score += Math.min((testingInitiatives.length / 2) * 30, 30);
+    
+    // Enterprise systems (20%)
+    const enterpriseSystems = ['salesforce', 'sap', 'oracle', 'dynamics', 'workday'];
+    const hasEnterpriseSystems = systems.some((system: string) =>
+      enterpriseSystems.some(es => system.toLowerCase().includes(es))
+    );
+    if (hasEnterpriseSystems) score += 20;
+    
+    // Quality challenges (10%)
+    const painPoints = parseJsonArray(research.painPoints);
+    const qualityChallenges = painPoints.filter((pain: string) =>
+      ['quality', 'bugs', 'testing', 'reliability'].some(keyword => 
+        pain.toLowerCase().includes(keyword)
+      )
+    );
+    score += Math.min((qualityChallenges.length / 2) * 10, 10);
+    
+    return Math.round(score);
+  };
+
   const filteredResearch = accountResearch.filter((research: any) => {
     if (researchFilter === "pending") return research.researchQuality === "pending";
     if (researchFilter === "excellent") return research.researchQuality === "excellent";
@@ -137,44 +186,6 @@ export default function AccountResearch() {
       industry: "",
       state: ""
     });
-  };
-
-  const calculateIntentScore = (research: any) => {
-    let score = 0;
-    const systems = parseJsonArray(research.currentSystems);
-    const postings = parseJsonArray(research.recentJobPostings);
-    const initiatives = parseJsonArray(research.initiatives);
-    
-    // QA hiring activity (40%)
-    const qaKeywords = ['qa', 'quality', 'test', 'automation', 'testing'];
-    const qaPostings = postings.filter((posting: string) => 
-      qaKeywords.some(keyword => posting.toLowerCase().includes(keyword))
-    );
-    score += Math.min((qaPostings.length / 3) * 40, 40);
-    
-    // Testing initiatives (30%)
-    const testingInitiatives = initiatives.filter((init: string) =>
-      qaKeywords.some(keyword => init.toLowerCase().includes(keyword))
-    );
-    score += Math.min((testingInitiatives.length / 2) * 30, 30);
-    
-    // Enterprise systems (20%)
-    const enterpriseSystems = ['salesforce', 'sap', 'oracle', 'dynamics', 'workday'];
-    const hasEnterpriseSystems = systems.some((system: string) =>
-      enterpriseSystems.some(es => system.toLowerCase().includes(es))
-    );
-    if (hasEnterpriseSystems) score += 20;
-    
-    // Quality challenges (10%)
-    const painPoints = parseJsonArray(research.painPoints);
-    const qualityChallenges = painPoints.filter((pain: string) =>
-      ['quality', 'bugs', 'testing', 'reliability'].some(keyword => 
-        pain.toLowerCase().includes(keyword)
-      )
-    );
-    score += Math.min((qualityChallenges.length / 2) * 10, 10);
-    
-    return Math.round(score);
   };
 
   const getIntentColor = (score: number) => {
