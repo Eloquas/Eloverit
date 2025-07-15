@@ -1017,6 +1017,24 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
         return res.status(400).json({ message: "Company name is required" });
       }
 
+      // Check if we already have recent research for this company (within 7 days)
+      const existingResearch = await storage.getAccountResearchByCompany(companyName, req.user!.id);
+      if (existingResearch) {
+        const researchAge = Date.now() - new Date(existingResearch.researchDate).getTime();
+        const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+        
+        if (researchAge < sevenDaysInMs) {
+          console.log(`Using cached research for ${companyName}, last updated ${Math.floor(researchAge / (1000 * 60 * 60))} hours ago`);
+          return res.json({ 
+            message: "Using recent research data", 
+            companyName, 
+            research: existingResearch,
+            cached: true,
+            hoursOld: Math.floor(researchAge / (1000 * 60 * 60))
+          });
+        }
+      }
+
       // Platform-specific research if platform is specified
       if (platform && ['salesforce', 'sap', 'oracle', 'dynamics'].includes(platform)) {
         try {
