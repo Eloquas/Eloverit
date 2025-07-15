@@ -61,13 +61,6 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       badge: null
     },
     {
-      label: "Account Research",
-      href: "/account-research",
-      icon: Building2,
-      active: location === "/account-research",
-      badge: null
-    },
-    {
       label: "Generated Content",
       href: "/generated-content",
       icon: FileText,
@@ -109,6 +102,20 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     label: "Outbound Engine",
     icon: Layers,
     items: [
+      {
+        label: "Prospect Identification",
+        href: "/prospect-identification",
+        icon: Users,
+        active: location === "/prospect-identification",
+        badge: "START HERE"
+      },
+      {
+        label: "Account Research",
+        href: "/account-research",
+        icon: Building2,
+        active: location === "/account-research",
+        badge: "AI"
+      },
       {
         label: "LinkedIn Messaging",
         href: "/linkedin-posts",
@@ -175,35 +182,27 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Navigation */}
       <div className="flex flex-col h-full pt-6 overflow-hidden">
         <nav className="flex-1 px-3 space-y-2 overflow-y-auto max-h-[calc(100vh-200px)]">
-          {navigationItems.map((item) => (
-            <Link key={item.href} href={item.href}>
-              <div className={`avo-sidebar-item ${item.active ? "active" : ""}`}>
-                <Button
-                  variant="ghost"
-                  className={`w-full justify-start h-11 rounded-xl transition-all duration-200 ${
-                    item.active 
-                      ? "bg-primary text-white hover:bg-primary-dark avo-shadow-soft" 
-                      : "text-gray-600 hover:text-primary hover:bg-avo-blue-50 avo-hover-scale"
-                  } ${collapsed ? "px-2" : "px-4"}`}
-                >
-                  <item.icon className={`h-5 w-5 ${collapsed ? "" : "mr-3"}`} />
-                  {!collapsed && (
-                    <>
-                      <span className="flex-1 text-left font-medium truncate">{item.label}</span>
-                      {item.badge && (
-                        <Badge className="ml-2 text-xs avo-badge-blue flex-shrink-0">
-                          {item.badge}
-                        </Badge>
-                      )}
-                    </>
-                  )}
-                </Button>
-              </div>
-            </Link>
-          ))}
+          {/* Dashboard - First Item */}
+          <Link href="/">
+            <div className={`avo-sidebar-item ${location === "/" ? "active" : ""}`}>
+              <Button
+                variant="ghost"
+                className={`w-full justify-start h-11 rounded-xl transition-all duration-200 ${
+                  location === "/" 
+                    ? "bg-primary text-white hover:bg-primary-dark avo-shadow-soft" 
+                    : "text-gray-600 hover:text-primary hover:bg-avo-blue-50 avo-hover-scale"
+                } ${collapsed ? "px-2" : "px-4"}`}
+              >
+                <Home className={`h-5 w-5 ${collapsed ? "" : "mr-3"}`} />
+                {!collapsed && (
+                  <span className="flex-1 text-left font-medium truncate">Dashboard</span>
+                )}
+              </Button>
+            </div>
+          </Link>
 
-          {/* Outbound Engine Group */}
-          <div className="mt-4">
+          {/* Outbound Engine Group - Second Item */}
+          <div className="mt-2">
             <Button
               variant="ghost"
               onClick={() => toggleGroup(outboundEngine.id)}

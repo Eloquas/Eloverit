@@ -11,6 +11,7 @@ import { Loader2 } from "lucide-react";
 import Dashboard from "@/pages/dashboard";
 import GeneratedContent from "@/pages/generated-content";
 import AccountResearch from "@/pages/account-research";
+import ProspectIdentification from "@/pages/prospect-identification";
 import Onboarding from "@/pages/onboarding";
 import { EloquasAI } from "@/pages/eloquas-ai";
 import LinkedInPosts from "@/pages/linkedin-posts";
@@ -50,6 +51,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/dashboard" component={Dashboard} />
+        <Route path="/prospect-identification" component={ProspectIdentification} />
         <Route path="/generated-content" component={GeneratedContent} />
         <Route path="/account-research" component={AccountResearch} />
         <Route path="/onboarding" component={Onboarding} />
