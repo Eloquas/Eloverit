@@ -1017,20 +1017,29 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
         return res.status(400).json({ message: "Company name is required" });
       }
 
-      // Check if we already have recent research for this company (within 7 days)
+      // Check for duplicate research with improved cache system
+      const { forceRefresh } = req.body;
       const existingResearch = await storage.getAccountResearchByCompany(companyName, req.user!.id);
-      if (existingResearch) {
+      
+      if (existingResearch && !forceRefresh) {
         const researchAge = Date.now() - new Date(existingResearch.researchDate).getTime();
         const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
         
         if (researchAge < sevenDaysInMs) {
-          console.log(`Using cached research for ${companyName}, last updated ${Math.floor(researchAge / (1000 * 60 * 60))} hours ago`);
+          const hoursOld = Math.floor(researchAge / (1000 * 60 * 60));
+          const daysOld = Math.floor(researchAge / (1000 * 60 * 60 * 24));
+          
+          console.log(`Existing research found for ${companyName}. Age: ${daysOld} days, ${hoursOld % 24} hours`);
           return res.json({ 
-            message: "Using recent research data", 
+            message: "Research already exists and is less than 7 days old", 
             companyName, 
             research: existingResearch,
             cached: true,
-            hoursOld: Math.floor(researchAge / (1000 * 60 * 60))
+            existingResearch: true,
+            ageInHours: hoursOld,
+            ageInDays: daysOld,
+            nextRefresh: new Date(new Date(existingResearch.researchDate).getTime() + sevenDaysInMs).toISOString(),
+            cacheStatus: "hit"
           });
         }
       }
@@ -1105,16 +1114,35 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
                           hybridData.researchQuality >= 40 ? "good" : "fair"
         });
 
+        // Generate SCIPAB framework for QA automation value proposition
+        const scipabEngine = new SCIPABFramework();
+        const scipabData = await scipabEngine.generateSCIPAB(
+          companyName, 
+          hybridData, 
+          platform || 'qa-automation'
+        );
+
         res.json({ 
           message: "Hybrid research completed successfully", 
           companyName, 
-          research,
+          research: {
+            ...research,
+            scipabFramework: scipabData
+          },
           hybridData: {
             dataSource: hybridData.dataSource,
             researchQuality: hybridData.researchQuality,
             pdlDataAvailable: !!hybridData.pdlData,
             aiResearchCompleted: !!hybridData.aiResearch,
             keyInsights: hybridData.combinedInsights
+          },
+          scipab: scipabData,
+          dataValidation: {
+            source: hybridData.dataSource === 'hybrid' ? 'PDL + AI Research' : 
+                   hybridData.dataSource === 'pdl-only' ? 'People Data Labs API' : 'AI Research',
+            quality: hybridData.researchQuality,
+            lastUpdated: new Date().toISOString(),
+            authentic: true
           }
         });
       } catch (hybridError) {

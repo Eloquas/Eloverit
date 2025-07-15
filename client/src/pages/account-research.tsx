@@ -55,16 +55,25 @@ export default function AccountResearch() {
   });
 
   const researchCompanyMutation = useMutation({
-    mutationFn: async ({ companyName, platform }: { companyName: string, platform?: string }) => {
-      const response = await apiRequest("POST", "/api/account-research/generate", { companyName, platform });
+    mutationFn: async ({ companyName, platform, forceRefresh }: { companyName: string, platform?: string, forceRefresh?: boolean }) => {
+      const response = await apiRequest("POST", "/api/account-research/generate", { companyName, platform, forceRefresh });
       return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/account-research"] });
-      toast({
-        title: "Research completed!",
-        description: `Generated comprehensive research for ${data.companyName}`,
-      });
+      
+      if (data.existingResearch) {
+        toast({
+          title: "Research Already Exists",
+          description: `Found existing research for ${data.companyName} (${data.ageInDays} days old). Click "Refresh" to update.`,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: data.cacheStatus === "refreshed" ? "Research Refreshed!" : "Research Completed!",
+          description: `${data.cacheStatus === "refreshed" ? "Updated" : "Generated"} comprehensive research for ${data.companyName}`,
+        });
+      }
     },
     onError: (error: any) => {
       const isDataIntegrityError = error.message?.includes("authentic") || error.message?.includes("unavailable");
@@ -104,8 +113,8 @@ export default function AccountResearch() {
     }
   });
 
-  const handleResearchCompany = (companyName: string, platform?: string) => {
-    researchCompanyMutation.mutate({ companyName, platform });
+  const handleResearchCompany = (companyName: string, platform?: string, forceRefresh?: boolean) => {
+    researchCompanyMutation.mutate({ companyName, platform, forceRefresh });
   };
 
   const handlePlatformDiscovery = () => {
@@ -239,10 +248,18 @@ export default function AccountResearch() {
       {/* Research Generation Card */}
       <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
         <CardHeader>
-          <CardTitle className="flex items-center text-blue-900">
-            <Search className="w-5 h-5 mr-2" />
-            Generate Account Research
+          <CardTitle className="flex items-center justify-between text-blue-900">
+            <div className="flex items-center">
+              <Search className="w-5 h-5 mr-2" />
+              Generate Account Research
+            </div>
+            <Badge variant="outline" className="text-blue-600 border-blue-300">
+              Authentic Data Only
+            </Badge>
           </CardTitle>
+          <p className="text-sm text-blue-700 mt-1">
+            Research powered by PDL API + AI analysis. Weekly caching prevents duplicate research.
+          </p>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="existing" className="w-full">
@@ -267,23 +284,35 @@ export default function AccountResearch() {
                   </SelectContent>
                 </Select>
                 
-                <Button 
-                  onClick={() => selectedCompany && handleResearchCompany(selectedCompany)}
-                  disabled={!selectedCompany || researchCompanyMutation.isPending}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {researchCompanyMutation.isPending ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      Researching...
-                    </>
-                  ) : (
-                    <>
-                      <TrendingUp className="w-4 h-4 mr-2" />
-                      Generate Research
-                    </>
-                  )}
-                </Button>
+                <div className="flex space-x-2">
+                  <Button 
+                    onClick={() => selectedCompany && handleResearchCompany(selectedCompany)}
+                    disabled={!selectedCompany || researchCompanyMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {researchCompanyMutation.isPending ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Researching...
+                      </>
+                    ) : (
+                      <>
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        Generate Research
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => selectedCompany && handleResearchCompany(selectedCompany, undefined, true)}
+                    disabled={!selectedCompany || researchCompanyMutation.isPending}
+                    className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Refresh
+                  </Button>
+                </div>
               </div>
             </TabsContent>
             

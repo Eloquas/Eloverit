@@ -65,10 +65,28 @@ export const accountResearch = pgTable("account_research", {
   initiatives: text("initiatives"), // JSON array of current initiatives
   painPoints: text("pain_points"), // JSON array of identified challenges
   decisionMakers: text("decision_makers"), // JSON array of key contacts
+  scipabFramework: text("scipab_framework"), // JSON object with SCIPAB data
   researchDate: timestamp("research_date").notNull().defaultNow(),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   researchQuality: text("research_quality").default("pending"), // excellent, good, fair, pending
 }, (table) => [
   index("account_research_user_id_idx").on(table.userId),
+  index("account_research_company_idx").on(table.companyName),
+]);
+
+// Search templates for weekly intel loops
+export const searchTemplates = pgTable("search_templates", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  templateName: text("template_name").notNull(),
+  searchCriteria: text("search_criteria").notNull(), // JSON object with filters
+  isActive: boolean("is_active").notNull().default(true),
+  schedule: text("schedule"), // weekly, biweekly, monthly
+  lastExecuted: timestamp("last_executed"),
+  nextExecution: timestamp("next_execution"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  index("search_templates_user_id_idx").on(table.userId),
 ]);
 
 // New table for email cadence management

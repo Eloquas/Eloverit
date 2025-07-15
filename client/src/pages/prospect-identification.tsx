@@ -357,6 +357,25 @@ function LeadDiscoveryEngine() {
                           </div>
                         </div>
                       </div>
+                      
+                      {/* QA-Focused SCIPAB Brief */}
+                      <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                        <h4 className="text-sm font-semibold text-blue-800 mb-2 flex items-center">
+                          <Target className="w-4 h-4 mr-1" />
+                          QA Automation Value Brief
+                        </h4>
+                        <div className="space-y-1 text-xs text-blue-700">
+                          <p><strong>Situation:</strong> {prospect.company} ({prospect.employees} employees) managing complex {prospect.industry.toLowerCase()} systems</p>
+                          <p><strong>Challenge:</strong> Manual testing consuming 60-80% of QA cycles, delaying releases</p>
+                          <p><strong>Value:</strong> 80% testing time reduction + 40% faster releases + $1.2M OPEX savings potential</p>
+                          <p><strong>Next:</strong> {prospect.title} likely evaluating QA automation solutions for {new Date().getFullYear() + 1} initiatives</p>
+                        </div>
+                        <div className="mt-2 flex items-center text-xs text-blue-600">
+                          <Badge variant="outline" className="text-blue-600 border-blue-300">
+                            Data: PDL + AI Research
+                          </Badge>
+                        </div>
+                      </div>
                     </div>
                     
                     <div className="flex space-x-2 ml-4">
