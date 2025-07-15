@@ -15,7 +15,19 @@ This repository contains two complementary platforms:
 - **Content Strategy:** 6-email cadence starting with brand awareness, ending with strong CTA
 - **Target Roles:** Manager+ level positions in QA, CRM, ERP, D365, SAP, Oracle, enterprise systems
 
-## Recent Changes (Last Updated: January 14, 2025)
+## Recent Changes (Last Updated: January 15, 2025)
+- ✅ **Cadence-Focused System Transformation:** Complete architectural shift from single-email approach to sequence-based outreach
+  - Email Cadences page with trust+story combined generation capability 
+  - LinkedIn Campaign Engine for multi-post storytelling (3-4 posts per campaign)
+  - Enhanced email cadence engine supporting Trust Build™ AND Story Build™ together (not OR)
+  - Database schema updated with emailCadences table for comprehensive sequence management
+  - Navigation and routing updated to emphasize cadences over singular outreach
+- ✅ **Story AND Trust Combined Mode:** Revolutionary email generation supporting both modes simultaneously
+  - Trust Build™: Leverage shared connections and credibility signals
+  - Story Build™: Hero's Journey narrative framework
+  - Combined Mode: Maximum impact sequences merging relationship building with compelling storytelling
+  - Visual indicators and mode selection UI for cadence generation
+- ✅ **Fixed Database Schema Issues:** Resolved duplicate emailCadences export errors preventing server startup
 - ✅ **Interactive Dashboard Insights:** Enhanced stats tiles with expandable insights, contextual recommendations, and actionable next steps
 - ✅ **Account Research Caching:** Weekly cache system prevents redundant research cycles and saves API costs
 - ✅ **Route Fix:** Resolved Generated Content page 404 error by correcting route mismatch

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Search, TrendingUp, Users, Briefcase, ArrowLeft, RefreshCw, Eye, BarChart3, Target, Clock, CheckCircle, AlertTriangle, ExternalLink, Star } from "lucide-react";
+import { Building2, Search, TrendingUp, Users, Briefcase, ArrowLeft, RefreshCw, Eye, BarChart3, Target, Clock, CheckCircle, AlertTriangle, ExternalLink, Star, Lightbulb } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -234,6 +234,12 @@ export default function AccountResearch() {
             <Button variant="ghost" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Dashboard
+            </Button>
+          </Link>
+          <Link href="/research-insights">
+            <Button variant="outline" size="sm">
+              <Lightbulb className="w-4 h-4 mr-2" />
+              View Insights
             </Button>
           </Link>
           <div>

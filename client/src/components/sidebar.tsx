@@ -31,7 +31,8 @@ import {
   Trophy,
   User,
   LogOut,
-  Layers
+  Layers,
+  Brain
 } from "lucide-react";
 
 interface SidebarProps {
@@ -115,6 +116,20 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         icon: Building2,
         active: location === "/account-research",
         badge: "AI"
+      },
+      {
+        label: "Research Insights",
+        href: "/research-insights",
+        icon: Brain,
+        active: location === "/research-insights",
+        badge: "NEW"
+      },
+      {
+        label: "Email Cadences",
+        href: "/email-cadences",
+        icon: Mail,
+        active: location === "/email-cadences",
+        badge: "NEW"
       },
       {
         label: "LinkedIn Messaging",

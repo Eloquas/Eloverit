@@ -76,6 +76,12 @@ export interface IStorage {
   getOnboardingResponse(userId: number): Promise<OnboardingResponse | undefined>;
   createOnboardingResponse(onboarding: InsertOnboardingResponse): Promise<OnboardingResponse>;
   
+  // Email cadence methods (user-scoped)
+  getEmailCadences(userId: number): Promise<EmailCadence[]>;
+  createEmailCadence(cadenceData: InsertEmailCadence): Promise<EmailCadence>;
+  getEmailCadenceById(id: number, userId: number): Promise<EmailCadence | undefined>;
+  updateEmailCadenceStatus(id: number, userId: number, status: string): Promise<boolean>;
+  
   // Stats (user-scoped)
   getStats(userId: number): Promise<{
     totalProspects: number;
@@ -258,19 +264,45 @@ export class DatabaseStorage implements IStorage {
   // Account research methods (user-scoped)
   async getAccountResearch(userId: number): Promise<AccountResearch[]> {
     console.log('DatabaseStorage.getAccountResearch called with userId:', userId);
-    const results = await db.select().from(accountResearch)
+    const results = await db.select({
+      id: accountResearch.id,
+      userId: accountResearch.userId,
+      companyName: accountResearch.companyName,
+      industry: accountResearch.industry,
+      companySize: accountResearch.companySize,
+      currentSystems: accountResearch.currentSystems,
+      recentJobPostings: accountResearch.recentJobPostings,
+      initiatives: accountResearch.initiatives,
+      painPoints: accountResearch.painPoints,
+      decisionMakers: accountResearch.decisionMakers,
+      researchDate: accountResearch.researchDate,
+      researchQuality: accountResearch.researchQuality,
+    }).from(accountResearch)
       .where(eq(accountResearch.userId, userId))
       .orderBy(desc(accountResearch.researchDate));
     console.log('DatabaseStorage.getAccountResearch found entries:', results.length);
-    return results;
+    return results as AccountResearch[];
   }
 
   async getAccountResearchByCompany(companyName: string, userId: number): Promise<AccountResearch | undefined> {
     const [research] = await db
-      .select()
+      .select({
+        id: accountResearch.id,
+        userId: accountResearch.userId,
+        companyName: accountResearch.companyName,
+        industry: accountResearch.industry,
+        companySize: accountResearch.companySize,
+        currentSystems: accountResearch.currentSystems,
+        recentJobPostings: accountResearch.recentJobPostings,
+        initiatives: accountResearch.initiatives,
+        painPoints: accountResearch.painPoints,
+        decisionMakers: accountResearch.decisionMakers,
+        researchDate: accountResearch.researchDate,
+        researchQuality: accountResearch.researchQuality,
+      })
       .from(accountResearch)
       .where(and(eq(accountResearch.companyName, companyName), eq(accountResearch.userId, userId)));
-    return research || undefined;
+    return research as AccountResearch || undefined;
   }
 
   async createAccountResearch(insertResearch: InsertAccountResearch): Promise<AccountResearch> {

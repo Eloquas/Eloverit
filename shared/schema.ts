@@ -89,18 +89,23 @@ export const searchTemplates = pgTable("search_templates", {
   index("search_templates_user_id_idx").on(table.userId),
 ]);
 
-// New table for email cadence management
+// Email cadence management with Trust+Story functionality
 export const emailCadences = pgTable("email_cadences", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  prospectId: integer("prospect_id").notNull().references(() => prospects.id),
-  cadenceName: text("cadence_name").notNull(), // Brand Awareness D365, SAP Enterprise, etc.
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  prospectId: integer("prospect_id").notNull().references(() => prospects.id, { onDelete: "cascade" }),
+  cadenceName: text("cadence_name").notNull(),
+  cadenceType: text("cadence_type").notNull(), // 'trust_build', 'story_build', 'trust_story_combined', 'brand_awareness'
+  status: text("status").notNull().default("draft"), // 'draft', 'active', 'paused', 'completed'
   currentStep: integer("current_step").notNull().default(1),
   totalSteps: integer("total_steps").notNull().default(6),
-  cadenceType: text("cadence_type").notNull(), // brand_awareness, product_demo, follow_up
+  steps: text("steps"), // JSON string of cadence steps for trust+story modes
+  trustSignals: text("trust_signals"), // JSON string of trust signals
+  storyElements: text("story_elements"), // JSON string of story elements
+  totalDuration: text("total_duration").notNull().default("21 days"),
   nextSendDate: timestamp("next_send_date"),
-  status: text("status").notNull().default("active"), // active, paused, completed
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (table) => [
   index("email_cadences_user_id_idx").on(table.userId),
 ]);
@@ -255,6 +260,7 @@ export const insertAccountResearchSchema = createInsertSchema(accountResearch).o
 export const insertEmailCadenceSchema = createInsertSchema(emailCadences).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({

@@ -23,6 +23,8 @@ import { googleDriveService } from './google-drive';
 import { platformResearchEngine } from './platform-research';
 import { hybridResearchEngine } from './hybrid-research';
 import { PlatformDiscoveryEngine } from './platform-discovery';
+import { researchInsightsEngine } from './research-insights';
+import { emailCadenceEngine } from './email-cadence-engine';
 import { insertOnboardingResponseSchema, type InsertOnboardingResponse } from "@shared/schema";
 
 // AI-powered onboarding recommendations function
@@ -1189,13 +1191,191 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
     }
   });
 
-  // Email Cadences API Routes
-  app.get("/api/email-cadences", async (req, res) => {
+  // Email Cadences API Routes (Enhanced for Trust+Story Combined)
+  app.get("/api/email-cadences", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const cadences = await storage.getEmailCadences();
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const cadences = await storage.getEmailCadences(userId);
       res.json(cadences);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch email cadences" });
+    }
+  });
+
+  // Generate Trust+Story Combined Email Cadence
+  app.post("/api/email-cadences/generate", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const { prospectId, useTrust, useStory } = req.body;
+
+      if (!prospectId) {
+        return res.status(400).json({ message: "Prospect ID is required" });
+      }
+
+      // Get prospect data
+      const prospect = await storage.getProspect(prospectId, userId);
+      if (!prospect) {
+        return res.status(404).json({ message: "Prospect not found" });
+      }
+
+      // Import and use the email cadence engine
+      const { emailCadenceEngine } = await import("./email-cadence-engine");
+      
+      const prospectData = {
+        id: prospect.id,
+        name: prospect.name,
+        company: prospect.company,
+        role: prospect.role || "QA Manager",
+        industry: prospect.industry || "Technology",
+        email: prospect.email,
+        linkedinProfile: prospect.linkedinProfile
+      };
+
+      // Generate cadence with Trust and/or Story modes
+      const cadence = await emailCadenceEngine.generateTrustStoryEmail(prospectData, useTrust, useStory);
+
+      // Store cadence in database
+      const cadenceData = {
+        userId,
+        prospectId,
+        cadenceName: `${cadence.cadenceType} - ${prospect.name}`,
+        cadenceType: cadence.cadenceType,
+        status: 'draft' as const,
+        steps: JSON.stringify(cadence.steps),
+        trustSignals: JSON.stringify(cadence.trustSignals),
+        storyElements: JSON.stringify(cadence.storyElements),
+        totalDuration: cadence.totalDuration
+      };
+
+      const savedCadence = await storage.createEmailCadence(cadenceData);
+
+      res.json({
+        success: true,
+        message: `${cadence.cadenceType} cadence generated successfully`,
+        cadence: {
+          ...savedCadence,
+          steps: cadence.steps,
+          trustSignals: cadence.trustSignals,
+          storyElements: cadence.storyElements
+        },
+        prospectName: prospect.name,
+        cadencePreview: {
+          totalSteps: cadence.steps.length,
+          duration: cadence.totalDuration,
+          firstEmailSubject: cadence.steps[0]?.subject,
+          modes: {
+            trust: useTrust,
+            story: useStory,
+            combined: useTrust && useStory
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error("Cadence generation error:", error);
+      res.status(500).json({ 
+        message: "Failed to generate email cadence",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Generate LinkedIn Campaign
+  app.post("/api/linkedin-campaigns/generate", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const campaignBrief = req.body;
+
+      if (!campaignBrief.companyName || !campaignBrief.targetAudience) {
+        return res.status(400).json({ message: "Company name and target audience are required" });
+      }
+
+      // Import and use the LinkedIn campaign engine
+      const { linkedInCampaignEngine } = await import("./linkedin-campaign-engine");
+      
+      const campaign = await linkedInCampaignEngine.generateLinkedInCampaign(campaignBrief);
+
+      res.json({
+        success: true,
+        message: "LinkedIn campaign generated successfully",
+        campaign,
+        preview: {
+          totalPosts: campaign.posts.length,
+          duration: campaign.totalDuration,
+          themes: campaign.posts.map(p => p.theme),
+          postSchedule: campaign.posts.map(p => ({ sequence: p.sequence, timing: p.timing, theme: p.theme }))
+        }
+      });
+
+    } catch (error) {
+      console.error("LinkedIn campaign generation error:", error);
+      res.status(500).json({ 
+        message: "Failed to generate LinkedIn campaign",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Generate LinkedIn Messaging Campaign
+  app.post("/api/linkedin-messaging/generate", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const { prospectId } = req.body;
+
+      if (!prospectId) {
+        return res.status(400).json({ message: "Prospect ID is required" });
+      }
+
+      const prospect = await storage.getProspect(prospectId, userId);
+      if (!prospect) {
+        return res.status(404).json({ message: "Prospect not found" });
+      }
+
+      // Import and use the LinkedIn campaign engine
+      const { linkedInCampaignEngine } = await import("./linkedin-campaign-engine");
+      
+      const prospectData = {
+        name: prospect.name,
+        company: prospect.company,
+        role: prospect.role || "QA Manager"
+      };
+
+      const messagingCampaign = await linkedInCampaignEngine.generateLinkedInMessagingCampaign(prospectData, 'trust_story_combined');
+
+      res.json({
+        success: true,
+        message: "LinkedIn messaging campaign generated successfully",
+        campaign: messagingCampaign,
+        prospectName: prospect.name,
+        preview: {
+          totalMessages: messagingCampaign.messages.length,
+          duration: messagingCampaign.campaignDuration,
+          messageTypes: messagingCampaign.messages.map(m => m.type)
+        }
+      });
+
+    } catch (error) {
+      console.error("LinkedIn messaging campaign generation error:", error);
+      res.status(500).json({ 
+        message: "Failed to generate LinkedIn messaging campaign",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
@@ -2115,6 +2295,41 @@ Keep it conversational and human - like one professional helping another.`;
     }
   });
 
+  // Research Insights API Routes
+  app.get("/api/research-insights", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const insights = await researchInsightsEngine.generateInsights(userId);
+      res.json(insights);
+    } catch (error) {
+      console.error("Failed to generate research insights:", error);
+      res.status(500).json({ message: "Failed to generate research insights" });
+    }
+  });
+
+  app.get("/api/research-insights/high-priority", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const insights = await researchInsightsEngine.getHighPriorityInsights(userId);
+      res.json(insights);
+    } catch (error) {
+      console.error("Failed to get high-priority insights:", error);
+      res.status(500).json({ message: "Failed to get high-priority insights" });
+    }
+  });
+
+  app.get("/api/research-insights/type/:type", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const { type } = req.params;
+      const insights = await researchInsightsEngine.getInsightsByType(userId, type);
+      res.json(insights);
+    } catch (error) {
+      console.error(`Failed to get ${type} insights:`, error);
+      res.status(500).json({ message: `Failed to get ${type} insights` });
+    }
+  });
+
   // Onboarding completion endpoint
   app.post('/api/onboarding/complete', authenticateToken, async (req, res) => {
     try {
@@ -2147,6 +2362,80 @@ Keep it conversational and human - like one professional helping another.`;
     } catch (error) {
       console.error('Error fetching onboarding response:', error);
       res.status(500).json({ message: "Failed to fetch onboarding response" });
+    }
+  });
+
+  // Email Cadences routes
+  app.get("/api/email-cadences", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const cadences = await storage.getEmailCadences(userId);
+      res.json(cadences);
+    } catch (error) {
+      console.error("Error fetching email cadences:", error);
+      res.status(500).json({ message: "Failed to fetch email cadences" });
+    }
+  });
+
+  app.post("/api/email-cadences/generate", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const { prospectId, useTrust, useStory } = req.body;
+
+      // Get prospect data
+      const prospect = await storage.getProspect(prospectId, userId);
+      if (!prospect) {
+        return res.status(404).json({ message: "Prospect not found" });
+      }
+
+      // Determine cadence type
+      let cadenceType = "brand_awareness";
+      if (useTrust && useStory) {
+        cadenceType = "trust_story_combined";
+      } else if (useTrust) {
+        cadenceType = "trust_build";
+      } else if (useStory) {
+        cadenceType = "story_build";
+      }
+
+      // Generate cadence using the email cadence engine
+      const cadenceResult = await emailCadenceEngine.generateCadence({
+        prospect,
+        cadenceType,
+        useTrust,
+        useStory,
+        userId
+      });
+
+      // Store the cadence
+      const cadenceData = {
+        userId,
+        prospectId,
+        cadenceName: `${cadenceType.replace(/_/g, ' ')} - ${prospect.name}`,
+        cadenceType,
+        status: "draft" as const,
+        currentStep: 1,
+        totalSteps: cadenceResult.steps.length,
+        steps: JSON.stringify(cadenceResult.steps),
+        trustSignals: useTrust ? JSON.stringify(cadenceResult.trustSignals || {}) : null,
+        storyElements: useStory ? JSON.stringify(cadenceResult.storyElements || {}) : null,
+        totalDuration: cadenceResult.totalDuration,
+      };
+
+      const newCadence = await storage.createEmailCadence(cadenceData);
+
+      res.json({
+        cadence: newCadence,
+        cadencePreview: {
+          totalSteps: cadenceResult.steps.length,
+          duration: cadenceResult.totalDuration,
+          type: cadenceType
+        },
+        prospectName: prospect.name
+      });
+    } catch (error) {
+      console.error("Error generating email cadence:", error);
+      res.status(500).json({ message: "Failed to generate email cadence" });
     }
   });
 
