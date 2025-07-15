@@ -1193,6 +1193,37 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
     }
   });
 
+  // Test endpoint for platform discovery (bypass auth for testing)
+  app.post("/api/test/platform-discovery", async (req, res) => {
+    try {
+      const filters = req.body;
+      
+      if (!filters.platform) {
+        return res.status(400).json({ error: "Platform selection is required" });
+      }
+
+      console.log(`TEST Platform discovery for: ${filters.platform} with filters:`, filters);
+      
+      // Use platform discovery engine for high-intent account discovery
+      const discoveredAccounts = await platformDiscoveryEngine.discoverHighIntentAccounts(filters);
+      
+      res.json({
+        success: true,
+        filters,
+        accounts: discoveredAccounts,
+        totalAccounts: discoveredAccounts.length,
+        highIntentAccounts: discoveredAccounts.filter(acc => acc.intentScore >= 75).length,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Test platform discovery error:", error);
+      res.status(500).json({ 
+        error: "Failed to discover platform accounts",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Email Cadences API Routes (Enhanced for Trust+Story Combined)
   app.get("/api/email-cadences", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {

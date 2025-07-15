@@ -69,11 +69,16 @@ export class PlatformDiscoveryEngine {
       const discoveredAccounts = this.generateDemoAccounts(filters);
       
       // Calculate intent scores for each account
-      const accountsWithScores = discoveredAccounts.map(account => ({
-        ...account,
-        intentScore: this.calculateIntentScore(account),
-        researchQuality: this.determineResearchQuality(account)
-      }));
+      const accountsWithScores = discoveredAccounts.map(account => {
+        const intentScore = this.calculateIntentScore(account);
+        const researchQuality = this.determineResearchQuality({...account, intentScore});
+        
+        return {
+          ...account,
+          intentScore,
+          researchQuality
+        };
+      });
 
       // Sort by intent score (highest first)
       return accountsWithScores.sort((a, b) => b.intentScore - a.intentScore);
@@ -147,20 +152,52 @@ export class PlatformDiscoveryEngine {
         employeeSize: "10000+",
         fortuneRanking: 89,
         state: "IL",
-        initiatives: [
-          { title: "SAP S/4HANA Migration", description: "Migrating from legacy SAP to S/4HANA", priority: "high", timeline: "Q2 2025" },
-          { title: "Salesforce Service Cloud", description: "Implementing customer service automation", priority: "medium", timeline: "Q3 2025" }
+        headquarters: "Chicago, IL",
+        platformInitiatives: [
+          { 
+            title: "SAP S/4HANA Migration", 
+            description: "Migrating from legacy SAP to S/4HANA", 
+            priority: "high", 
+            timeline: "Q2 2025",
+            urgencyLevel: "high"
+          },
+          { 
+            title: "Salesforce Service Cloud", 
+            description: "Implementing customer service automation", 
+            priority: "medium", 
+            timeline: "Q3 2025",
+            urgencyLevel: "medium"
+          }
         ],
         hiringSignals: [
-          { role: "SAP QA Analyst", department: "IT", urgency: "high", postedDate: "2024-01-10", requirements: ["SAP testing", "QA automation"] },
-          { role: "Salesforce Test Engineer", department: "Customer Service", urgency: "medium", postedDate: "2024-01-08", requirements: ["Salesforce", "Apex testing"] }
+          { 
+            jobTitle: "SAP QA Analyst", 
+            department: "IT", 
+            urgencyLevel: "high", 
+            postedDate: "2024-01-10", 
+            keyRequirements: ["SAP testing", "QA automation"],
+            testingMentions: ["regression testing", "performance testing"],
+            source: "United Airlines Careers"
+          },
+          { 
+            jobTitle: "Salesforce Test Engineer", 
+            department: "Customer Service", 
+            urgencyLevel: "medium", 
+            postedDate: "2024-01-08", 
+            keyRequirements: ["Salesforce", "Apex testing"],
+            testingMentions: ["integration testing", "automation testing"],
+            source: "LinkedIn Jobs"
+          }
         ],
-        testingRequirements: [
-          { area: "SAP Migration", description: "End-to-end testing for S/4HANA migration", priority: "critical" },
-          { area: "Salesforce Integration", description: "API testing for Service Cloud integration", priority: "high" }
-        ],
+        platformUsage: {
+          currentPlatform: "SAP ECC 6.0",
+          migrationPlans: ["S/4HANA migration", "Cloud transition"],
+          integrationNeeds: ["Third-party system integration", "API connectivity"],
+          qaRequirements: ["SAP migration testing", "Performance testing", "Regression testing"],
+          budgetIndicators: ["$15M digital transformation budget", "18-month migration timeline"]
+        },
         intentScore: 85,
-        qualityRating: "excellent"
+        researchQuality: "excellent"
       },
       {
         companyName: "General Electric",
@@ -168,25 +205,124 @@ export class PlatformDiscoveryEngine {
         employeeSize: "10000+",
         fortuneRanking: 33,
         state: "MA",
-        initiatives: [
-          { title: "Oracle Cloud Migration", description: "Moving ERP to Oracle Cloud", priority: "high", timeline: "Q1 2025" },
-          { title: "Microsoft Dynamics 365", description: "CRM modernization project", priority: "medium", timeline: "Q4 2024" }
+        headquarters: "Boston, MA",
+        platformInitiatives: [
+          { 
+            title: "Oracle Cloud Migration", 
+            description: "Moving ERP to Oracle Cloud", 
+            priority: "high", 
+            timeline: "Q1 2025",
+            urgencyLevel: "high"
+          },
+          { 
+            title: "Microsoft Dynamics 365", 
+            description: "CRM modernization project", 
+            priority: "medium", 
+            timeline: "Q4 2024",
+            urgencyLevel: "medium"
+          }
         ],
         hiringSignals: [
-          { role: "Oracle QA Engineer", department: "Digital Technology", urgency: "high", postedDate: "2024-01-12", requirements: ["Oracle testing", "Cloud migration"] },
-          { role: "Dynamics 365 Test Lead", department: "Sales Operations", urgency: "medium", postedDate: "2024-01-09", requirements: ["D365 testing", "CRM automation"] }
+          { 
+            jobTitle: "Oracle QA Engineer", 
+            department: "Digital Technology", 
+            urgencyLevel: "high", 
+            postedDate: "2024-01-12", 
+            keyRequirements: ["Oracle testing", "Cloud migration"],
+            testingMentions: ["performance testing", "cloud migration testing"],
+            source: "GE Careers"
+          },
+          { 
+            jobTitle: "Dynamics 365 Test Lead", 
+            department: "Sales Operations", 
+            urgencyLevel: "medium", 
+            postedDate: "2024-01-09", 
+            keyRequirements: ["D365 testing", "CRM automation"],
+            testingMentions: ["integration testing", "workflow testing"],
+            source: "Indeed"
+          }
         ],
-        testingRequirements: [
-          { area: "Oracle Migration", description: "Performance testing for cloud migration", priority: "critical" },
-          { area: "Dynamics CRM", description: "Integration testing for sales workflows", priority: "high" }
-        ],
+        platformUsage: {
+          currentPlatform: "Oracle 11g/12c",
+          migrationPlans: ["Oracle Cloud ERP", "Database 23c upgrade"],
+          integrationNeeds: ["Cloud integration", "Third-party applications"],
+          qaRequirements: ["Database testing", "Performance optimization", "Migration testing"],
+          budgetIndicators: ["$8M infrastructure modernization", "2025 completion target"]
+        },
         intentScore: 78,
-        qualityRating: "good"
+        researchQuality: "good"
+      },
+      {
+        companyName: "JPMorgan Chase",
+        industry: "Financial Services",
+        employeeSize: "10000+",
+        fortuneRanking: 24,
+        state: "NY",
+        headquarters: "New York, NY",
+        platformInitiatives: [
+          { 
+            title: "Dynamics 365 Implementation", 
+            description: "Enterprise CRM modernization", 
+            priority: "high", 
+            timeline: "Q3 2025",
+            urgencyLevel: "high"
+          },
+          { 
+            title: "Power Platform Integration", 
+            description: "Low-code automation deployment", 
+            priority: "medium", 
+            timeline: "Q4 2025",
+            urgencyLevel: "medium"
+          }
+        ],
+        hiringSignals: [
+          { 
+            jobTitle: "Dynamics 365 QA Lead", 
+            department: "Technology", 
+            urgencyLevel: "high", 
+            postedDate: "2024-01-15", 
+            keyRequirements: ["D365 testing", "Financial services"],
+            testingMentions: ["regulatory testing", "compliance testing"],
+            source: "JPMorgan Chase Careers"
+          },
+          { 
+            jobTitle: "Power Platform Test Engineer", 
+            department: "Digital Innovation", 
+            urgencyLevel: "medium", 
+            postedDate: "2024-01-11", 
+            keyRequirements: ["Power Platform", "Automation testing"],
+            testingMentions: ["workflow testing", "integration testing"],
+            source: "LinkedIn Jobs"
+          }
+        ],
+        platformUsage: {
+          currentPlatform: "Legacy CRM/ERP",
+          migrationPlans: ["Dynamics 365 implementation", "Power Platform integration"],
+          integrationNeeds: ["Office 365 integration", "Third-party connectors"],
+          qaRequirements: ["CRM testing", "Integration testing", "Workflow testing", "Compliance testing"],
+          budgetIndicators: ["$12M digital platform budget", "Q2-Q4 2025 rollout"]
+        },
+        intentScore: 82,
+        researchQuality: "excellent"
       }
     ];
 
-    // Return demo accounts for testing
-    return demoAccounts;
+    // Filter accounts based on platform and other criteria
+    const filteredAccounts = demoAccounts.filter(account => {
+      // Platform filter - check if any initiative matches the platform
+      if (filters.platform && filters.platform !== 'all') {
+        const platformMatch = account.platformInitiatives.some(init => 
+          init.title.toLowerCase().includes(filters.platform.toLowerCase()) ||
+          init.description.toLowerCase().includes(filters.platform.toLowerCase())
+        );
+        if (!platformMatch) return false;
+      }
+
+      // Apply other filters
+      return this.matchesFilters(account, filters);
+    });
+
+    return filteredAccounts;
   }
 
   private matchesFilters(account: any, filters: DiscoveryFilters): boolean {
@@ -443,16 +579,18 @@ export class PlatformDiscoveryEngine {
     let score = 0;
 
     // Platform initiatives scoring (40%)
-    if (account.platformInitiatives.length > 0) {
-      const initiativeScore = Math.min(account.platformInitiatives.length * 20, 40);
-      const urgencyBonus = account.platformInitiatives.some(i => i.urgencyLevel === 'high') ? 10 : 0;
+    const platformInitiatives = account.platformInitiatives || [];
+    if (platformInitiatives.length > 0) {
+      const initiativeScore = Math.min(platformInitiatives.length * 20, 40);
+      const urgencyBonus = platformInitiatives.some(i => i.urgencyLevel === 'high') ? 10 : 0;
       score += initiativeScore + urgencyBonus;
     }
 
     // Hiring signals scoring (30%)
-    if (account.hiringSignals.length > 0) {
-      const hiringScore = Math.min(account.hiringSignals.length * 15, 30);
-      const urgencyBonus = account.hiringSignals.some(h => h.urgencyLevel === 'high') ? 5 : 0;
+    const hiringSignals = account.hiringSignals || [];
+    if (hiringSignals.length > 0) {
+      const hiringScore = Math.min(hiringSignals.length * 15, 30);
+      const urgencyBonus = hiringSignals.some(h => h.urgencyLevel === 'high') ? 5 : 0;
       score += hiringScore + urgencyBonus;
     }
 
@@ -469,15 +607,19 @@ export class PlatformDiscoveryEngine {
     else if (account.employeeSize === "1000-5000") score += 6;
 
     // QA requirements bonus (5%)
-    if (account.platformUsage.qaRequirements.length > 2) score += 5;
+    const qaRequirements = account.platformUsage?.qaRequirements || [];
+    if (qaRequirements.length > 2) {
+      score += 5;
+    }
 
     return Math.min(score, 100);
   }
 
   private determineResearchQuality(account: DiscoveredAccount): string {
-    if (account.intentScore >= 85) return "excellent";
-    if (account.intentScore >= 70) return "good";
-    if (account.intentScore >= 50) return "fair";
+    const score = account.intentScore || 0;
+    if (score >= 85) return "excellent";
+    if (score >= 70) return "good";
+    if (score >= 50) return "fair";
     return "basic";
   }
 }
