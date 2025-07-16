@@ -722,6 +722,47 @@ export default function AccountResearch() {
                       </div>
                     )}
 
+                    {/* Prospects/Leads Section */}
+                    <div className="pt-4 border-t">
+                      <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                        <Users className="w-4 h-4 mr-2" />
+                        Prospects ({prospects.filter((p: any) => p.company === research.companyName).length})
+                      </h4>
+                      {prospects.filter((p: any) => p.company === research.companyName).length > 0 ? (
+                        <div className="space-y-2">
+                          {prospects.filter((p: any) => p.company === research.companyName).slice(0, 3).map((prospect: any) => (
+                            <div key={prospect.id} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                              <div className="flex-1">
+                                <div className="font-medium text-gray-900">{prospect.name}</div>
+                                <div className="text-gray-600">{prospect.position}</div>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {prospect.accountPriority || 'medium'}
+                                </Badge>
+                                <Link href={`/prospect-validation/${prospect.id}`} className="text-blue-600 hover:text-blue-800">
+                                  <Eye className="w-4 h-4" />
+                                </Link>
+                              </div>
+                            </div>
+                          ))}
+                          {prospects.filter((p: any) => p.company === research.companyName).length > 3 && (
+                            <div className="text-center">
+                              <Badge variant="outline" className="text-xs">
+                                +{prospects.filter((p: any) => p.company === research.companyName).length - 3} more prospects
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 text-gray-500">
+                          <Users className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                          <p className="text-sm">No prospects uploaded yet</p>
+                          <p className="text-xs text-gray-400">Upload prospects to see contact details</p>
+                        </div>
+                      )}
+                    </div>
+
                     <div className="pt-4 border-t">
                       <Button variant="outline" size="sm" className="w-full group-hover:bg-blue-50 group-hover:border-blue-300">
                         <Eye className="w-4 h-4 mr-2" />

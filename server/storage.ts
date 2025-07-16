@@ -234,7 +234,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async findDuplicateAccountResearch(companyName: string, userId: number): Promise<AccountResearch | undefined> {
-    const [research] = await db.select().from(accountResearch)
+    const [research] = await db.select({
+      id: accountResearch.id,
+      userId: accountResearch.userId,
+      companyName: accountResearch.companyName,
+      industry: accountResearch.industry,
+      companySize: accountResearch.companySize,
+      currentSystems: accountResearch.currentSystems,
+      recentJobPostings: accountResearch.recentJobPostings,
+      initiatives: accountResearch.initiatives,
+      painPoints: accountResearch.painPoints,
+      decisionMakers: accountResearch.decisionMakers,
+      scipabFramework: accountResearch.scipabFramework,
+      researchDate: accountResearch.researchDate,
+      researchQuality: accountResearch.researchQuality,
+    }).from(accountResearch)
       .where(
         and(
           eq(accountResearch.userId, userId),

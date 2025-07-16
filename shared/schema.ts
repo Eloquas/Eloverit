@@ -62,7 +62,6 @@ export const accountResearch = pgTable("account_research", {
   companySize: text("company_size"),
   // Core Technology Systems (enhanced for enterprise systems)
   currentSystems: text("current_systems"), // JSON array of systems in use
-  proprietaryTechnologies: text("proprietary_technologies"), // JSON array of unique systems
   // Enhanced research data
   recentJobPostings: text("recent_job_postings"), // JSON array of relevant postings
   initiatives: text("initiatives"), // JSON array of current initiatives
