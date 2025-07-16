@@ -88,7 +88,7 @@ Respond in JSON format with: title (campaign title), narrative (overall story ar
         messages: [
           {
             role: "system",
-            content: "You are a LinkedIn marketing strategist specializing in B2B campaigns for QA automation and enterprise software companies."
+            content: "You are a LinkedIn marketing strategist specializing in B2B campaigns for QA automation and enterprise software companies. Generate content focused on QA automation value propositions, testing challenges, and business outcomes. NEVER mention trust scores, story scores, or scoring systems in the content. Focus on specific QA automation benefits like faster testing cycles, reduced bugs, improved release quality, and operational efficiency."
           },
           {
             role: "user",
@@ -191,7 +191,7 @@ Respond in JSON format with: hook, content, cta, hashtags (array), wordCount`;
           messages: [
             {
               role: "system",
-              content: `You are a LinkedIn content strategist specializing in B2B campaigns for QA automation and enterprise software. Create post ${template.sequence} that builds on the campaign narrative and connects with previous posts.`
+              content: `You are a LinkedIn content strategist specializing in B2B campaigns for QA automation and enterprise software. Create post ${template.sequence} that builds on the campaign narrative and connects with previous posts. Generate content focused on QA automation value propositions, testing challenges, and business outcomes. NEVER mention trust scores, story scores, or scoring systems in the content. Focus on specific QA automation benefits like faster testing cycles, reduced bugs, improved release quality, and operational efficiency.`
             },
             {
               role: "user",
@@ -323,6 +323,10 @@ Guidelines:
 - Include story elements when appropriate
 - Keep under character limit
 - No sales pitches, focus on value
+- CRITICAL: Focus entirely on QA automation value propositions and testing challenges
+- NEVER mention trust scores, story scores, or scoring systems in the message
+- Talk about specific benefits: faster testing, fewer bugs, improved quality, reduced manual effort
+- Reference industry-specific testing challenges like compliance, scalability, or release velocity
 
 Respond in JSON format with: message, characterCount, trustElements (array), storyElements (array)`;
 
@@ -332,7 +336,7 @@ Respond in JSON format with: message, characterCount, trustElements (array), sto
           messages: [
             {
               role: "system",
-              content: "You are a LinkedIn outreach specialist focusing on QA automation and enterprise testing solutions."
+              content: "You are a LinkedIn outreach specialist focusing on QA automation and enterprise testing solutions. Generate professional LinkedIn messages focused on QA automation value propositions, testing challenges, and business outcomes. NEVER mention trust scores, story scores, or scoring systems in the message content. Focus on specific QA automation benefits like faster testing cycles, reduced bugs, improved release quality, and operational efficiency. The trust and story elements should inform your messaging approach and personalization, but should not be mentioned explicitly in the LinkedIn message."
             },
             {
               role: "user",

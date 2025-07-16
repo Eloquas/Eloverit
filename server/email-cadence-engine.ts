@@ -237,8 +237,12 @@ Email Guidelines:
 - Use ${step.tone} tone
 - Include ${step.cta} call-to-action
 - Focus on ${prospect.industry} industry specifics
+- CRITICAL: Focus entirely on QA automation value propositions, testing challenges, and business outcomes
+- NEVER mention trust scores, story scores, scoring systems, or Avo's metrics in the email content
+- Talk about specific benefits: faster testing, fewer bugs, improved quality, reduced manual effort
+- Reference industry-specific testing challenges like compliance, scalability, or release velocity
 
-Subject line and body should be professional, consultative, and human.
+Subject line and body should be professional, consultative, and human. The email should read like a helpful sales professional reaching out about QA automation solutions.
 
 Respond in JSON format with: subject, body, trustElements (array), storyElements (array), wordCount`;
 
@@ -248,7 +252,7 @@ Respond in JSON format with: subject, body, trustElements (array), storyElements
           messages: [
             {
               role: "system",
-              content: "You are an expert sales copywriter specializing in QA automation and enterprise software outreach."
+              content: "You are an expert sales copywriter specializing in QA automation and enterprise software outreach. Generate professional emails focused on QA automation value propositions, testing challenges, and business outcomes. NEVER mention trust scores, story scores, or scoring systems in the email content. Focus on specific QA automation benefits like faster testing cycles, reduced bugs, improved release quality, and operational efficiency. The trust and story elements should inform your writing style and personalization approach, but should not be mentioned explicitly in the email."
             },
             {
               role: "user",

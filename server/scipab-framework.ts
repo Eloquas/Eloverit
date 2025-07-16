@@ -1,216 +1,439 @@
-// SCIPAB Framework Implementation for Consultative Sales Messaging
-// Situation, Complication, Implication, Position, Ask, Benefit
+import OpenAI from "openai";
 
-export interface SCIPABContext {
-  prospect: {
-    name: string;
-    position: string;
-    company: string;
-    seniority: string;
-    department: string;
-  };
-  accountResearch: {
-    initiatives: string[];
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+export interface SCIPABFramework {
+  situation: {
+    currentState: string;
+    businessContext: string;
     systemsInUse: string[];
-    hiringPatterns: string[];
-    painPoints: string[];
-    industry: string;
-    companySize: string;
+    teamStructure: string;
   };
-  cadenceStep: number;
-}
-
-export interface SCIPABEmail {
-  situation: string;
-  complication: string;
-  implication: string;
-  position: string;
-  ask: string;
-  benefit: string;
-  thoughtProvokingQuestion: string;
-  softCTA: string;
-  strongCTA: string;
-}
-
-export const cadenceStrategy = {
-  step1: {
-    focus: "Thought-provoking question + soft resource offer",
-    ctaType: "soft",
-    purpose: "Capture attention with insight, not sales pitch",
-    askOptions: ["Would you mind if I shared a video?", "Would you be open to a brief insight document?", "May I share a relevant case study?"]
-  },
-  step2: {
-    focus: "Build on their potential interest + industry insights",
-    ctaType: "soft", 
-    purpose: "Deepen engagement with valuable content",
-    askOptions: ["Would a quick industry benchmark be helpful?", "Should I send over our latest research?", "Would you find a peer comparison valuable?"]
-  },
-  step3: {
-    focus: "Share specific value proposition + gentle positioning",
-    ctaType: "soft",
-    purpose: "Position solution while maintaining consultative tone",
-    askOptions: ["Would you like to see how others solved this?", "May I share a brief solution overview?", "Would a quick demo be worthwhile?"]
-  },
-  step4: {
-    focus: "Direct value connection + demo opportunity",
-    ctaType: "strong",
-    purpose: "Move toward qualification conversation",
-    askOptions: ["Worth a brief call to review your situation?", "Should we schedule 15 minutes to discuss?", "Would you like to see this in action?"]
-  },
-  step5: {
-    focus: "Initiative-specific positioning + urgency",
-    ctaType: "strong", 
-    purpose: "Create urgency around their specific initiatives",
-    askOptions: ["Given your upcoming initiative, shall we connect?", "With your timeline, would a quick review help?", "Before you move forward, worth a conversation?"]
-  },
-  step6: {
-    focus: "Breakup email + final value offer",
-    ctaType: "breakup",
-    purpose: "Last attempt with graceful exit",
-    askOptions: ["Should I stop reaching out?", "One final resource that might help?", "Worth staying connected for future?"]
-  }
-};
-
-export function buildSCIPABFramework(context: SCIPABContext): SCIPABEmail {
-  const { prospect, accountResearch } = context;
-  
-  // Situation: Current state based on role + company initiatives
-  const situation = `You're leading ${prospect.department} efforts at ${prospect.company}, and I noticed ${accountResearch.initiatives.length > 0 ? 
-    `recent initiatives around ${accountResearch.initiatives.slice(0, 2).join(' and ')}` : 
-    `your focus on ${prospect.department} excellence`}.`;
-
-  // Complication: Industry-wide challenge affecting their role
-  const complications = {
-    qa: "manual testing bottlenecks creating release delays",
-    systems: "integration complexity slowing down deployments", 
-    erp: "system upgrades causing testing overhead",
-    d365: "customizations requiring extensive validation",
-    sap: "S/4HANA migrations demanding thorough testing",
-    oracle: "cloud transitions needing comprehensive QA"
+  complication: {
+    primaryChallenges: string[];
+    operationalPainPoints: string[];
+    riskFactors: string[];
+    inefficiencies: string[];
   };
-  
-  const roleType = categorizeRole(prospect.position);
-  const complication = complications[roleType as keyof typeof complications] || "testing challenges impacting delivery speed";
-
-  // Implication: Business impact of the complication
-  const implication = `This often means ${prospect.seniority === 'senior' ? 'strategic initiatives get delayed' : 'teams work overtime'} and ${
-    accountResearch.companySize === 'enterprise' ? 'enterprise-wide' : 'critical'
-  } releases face quality risks.`;
-
-  // Position: Our approach/solution
-  const position = `At Avo Automation, we've helped ${roleType} leaders reduce testing time by 80% through AI-powered automation that integrates seamlessly with ${
-    accountResearch.systemsInUse.length > 0 ? accountResearch.systemsInUse[0] : 'existing systems'
-  }.`;
-
-  // Thought-provoking question tied to their context
-  const questions = {
-    qa: `How much time does your team spend on regression testing for each ${accountResearch.systemsInUse[0] || 'system'} release?`,
-    systems: `What's your biggest challenge when validating integrations across multiple enterprise systems?`,
-    erp: `How do you currently handle testing during major ERP updates without disrupting business operations?`,
-    d365: `What's your approach to testing D365 customizations while maintaining compliance requirements?`,
-    sap: `How are you planning to validate your S/4HANA migration without extending the timeline?`,
-    oracle: `What's your strategy for ensuring data integrity during Oracle cloud transitions?`
+  implication: {
+    businessImpact: string[];
+    costImplications: string[];
+    riskConsequences: string[];
+    competitiveDisadvantages: string[];
   };
-
-  const thoughtProvokingQuestion = questions[roleType as keyof typeof questions] || 
-    `What's your current approach to balancing testing thoroughness with release velocity?`;
-
-  return {
-    situation,
-    complication,
-    implication, 
-    position,
-    ask: "", // Will be filled based on cadence step
-    benefit: "30% faster releases with 40% fewer post-release issues",
-    thoughtProvokingQuestion,
-    softCTA: "", // Will be customized per step
-    strongCTA: "" // Will be customized per step
+  position: {
+    solutionOverview: string;
+    valueProposition: string[];
+    differentiators: string[];
+    strategicFit: string;
+  };
+  ask: {
+    specificRequest: string;
+    nextSteps: string[];
+    timeline: string;
+    decisionMakers: string[];
+  };
+  benefit: {
+    quantifiableOutcomes: string[];
+    strategicAdvantages: string[];
+    transformationalImpact: string;
+    roi: string;
   };
 }
 
-function categorizeRole(position: string): string {
-  const pos = position.toLowerCase();
-  if (pos.includes('qa') || pos.includes('quality') || pos.includes('test')) return 'qa';
-  if (pos.includes('d365') || pos.includes('dynamics')) return 'd365';
-  if (pos.includes('sap')) return 'sap';
-  if (pos.includes('oracle')) return 'oracle';
-  if (pos.includes('erp')) return 'erp';
-  if (pos.includes('crm')) return 'systems';
-  if (pos.includes('system') || pos.includes('application')) return 'systems';
-  return 'systems';
+export interface SPINFramework {
+  situation: {
+    currentProcesses: string[];
+    existingSystems: string[];
+    teamSize: string;
+    currentApproach: string;
+  };
+  problem: {
+    identifiedChallenges: string[];
+    frequencyOfIssues: string;
+    impactOnOperations: string[];
+    stakeholderFrustrations: string[];
+  };
+  implication: {
+    continuedPainPoints: string[];
+    escalatingCosts: string[];
+    competitiveRisks: string[];
+    stakeholderImpact: string[];
+  };
+  needPayoff: {
+    desiredOutcomes: string[];
+    successMetrics: string[];
+    transformationGoals: string[];
+    stakeholderBenefits: string[];
+  };
 }
 
-export function generateCadenceContent(scipab: SCIPABEmail, step: number): {
-  subject: string;
-  emailBody: string;
-  cta: string;
-  ctaType: 'soft' | 'strong' | 'breakup';
-} {
-  const strategy = cadenceStrategy[`step${step}` as keyof typeof cadenceStrategy];
-  
-  const subjects = {
-    1: "Quick question about [Company] testing approach",
-    2: "Reducing testing overhead at [Company]", 
-    3: "How [Industry] companies solved this",
-    4: "Worth 15 minutes to discuss [Company] initiatives?",
-    5: "Before your next release cycle...",
-    6: "Final thought + staying connected"
-  };
+export class SCIPABGenerator {
+  async generateSCIPABFramework(
+    companyName: string,
+    industry: string,
+    companySize: string,
+    currentSystems: string[],
+    painPoints: string[],
+    initiatives: string[],
+    jobPostings: string[]
+  ): Promise<SCIPABFramework> {
+    const prompt = this.buildSCIPABPrompt(
+      companyName, industry, companySize, currentSystems, 
+      painPoints, initiatives, jobPostings
+    );
 
-  const subject = subjects[step as keyof typeof subjects] || "Following up on QA automation";
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: "You are a senior sales consultant specializing in QA automation and enterprise systems. Generate detailed SCIPAB framework analysis based on the provided company intelligence. Focus on quality assurance, test automation, and software delivery optimization opportunities."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+        max_tokens: 3000
+      });
 
-  let emailBody = "";
-  let cta = "";
-
-  if (step <= 3) {
-    // Soft CTA emails - short and consultative
-    emailBody = `Hi [Name],
-
-${scipab.thoughtProvokingQuestion}
-
-${scipab.situation} ${scipab.complication}, which often means delays and quality risks.
-
-${strategy.askOptions[0]} It shows how similar organizations reduced testing time by 80%.
-
-Best,
-John White
-Avo Automation`;
-
-    cta = strategy.askOptions[0];
-  } else if (step <= 5) {
-    // Stronger CTA emails - still concise
-    emailBody = `Hi [Name],
-
-${scipab.thoughtProvokingQuestion}
-
-${scipab.position} Our clients typically see ${scipab.benefit}.
-
-${strategy.askOptions[0]} I can show you how similar teams accelerated their initiatives.
-
-Best,
-John White
-Avo Automation`;
-
-    cta = strategy.askOptions[0];
-  } else {
-    // Breakup email - very short
-    emailBody = `Hi [Name],
-
-I haven't heard back, so I'll assume this isn't a priority right now.
-
-If testing automation becomes relevant for your upcoming initiatives, I'm here to help.
-
-Best,
-John White
-Avo Automation`;
-
-    cta = strategy.askOptions[0];
+      const scipabData = JSON.parse(response.choices[0]?.message?.content || '{}');
+      return this.validateAndStructureSCIPAB(scipabData);
+    } catch (error) {
+      console.error('SCIPAB generation error:', error);
+      return this.generateFallbackSCIPAB(companyName, industry, currentSystems, painPoints);
+    }
   }
 
-  return {
-    subject,
-    emailBody,
-    cta,
-    ctaType: strategy.ctaType as 'soft' | 'strong' | 'breakup'
-  };
+  async generateSPINFramework(
+    companyName: string,
+    industry: string,
+    currentSystems: string[],
+    painPoints: string[],
+    jobPostings: string[]
+  ): Promise<SPINFramework> {
+    const prompt = this.buildSPINPrompt(companyName, industry, currentSystems, painPoints, jobPostings);
+
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert sales consultant using SPIN selling methodology. Generate comprehensive SPIN analysis for QA automation and enterprise systems optimization opportunities."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+        max_tokens: 2500
+      });
+
+      const spinData = JSON.parse(response.choices[0]?.message?.content || '{}');
+      return this.validateAndStructureSPIN(spinData);
+    } catch (error) {
+      console.error('SPIN generation error:', error);
+      return this.generateFallbackSPIN(companyName, industry, currentSystems, painPoints);
+    }
+  }
+
+  private buildSCIPABPrompt(
+    companyName: string,
+    industry: string,
+    companySize: string,
+    currentSystems: string[],
+    painPoints: string[],
+    initiatives: string[],
+    jobPostings: string[]
+  ): string {
+    return `
+# SCIPAB Framework Analysis for ${companyName}
+
+## Company Intelligence
+- **Industry**: ${industry}
+- **Company Size**: ${companySize}
+- **Current Systems**: ${currentSystems.join(', ')}
+- **Identified Pain Points**: ${painPoints.join(', ')}
+- **Current Initiatives**: ${initiatives.join(', ')}
+- **Recent Job Postings**: ${jobPostings.join(', ')}
+
+## SCIPAB Framework Requirements
+
+Generate a comprehensive SCIPAB analysis focused on QA automation, test automation, and software delivery optimization opportunities.
+
+### Key Focus Areas:
+1. **Test Automation & Quality Assurance**
+   - Manual testing inefficiencies
+   - Quality bottlenecks in delivery
+   - Defect detection delays
+   - Test coverage gaps
+
+2. **Software Delivery Optimization**
+   - CI/CD pipeline maturity
+   - Release cycle speed
+   - Deployment risks
+   - Time-to-market challenges
+
+3. **Enterprise System Integration**
+   - System testing complexity
+   - Cross-platform quality
+   - Integration testing gaps
+   - Data quality issues
+
+## Response Format
+Return a JSON object with this exact structure:
+
+\`\`\`json
+{
+  "situation": {
+    "currentState": "Current QA and software delivery state",
+    "businessContext": "Business context and market pressures",
+    "systemsInUse": ["system1", "system2"],
+    "teamStructure": "Current team structure and roles"
+  },
+  "complication": {
+    "primaryChallenges": ["challenge1", "challenge2"],
+    "operationalPainPoints": ["pain1", "pain2"],
+    "riskFactors": ["risk1", "risk2"],
+    "inefficiencies": ["inefficiency1", "inefficiency2"]
+  },
+  "implication": {
+    "businessImpact": ["impact1", "impact2"],
+    "costImplications": ["cost1", "cost2"],
+    "riskConsequences": ["consequence1", "consequence2"],
+    "competitiveDisadvantages": ["disadvantage1", "disadvantage2"]
+  },
+  "position": {
+    "solutionOverview": "High-level solution positioning",
+    "valueProposition": ["value1", "value2"],
+    "differentiators": ["diff1", "diff2"],
+    "strategicFit": "Why this solution fits their strategy"
+  },
+  "ask": {
+    "specificRequest": "Specific request or call to action",
+    "nextSteps": ["step1", "step2"],
+    "timeline": "Suggested timeline",
+    "decisionMakers": ["role1", "role2"]
+  },
+  "benefit": {
+    "quantifiableOutcomes": ["80% reduction in testing time", "60% faster releases"],
+    "strategicAdvantages": ["advantage1", "advantage2"],
+    "transformationalImpact": "Long-term transformation impact",
+    "roi": "Expected ROI and timeframe"
+  }
 }
+\`\`\`
+
+Focus on authentic, industry-specific insights based on the provided company intelligence.
+    `;
+  }
+
+  private buildSPINPrompt(
+    companyName: string,
+    industry: string,
+    currentSystems: string[],
+    painPoints: string[],
+    jobPostings: string[]
+  ): string {
+    return `
+# SPIN Selling Framework Analysis for ${companyName}
+
+## Company Intelligence
+- **Industry**: ${industry}
+- **Current Systems**: ${currentSystems.join(', ')}
+- **Pain Points**: ${painPoints.join(', ')}
+- **Job Postings**: ${jobPostings.join(', ')}
+
+Generate a comprehensive SPIN analysis for QA automation and software delivery optimization.
+
+## Response Format
+\`\`\`json
+{
+  "situation": {
+    "currentProcesses": ["process1", "process2"],
+    "existingSystems": ["system1", "system2"],
+    "teamSize": "Team size and structure",
+    "currentApproach": "Current approach to QA and testing"
+  },
+  "problem": {
+    "identifiedChallenges": ["challenge1", "challenge2"],
+    "frequencyOfIssues": "How often problems occur",
+    "impactOnOperations": ["impact1", "impact2"],
+    "stakeholderFrustrations": ["frustration1", "frustration2"]
+  },
+  "implication": {
+    "continuedPainPoints": ["pain1", "pain2"],
+    "escalatingCosts": ["cost1", "cost2"],
+    "competitiveRisks": ["risk1", "risk2"],
+    "stakeholderImpact": ["impact1", "impact2"]
+  },
+  "needPayoff": {
+    "desiredOutcomes": ["outcome1", "outcome2"],
+    "successMetrics": ["metric1", "metric2"],
+    "transformationGoals": ["goal1", "goal2"],
+    "stakeholderBenefits": ["benefit1", "benefit2"]
+  }
+}
+\`\`\`
+    `;
+  }
+
+  private validateAndStructureSCIPAB(data: any): SCIPABFramework {
+    return {
+      situation: {
+        currentState: data.situation?.currentState || 'Current state analysis pending',
+        businessContext: data.situation?.businessContext || 'Business context assessment needed',
+        systemsInUse: data.situation?.systemsInUse || [],
+        teamStructure: data.situation?.teamStructure || 'Team structure analysis required'
+      },
+      complication: {
+        primaryChallenges: data.complication?.primaryChallenges || [],
+        operationalPainPoints: data.complication?.operationalPainPoints || [],
+        riskFactors: data.complication?.riskFactors || [],
+        inefficiencies: data.complication?.inefficiencies || []
+      },
+      implication: {
+        businessImpact: data.implication?.businessImpact || [],
+        costImplications: data.implication?.costImplications || [],
+        riskConsequences: data.implication?.riskConsequences || [],
+        competitiveDisadvantages: data.implication?.competitiveDisadvantages || []
+      },
+      position: {
+        solutionOverview: data.position?.solutionOverview || 'Solution positioning to be developed',
+        valueProposition: data.position?.valueProposition || [],
+        differentiators: data.position?.differentiators || [],
+        strategicFit: data.position?.strategicFit || 'Strategic fit analysis pending'
+      },
+      ask: {
+        specificRequest: data.ask?.specificRequest || 'Specific request to be formulated',
+        nextSteps: data.ask?.nextSteps || [],
+        timeline: data.ask?.timeline || 'Timeline to be determined',
+        decisionMakers: data.ask?.decisionMakers || []
+      },
+      benefit: {
+        quantifiableOutcomes: data.benefit?.quantifiableOutcomes || [],
+        strategicAdvantages: data.benefit?.strategicAdvantages || [],
+        transformationalImpact: data.benefit?.transformationalImpact || 'Transformation impact analysis pending',
+        roi: data.benefit?.roi || 'ROI calculation in progress'
+      }
+    };
+  }
+
+  private validateAndStructureSPIN(data: any): SPINFramework {
+    return {
+      situation: {
+        currentProcesses: data.situation?.currentProcesses || [],
+        existingSystems: data.situation?.existingSystems || [],
+        teamSize: data.situation?.teamSize || 'Team size assessment needed',
+        currentApproach: data.situation?.currentApproach || 'Current approach analysis required'
+      },
+      problem: {
+        identifiedChallenges: data.problem?.identifiedChallenges || [],
+        frequencyOfIssues: data.problem?.frequencyOfIssues || 'Issue frequency analysis needed',
+        impactOnOperations: data.problem?.impactOnOperations || [],
+        stakeholderFrustrations: data.problem?.stakeholderFrustrations || []
+      },
+      implication: {
+        continuedPainPoints: data.implication?.continuedPainPoints || [],
+        escalatingCosts: data.implication?.escalatingCosts || [],
+        competitiveRisks: data.implication?.competitiveRisks || [],
+        stakeholderImpact: data.implication?.stakeholderImpact || []
+      },
+      needPayoff: {
+        desiredOutcomes: data.needPayoff?.desiredOutcomes || [],
+        successMetrics: data.needPayoff?.successMetrics || [],
+        transformationGoals: data.needPayoff?.transformationGoals || [],
+        stakeholderBenefits: data.needPayoff?.stakeholderBenefits || []
+      }
+    };
+  }
+
+  private generateFallbackSCIPAB(
+    companyName: string,
+    industry: string,
+    currentSystems: string[],
+    painPoints: string[]
+  ): SCIPABFramework {
+    return {
+      situation: {
+        currentState: `${companyName} operates in the ${industry} industry with existing systems including ${currentSystems.slice(0, 3).join(', ')}`,
+        businessContext: `Competitive pressures in ${industry} require efficient software delivery and quality assurance`,
+        systemsInUse: currentSystems,
+        teamStructure: "Distributed development and QA teams across multiple locations"
+      },
+      complication: {
+        primaryChallenges: painPoints.length > 0 ? painPoints : ["Manual testing bottlenecks", "Inconsistent quality across releases"],
+        operationalPainPoints: ["Slow release cycles", "High defect rates in production", "Testing resource constraints"],
+        riskFactors: ["Quality issues affecting customer satisfaction", "Delayed time-to-market"],
+        inefficiencies: ["Manual regression testing", "Siloed testing processes", "Lack of test automation"]
+      },
+      implication: {
+        businessImpact: ["Reduced competitive advantage", "Customer satisfaction decline", "Increased operational costs"],
+        costImplications: ["Higher testing costs", "Increased defect remediation expenses", "Lost revenue from delays"],
+        riskConsequences: ["Reputation damage from quality issues", "Market share loss to competitors"],
+        competitiveDisadvantages: ["Slower innovation cycles", "Higher operational overhead", "Quality perception issues"]
+      },
+      position: {
+        solutionOverview: "Comprehensive test automation and quality engineering transformation",
+        valueProposition: ["80% reduction in testing time", "60% faster release cycles", "90% improvement in test coverage"],
+        differentiators: ["AI-powered test generation", "Seamless CI/CD integration", "Enterprise-scale reliability"],
+        strategicFit: "Aligns with digital transformation initiatives and operational excellence goals"
+      },
+      ask: {
+        specificRequest: "Pilot implementation of automated testing framework for critical business applications",
+        nextSteps: ["Technical assessment meeting", "Proof of concept development", "Executive stakeholder alignment"],
+        timeline: "90-day pilot program with phased rollout",
+        decisionMakers: ["CTO", "VP of Engineering", "QA Director", "DevOps Lead"]
+      },
+      benefit: {
+        quantifiableOutcomes: ["80% reduction in manual testing effort", "60% faster release cycles", "40% reduction in production defects"],
+        strategicAdvantages: ["Accelerated innovation capability", "Enhanced competitive positioning", "Improved customer satisfaction"],
+        transformationalImpact: "Evolution from reactive quality assurance to proactive quality engineering culture",
+        roi: "300% ROI within 18 months through efficiency gains and quality improvements"
+      }
+    };
+  }
+
+  private generateFallbackSPIN(
+    companyName: string,
+    industry: string,
+    currentSystems: string[],
+    painPoints: string[]
+  ): SPINFramework {
+    return {
+      situation: {
+        currentProcesses: ["Manual testing processes", "Waterfall development cycles", "Siloed QA activities"],
+        existingSystems: currentSystems,
+        teamSize: "Medium-sized development and QA teams",
+        currentApproach: "Traditional manual testing with limited automation"
+      },
+      problem: {
+        identifiedChallenges: painPoints.length > 0 ? painPoints : ["Long testing cycles", "Inconsistent quality", "Resource bottlenecks"],
+        frequencyOfIssues: "Quality issues occur in 30-40% of releases",
+        impactOnOperations: ["Delayed product launches", "Increased support costs", "Customer escalations"],
+        stakeholderFrustrations: ["Development team blocked by testing", "Business frustrated with delays", "Customers experiencing defects"]
+      },
+      implication: {
+        continuedPainPoints: ["Escalating testing costs", "Longer time-to-market", "Quality reputation decline"],
+        escalatingCosts: ["Increasing manual testing overhead", "Production defect remediation", "Customer churn costs"],
+        competitiveRisks: ["Competitors launching faster", "Market share erosion", "Innovation slowdown"],
+        stakeholderImpact: ["Team morale decline", "Customer satisfaction drop", "Revenue impact"]
+      },
+      needPayoff: {
+        desiredOutcomes: ["Faster, more reliable releases", "Reduced testing costs", "Improved product quality"],
+        successMetrics: ["50% reduction in testing cycle time", "80% improvement in defect detection", "90% test automation coverage"],
+        transformationGoals: ["Shift-left testing approach", "Continuous quality integration", "Automated regression testing"],
+        stakeholderBenefits: ["Development team efficiency", "Business agility improvement", "Customer satisfaction increase"]
+      }
+    };
+  }
+}
+
+export const scipabGenerator = new SCIPABGenerator();

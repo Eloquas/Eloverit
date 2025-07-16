@@ -12,7 +12,7 @@ import { Readable } from "stream";
 import * as XLSX from "xlsx";
 import { avoKnowledgeBase, qaMarketIntelligence, getPersonalizedAvoInsights } from "./avo-knowledge";
 import { enterpriseSystemsKnowledge, categorizeJobTitle, determineSeniorityLevel, identifySystemsExperience, getPersonalizedEnterpriseInsights } from "./enterprise-knowledge";
-import { buildSCIPABFramework, generateCadenceContent, type SCIPABContext } from "./scipab-framework";
+import { scipabGenerator, type SCIPABContext } from "./scipab-framework";
 import { pdlService } from "./pdl-service";
 import { linkedInPostGenerator } from "./linkedin-posts";
 import { eloquasOutreachEngine } from "./outreach-engine";
@@ -1375,7 +1375,25 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
           },
           cadenceStep: 1
         };
-        const scipabData = buildSCIPABFramework(scipabContext);
+        // Generate SCIPAB framework using the new service
+        const { scipabGenerator } = await import("./scipab-framework");
+        const scipabFramework = await scipabGenerator.generateSCIPABFramework(
+          companyName,
+          hybridData.pdlData?.industry || 'Technology',
+          hybridData.pdlData?.companySize || 'Enterprise',
+          hybridData.pdlData?.technologies || [],
+          hybridData.combinedInsights.testingOpportunities || [],
+          hybridData.combinedInsights.keyInitiatives || [],
+          hybridData.combinedInsights.hiringSignals || []
+        );
+        
+        const spinFramework = await scipabGenerator.generateSPINFramework(
+          companyName,
+          hybridData.pdlData?.industry || 'Technology',
+          hybridData.pdlData?.technologies || [],
+          hybridData.combinedInsights.testingOpportunities || [],
+          hybridData.combinedInsights.hiringSignals || []
+        );
 
         const research = await storage.createAccountResearch({
           userId: req.user!.id,
@@ -1387,7 +1405,10 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
           initiatives: JSON.stringify(hybridData.combinedInsights.keyInitiatives || []),
           painPoints: JSON.stringify(hybridData.combinedInsights.testingOpportunities || []),
           decisionMakers: JSON.stringify([]),
-          scipabFramework: JSON.stringify(scipabData),
+          scipabFramework: JSON.stringify({
+            scipab: scipabFramework,
+            spin: spinFramework
+          }),
           researchQuality: hybridData.researchQuality >= 70 ? "excellent" : 
                           hybridData.researchQuality >= 40 ? "good" : "fair"
         });
@@ -1397,7 +1418,10 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
           companyName, 
           research: {
             ...research,
-            scipabFramework: scipabData
+            scipabFramework: {
+              scipab: scipabFramework,
+              spin: spinFramework
+            }
           },
           hybridData: {
             dataSource: hybridData.dataSource,
@@ -1406,7 +1430,8 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
             aiResearchCompleted: !!hybridData.aiResearch,
             keyInsights: hybridData.combinedInsights
           },
-          scipab: scipabData,
+          scipab: scipabFramework,
+          spin: spinFramework,
           dataValidation: {
             source: hybridData.dataSource === 'hybrid' ? 'PDL + AI Research' : 
                    hybridData.dataSource === 'pdl-only' ? 'People Data Labs API' : 'AI Research',
@@ -1485,6 +1510,70 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
       console.error("Test platform discovery error:", error);
       res.status(500).json({ 
         error: "Failed to discover platform accounts",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Generate SCIPAB/SPIN Framework for existing account research
+  app.post("/api/account-research/:id/generate-scipab", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const researchId = parseInt(req.params.id);
+      const userId = req.user!.id;
+
+      // Get existing research
+      const research = await storage.getAccountResearch(userId);
+      const accountResearch = research.find(r => r.id === researchId);
+      
+      if (!accountResearch) {
+        return res.status(404).json({ error: "Account research not found" });
+      }
+
+      // Generate SCIPAB and SPIN frameworks
+      const { scipabGenerator } = await import("./scipab-framework");
+      
+      const currentSystems = JSON.parse(accountResearch.currentSystems || "[]");
+      const painPoints = JSON.parse(accountResearch.painPoints || "[]");
+      const initiatives = JSON.parse(accountResearch.initiatives || "[]");
+      const jobPostings = JSON.parse(accountResearch.recentJobPostings || "[]");
+
+      const scipabFramework = await scipabGenerator.generateSCIPABFramework(
+        accountResearch.companyName,
+        accountResearch.industry || 'Technology',
+        accountResearch.companySize || 'Enterprise',
+        currentSystems,
+        painPoints,
+        initiatives,
+        jobPostings
+      );
+
+      const spinFramework = await scipabGenerator.generateSPINFramework(
+        accountResearch.companyName,
+        accountResearch.industry || 'Technology',
+        currentSystems,
+        painPoints,
+        jobPostings
+      );
+
+      // Update the research with new SCIPAB/SPIN data
+      const updatedResearch = await storage.updateAccountResearch(researchId, {
+        scipabFramework: JSON.stringify({
+          scipab: scipabFramework,
+          spin: spinFramework
+        }),
+        lastUpdated: new Date()
+      });
+
+      res.json({
+        success: true,
+        scipab: scipabFramework,
+        spin: spinFramework,
+        research: updatedResearch
+      });
+    } catch (error) {
+      console.error("SCIPAB generation error:", error);
+      res.status(500).json({ 
+        error: "Failed to generate SCIPAB framework",
         details: error instanceof Error ? error.message : "Unknown error"
       });
     }

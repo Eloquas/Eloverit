@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Search, TrendingUp, Users, Briefcase, ArrowLeft, RefreshCw, Eye, BarChart3, Target, Clock, CheckCircle, AlertTriangle, ExternalLink, Star, Lightbulb } from "lucide-react";
+import { Building2, Search, TrendingUp, Users, Briefcase, ArrowLeft, RefreshCw, Eye, BarChart3, Target, Clock, CheckCircle, AlertTriangle, ExternalLink, Star, Lightbulb, FileText, Info, TrendingDown, MessageSquare, RotateCcw, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -848,11 +848,12 @@ export default function AccountResearch() {
               </DialogHeader>
 
               <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
                   <TabsTrigger value="systems">Systems</TabsTrigger>
                   <TabsTrigger value="hiring">Hiring Activity</TabsTrigger>
                   <TabsTrigger value="initiatives">Initiatives</TabsTrigger>
+                  <TabsTrigger value="scipab">SCIPAB/SPIN</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6">
@@ -1007,6 +1008,294 @@ export default function AccountResearch() {
                       </div>
                     </CardContent>
                   </Card>
+                </TabsContent>
+
+                <TabsContent value="scipab" className="space-y-6">
+                  {(() => {
+                    let scipabFramework = null;
+                    try {
+                      scipabFramework = selectedResearch.scipabFramework ? JSON.parse(selectedResearch.scipabFramework) : null;
+                    } catch (error) {
+                      console.error('Error parsing SCIPAB framework:', error);
+                    }
+                    
+                    if (!scipabFramework || (!scipabFramework.scipab && !scipabFramework.spin)) {
+                      return (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center">
+                              <FileText className="w-5 h-5 mr-2" />
+                              SCIPAB & SPIN Framework Analysis
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-center py-8">
+                              <FileText className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                              <p className="text-gray-500 mb-4">No SCIPAB/SPIN analysis available for this company.</p>
+                              <Button 
+                                variant="outline" 
+                                onClick={() => handleResearchCompany(selectedResearch.companyName, undefined, true)}
+                                className="bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"
+                              >
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                                Generate Framework Analysis
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-6">
+                        {/* SCIPAB Framework */}
+                        {scipabFramework.scipab && (
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="flex items-center">
+                                <Target className="w-5 h-5 mr-2 text-purple-600" />
+                                SCIPAB Framework Analysis
+                              </CardTitle>
+                              <CardDescription>
+                                Structured consultative sales approach for QA automation opportunities
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Situation */}
+                                <div className="space-y-4">
+                                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                    <h4 className="font-semibold text-blue-900 mb-2 flex items-center">
+                                      <Info className="w-4 h-4 mr-2" />
+                                      Situation
+                                    </h4>
+                                    <p className="text-sm text-blue-800 mb-3">{scipabFramework.scipab.situation.currentState}</p>
+                                    <div className="space-y-2">
+                                      <p className="text-xs text-blue-700 font-medium">Business Context:</p>
+                                      <p className="text-xs text-blue-700">{scipabFramework.scipab.situation.businessContext}</p>
+                                      <p className="text-xs text-blue-700 font-medium">Team Structure:</p>
+                                      <p className="text-xs text-blue-700">{scipabFramework.scipab.situation.teamStructure}</p>
+                                    </div>
+                                  </div>
+
+                                  {/* Complication */}
+                                  <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                                    <h4 className="font-semibold text-orange-900 mb-2 flex items-center">
+                                      <AlertTriangle className="w-4 h-4 mr-2" />
+                                      Complication
+                                    </h4>
+                                    <div className="space-y-2">
+                                      <div>
+                                        <p className="text-xs text-orange-700 font-medium">Primary Challenges:</p>
+                                        <ul className="text-xs text-orange-700 list-disc list-inside">
+                                          {scipabFramework.scipab.complication.primaryChallenges.map((challenge: string, i: number) => (
+                                            <li key={i}>{challenge}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-orange-700 font-medium">Risk Factors:</p>
+                                        <ul className="text-xs text-orange-700 list-disc list-inside">
+                                          {scipabFramework.scipab.complication.riskFactors.map((risk: string, i: number) => (
+                                            <li key={i}>{risk}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Implication */}
+                                  <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                                    <h4 className="font-semibold text-red-900 mb-2 flex items-center">
+                                      <TrendingDown className="w-4 h-4 mr-2" />
+                                      Implication
+                                    </h4>
+                                    <div className="space-y-2">
+                                      <div>
+                                        <p className="text-xs text-red-700 font-medium">Business Impact:</p>
+                                        <ul className="text-xs text-red-700 list-disc list-inside">
+                                          {scipabFramework.scipab.implication.businessImpact.map((impact: string, i: number) => (
+                                            <li key={i}>{impact}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-red-700 font-medium">Cost Implications:</p>
+                                        <ul className="text-xs text-red-700 list-disc list-inside">
+                                          {scipabFramework.scipab.implication.costImplications.map((cost: string, i: number) => (
+                                            <li key={i}>{cost}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                  {/* Position */}
+                                  <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                                    <h4 className="font-semibold text-green-900 mb-2 flex items-center">
+                                      <CheckCircle className="w-4 h-4 mr-2" />
+                                      Position
+                                    </h4>
+                                    <p className="text-sm text-green-800 mb-3">{scipabFramework.scipab.position.solutionOverview}</p>
+                                    <div className="space-y-2">
+                                      <p className="text-xs text-green-700 font-medium">Value Proposition:</p>
+                                      <ul className="text-xs text-green-700 list-disc list-inside">
+                                        {scipabFramework.scipab.position.valueProposition.map((value: string, i: number) => (
+                                          <li key={i}>{value}</li>
+                                        ))}
+                                      </ul>
+                                      <p className="text-xs text-green-700 font-medium">Strategic Fit:</p>
+                                      <p className="text-xs text-green-700">{scipabFramework.scipab.position.strategicFit}</p>
+                                    </div>
+                                  </div>
+
+                                  {/* Ask */}
+                                  <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                                    <h4 className="font-semibold text-purple-900 mb-2 flex items-center">
+                                      <MessageSquare className="w-4 h-4 mr-2" />
+                                      Ask
+                                    </h4>
+                                    <p className="text-sm text-purple-800 mb-3">{scipabFramework.scipab.ask.specificRequest}</p>
+                                    <div className="space-y-2">
+                                      <p className="text-xs text-purple-700 font-medium">Next Steps:</p>
+                                      <ul className="text-xs text-purple-700 list-disc list-inside">
+                                        {scipabFramework.scipab.ask.nextSteps.map((step: string, i: number) => (
+                                          <li key={i}>{step}</li>
+                                        ))}
+                                      </ul>
+                                      <p className="text-xs text-purple-700 font-medium">Timeline:</p>
+                                      <p className="text-xs text-purple-700">{scipabFramework.scipab.ask.timeline}</p>
+                                    </div>
+                                  </div>
+
+                                  {/* Benefit */}
+                                  <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                                    <h4 className="font-semibold text-yellow-900 mb-2 flex items-center">
+                                      <Star className="w-4 h-4 mr-2" />
+                                      Benefit
+                                    </h4>
+                                    <p className="text-sm text-yellow-800 mb-3">{scipabFramework.scipab.benefit.transformationalImpact}</p>
+                                    <div className="space-y-2">
+                                      <p className="text-xs text-yellow-700 font-medium">Quantifiable Outcomes:</p>
+                                      <ul className="text-xs text-yellow-700 list-disc list-inside">
+                                        {scipabFramework.scipab.benefit.quantifiableOutcomes.map((outcome: string, i: number) => (
+                                          <li key={i}>{outcome}</li>
+                                        ))}
+                                      </ul>
+                                      <p className="text-xs text-yellow-700 font-medium">ROI:</p>
+                                      <p className="text-xs text-yellow-700">{scipabFramework.scipab.benefit.roi}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {/* SPIN Framework */}
+                        {scipabFramework.spin && (
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="flex items-center">
+                                <RotateCcw className="w-5 h-5 mr-2 text-indigo-600" />
+                                SPIN Selling Framework
+                              </CardTitle>
+                              <CardDescription>
+                                Situation, Problem, Implication, Need-Payoff analysis for sales conversations
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Situation */}
+                                <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                                  <h4 className="font-semibold text-indigo-900 mb-2 flex items-center">
+                                    <Info className="w-4 h-4 mr-2" />
+                                    Situation Questions
+                                  </h4>
+                                  <div className="space-y-2">
+                                    <p className="text-xs text-indigo-700 font-medium">Current Approach:</p>
+                                    <p className="text-xs text-indigo-700">{scipabFramework.spin.situation.currentApproach}</p>
+                                    <p className="text-xs text-indigo-700 font-medium">Team Size:</p>
+                                    <p className="text-xs text-indigo-700">{scipabFramework.spin.situation.teamSize}</p>
+                                    <p className="text-xs text-indigo-700 font-medium">Current Processes:</p>
+                                    <ul className="text-xs text-indigo-700 list-disc list-inside">
+                                      {scipabFramework.spin.situation.currentProcesses.map((process: string, i: number) => (
+                                        <li key={i}>{process}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                </div>
+
+                                {/* Problem */}
+                                <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                                  <h4 className="font-semibold text-red-900 mb-2 flex items-center">
+                                    <AlertCircle className="w-4 h-4 mr-2" />
+                                    Problem Questions
+                                  </h4>
+                                  <div className="space-y-2">
+                                    <p className="text-xs text-red-700 font-medium">Frequency of Issues:</p>
+                                    <p className="text-xs text-red-700">{scipabFramework.spin.problem.frequencyOfIssues}</p>
+                                    <p className="text-xs text-red-700 font-medium">Identified Challenges:</p>
+                                    <ul className="text-xs text-red-700 list-disc list-inside">
+                                      {scipabFramework.spin.problem.identifiedChallenges.map((challenge: string, i: number) => (
+                                        <li key={i}>{challenge}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                </div>
+
+                                {/* Implication */}
+                                <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                                  <h4 className="font-semibold text-orange-900 mb-2 flex items-center">
+                                    <TrendingDown className="w-4 h-4 mr-2" />
+                                    Implication Questions
+                                  </h4>
+                                  <div className="space-y-2">
+                                    <p className="text-xs text-orange-700 font-medium">Escalating Costs:</p>
+                                    <ul className="text-xs text-orange-700 list-disc list-inside">
+                                      {scipabFramework.spin.implication.escalatingCosts.map((cost: string, i: number) => (
+                                        <li key={i}>{cost}</li>
+                                      ))}
+                                    </ul>
+                                    <p className="text-xs text-orange-700 font-medium">Competitive Risks:</p>
+                                    <ul className="text-xs text-orange-700 list-disc list-inside">
+                                      {scipabFramework.spin.implication.competitiveRisks.map((risk: string, i: number) => (
+                                        <li key={i}>{risk}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                </div>
+
+                                {/* Need-Payoff */}
+                                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                                  <h4 className="font-semibold text-green-900 mb-2 flex items-center">
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Need-Payoff Questions
+                                  </h4>
+                                  <div className="space-y-2">
+                                    <p className="text-xs text-green-700 font-medium">Desired Outcomes:</p>
+                                    <ul className="text-xs text-green-700 list-disc list-inside">
+                                      {scipabFramework.spin.needPayoff.desiredOutcomes.map((outcome: string, i: number) => (
+                                        <li key={i}>{outcome}</li>
+                                      ))}
+                                    </ul>
+                                    <p className="text-xs text-green-700 font-medium">Success Metrics:</p>
+                                    <ul className="text-xs text-green-700 list-disc list-inside">
+                                      {scipabFramework.spin.needPayoff.successMetrics.map((metric: string, i: number) => (
+                                        <li key={i}>{metric}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </TabsContent>
               </Tabs>
 
