@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
 import { Upload, Users, Search, Download, FileSpreadsheet, Building2, Target, Zap, Filter, MapPin, Briefcase, ArrowRight, Star } from "lucide-react";
 
 // Lead Discovery Engine Component
@@ -379,8 +380,10 @@ function LeadDiscoveryEngine() {
                     </div>
                     
                     <div className="flex space-x-2 ml-4">
-                      <Button variant="outline" size="sm">
-                        View Profile
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/prospect-validation/${prospect.id}`}>
+                          View Profile
+                        </Link>
                       </Button>
                       <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
                         Add to Pipeline

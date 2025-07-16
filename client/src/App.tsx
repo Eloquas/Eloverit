@@ -27,6 +27,7 @@ import EmailCadences from "@/pages/email-cadences";
 import OrchestratorDashboard from "@/pages/orchestrator-dashboard";
 import Integrations from "@/pages/integrations";
 import IntentDiscovery from "@/pages/intent-discovery";
+import ProspectValidation from "@/pages/prospect-validation";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -77,6 +78,7 @@ function Router() {
         <Route path="/orchestrator" component={OrchestratorDashboard} />
         <Route path="/integrations" component={Integrations} />
         <Route path="/intent-discovery" component={IntentDiscovery} />
+        <Route path="/prospect-validation/:id" component={ProspectValidation} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>
