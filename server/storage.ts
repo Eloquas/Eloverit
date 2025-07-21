@@ -254,8 +254,71 @@ export class DatabaseStorage implements IStorage {
           eq(accountResearch.userId, userId),
           eq(accountResearch.companyName, companyName)
         )
-      );
+      )
+      .orderBy(desc(accountResearch.researchDate))
+      .limit(1);
     return research || undefined;
+  }
+
+  // New method to clean up duplicate research entries
+  async cleanupDuplicateAccountResearch(userId: number): Promise<{ removed: number; companies: string[] }> {
+    // Get all research entries for the user
+    const allResearch = await db.select({
+      id: accountResearch.id,
+      companyName: accountResearch.companyName,
+      researchDate: accountResearch.researchDate,
+    }).from(accountResearch)
+      .where(eq(accountResearch.userId, userId))
+      .orderBy(accountResearch.companyName, desc(accountResearch.researchDate));
+
+    // Group by company name and find duplicates
+    const companyGroups: { [key: string]: Array<{ id: number; researchDate: Date }> } = {};
+    
+    for (const research of allResearch) {
+      if (!companyGroups[research.companyName]) {
+        companyGroups[research.companyName] = [];
+      }
+      companyGroups[research.companyName].push({
+        id: research.id,
+        researchDate: research.researchDate || new Date(0)
+      });
+    }
+
+    const companiesWithDuplicates: string[] = [];
+    const idsToDelete: number[] = [];
+
+    // For each company with multiple entries, keep only the most recent
+    for (const [companyName, entries] of Object.entries(companyGroups)) {
+      if (entries.length > 1) {
+        companiesWithDuplicates.push(companyName);
+        // Sort by date (most recent first) and keep the first one
+        entries.sort((a, b) => new Date(b.researchDate).getTime() - new Date(a.researchDate).getTime());
+        // Add all but the first (most recent) to deletion list
+        for (let i = 1; i < entries.length; i++) {
+          idsToDelete.push(entries[i].id);
+        }
+      }
+    }
+
+    // Delete the duplicate entries
+    let removedCount = 0;
+    if (idsToDelete.length > 0) {
+      for (const id of idsToDelete) {
+        await db.delete(accountResearch)
+          .where(
+            and(
+              eq(accountResearch.userId, userId),
+              eq(accountResearch.id, id)
+            )
+          );
+        removedCount++;
+      }
+    }
+
+    return {
+      removed: removedCount,
+      companies: companiesWithDuplicates
+    };
   }
 
   async createProspectsWithDeduplication(insertProspects: InsertProspect[]): Promise<{ created: Prospect[], duplicates: any[], skipped: any[] }> {

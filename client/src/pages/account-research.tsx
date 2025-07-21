@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Search, TrendingUp, Users, Briefcase, ArrowLeft, RefreshCw, Eye, BarChart3, Target, Clock, CheckCircle, AlertTriangle, ExternalLink, Star, Lightbulb, FileText, Info, TrendingDown, MessageSquare, RotateCcw, AlertCircle } from "lucide-react";
@@ -39,8 +40,8 @@ export default function AccountResearch() {
     queryKey: ["/api/account-research"],
   });
 
-  // Get unique companies from prospects
-  const companies = [...new Set(prospects.map((p: any) => p.company))].sort();
+  // Get unique companies from prospects with proper typing
+  const companies = Array.from(new Set((prospects as any[]).map((p: any) => p.company))).sort();
 
   // Helper function to parse JSON arrays safely
   const parseJsonArray = (jsonString: string | null) => {
@@ -52,12 +53,18 @@ export default function AccountResearch() {
     }
   };
 
-  // Calculate intent score for a research entry
+  // Extract O1 Pro intent score from research entry
   const calculateIntentScore = (research: any) => {
+    // First check if O1 Pro intent score is available
+    const initiatives = parseJsonArray(research.initiatives);
+    if (initiatives.intent_score) {
+      return initiatives.intent_score;
+    }
+    
+    // Fallback to legacy calculation for backward compatibility
     let score = 0;
     const systems = parseJsonArray(research.currentSystems);
     const postings = parseJsonArray(research.recentJobPostings);
-    const initiatives = parseJsonArray(research.initiatives);
     
     // QA hiring activity (40%)
     const qaKeywords = ['qa', 'quality', 'test', 'automation', 'testing'];
@@ -91,7 +98,7 @@ export default function AccountResearch() {
     return Math.round(score);
   };
 
-  const filteredResearch = accountResearch.filter((research: any) => {
+  const filteredResearch = (accountResearch as any[]).filter((research: any) => {
     if (researchFilter === "pending") return research.researchQuality === "pending";
     if (researchFilter === "excellent") return research.researchQuality === "excellent";
     if (researchFilter === "high-intent") return calculateIntentScore(research) >= 75;
@@ -546,7 +553,7 @@ export default function AccountResearch() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-green-800">Total Companies</p>
-                <p className="text-2xl font-bold text-green-900">{accountResearch.length}</p>
+                <p className="text-2xl font-bold text-green-900">{(accountResearch as any[]).length}</p>
               </div>
               <Building2 className="h-8 w-8 text-green-600" />
             </div>
@@ -559,7 +566,7 @@ export default function AccountResearch() {
               <div>
                 <p className="text-sm font-medium text-blue-800">High Intent</p>
                 <p className="text-2xl font-bold text-blue-900">
-                  {accountResearch.filter((r: any) => calculateIntentScore(r) >= 75).length}
+                  {(accountResearch as any[]).filter((r: any) => calculateIntentScore(r) >= 75).length}
                 </p>
               </div>
               <Target className="h-8 w-8 text-blue-600" />
@@ -573,7 +580,7 @@ export default function AccountResearch() {
               <div>
                 <p className="text-sm font-medium text-purple-800">Recent Research</p>
                 <p className="text-2xl font-bold text-purple-900">
-                  {accountResearch.filter((r: any) => {
+                  {(accountResearch as any[]).filter((r: any) => {
                     const researchDate = new Date(r.researchDate);
                     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
                     return researchDate > weekAgo;
@@ -614,10 +621,10 @@ export default function AccountResearch() {
           <CardContent className="p-12 text-center">
             <Building2 className="w-16 h-16 mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {accountResearch.length === 0 ? "No research generated yet" : "No research matches your filters"}
+              {(accountResearch as any[]).length === 0 ? "No research generated yet" : "No research matches your filters"}
             </h3>
             <p className="text-gray-600 mb-4">
-              {accountResearch.length === 0 
+              {(accountResearch as any[]).length === 0 
                 ? "Select a company above to generate comprehensive account research."
                 : "Try adjusting your filter criteria."
               }
@@ -726,11 +733,11 @@ export default function AccountResearch() {
                     <div className="pt-4 border-t">
                       <h4 className="font-medium text-gray-900 mb-2 flex items-center">
                         <Users className="w-4 h-4 mr-2" />
-                        Prospects ({prospects.filter((p: any) => p.company === research.companyName).length})
+                        Prospects ({(prospects as any[]).filter((p: any) => p.company === research.companyName).length})
                       </h4>
-                      {prospects.filter((p: any) => p.company === research.companyName).length > 0 ? (
+                      {(prospects as any[]).filter((p: any) => p.company === research.companyName).length > 0 ? (
                         <div className="space-y-2">
-                          {prospects.filter((p: any) => p.company === research.companyName).slice(0, 3).map((prospect: any) => (
+                          {(prospects as any[]).filter((p: any) => p.company === research.companyName).slice(0, 3).map((prospect: any) => (
                             <div key={prospect.id} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
                               <div className="flex-1">
                                 <div className="font-medium text-gray-900">{prospect.name}</div>
@@ -746,10 +753,10 @@ export default function AccountResearch() {
                               </div>
                             </div>
                           ))}
-                          {prospects.filter((p: any) => p.company === research.companyName).length > 3 && (
+                          {(prospects as any[]).filter((p: any) => p.company === research.companyName).length > 3 && (
                             <div className="text-center">
                               <Badge variant="outline" className="text-xs">
-                                +{prospects.filter((p: any) => p.company === research.companyName).length - 3} more prospects
+                                +{(prospects as any[]).filter((p: any) => p.company === research.companyName).length - 3} more prospects
                               </Badge>
                             </div>
                           )}

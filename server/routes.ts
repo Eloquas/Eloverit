@@ -12,7 +12,7 @@ import { Readable } from "stream";
 import * as XLSX from "xlsx";
 import { avoKnowledgeBase, qaMarketIntelligence, getPersonalizedAvoInsights } from "./avo-knowledge";
 import { enterpriseSystemsKnowledge, categorizeJobTitle, determineSeniorityLevel, identifySystemsExperience, getPersonalizedEnterpriseInsights } from "./enterprise-knowledge";
-import { scipabGenerator, type SCIPABContext } from "./scipab-framework";
+import { O1ProIntentEngine, SCIPABFrameworkEngine, type PlatformIntentData, type SCIPABFramework } from "./o1-pro-intent-engine";
 import { pdlService } from "./pdl-service";
 import { linkedInPostGenerator } from "./linkedin-posts";
 import { eloquasOutreachEngine } from "./outreach-engine";
@@ -24,6 +24,8 @@ import { platformResearchEngine } from './platform-research';
 import { hybridResearchEngine } from './hybrid-research';
 import { PlatformDiscoveryEngine } from './platform-discovery';
 import { researchInsightsEngine } from './research-insights';
+import { platformIntelligenceEngine } from './platform-intelligence';
+import { o1ProIntentDiscoveryAPI } from './api/o1-pro-intent-discovery';
 import { emailCadenceEngine } from './email-cadence-engine';
 import { predictiveIntelligence } from './predictive-intelligence';
 import { performanceAnalytics } from './performance-analytics';
@@ -1267,15 +1269,176 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
 
   app.post("/api/account-research/generate", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const { companyName, platform } = req.body;
+      const { companyName, platform, forceRegenerate } = req.body;
       
       if (!companyName) {
         return res.status(400).json({ message: "Company name is required" });
       }
 
-      // Check for duplicate research with improved cache system
-      const { forceRefresh } = req.body;
-      const existingResearch = await storage.getAccountResearchByCompany(companyName, req.user!.id);
+      // Initialize O1 Pro Intent Engine and SCIPAB Framework Engine
+      const intentEngine = new O1ProIntentEngine();
+      const scipabEngine = new SCIPABFrameworkEngine();
+
+      // Check for existing research and prevent duplicates (unless force regenerate)
+      if (!forceRegenerate) {
+        const existingResearch = await storage.findDuplicateAccountResearch(companyName, req.user.id);
+        if (existingResearch) {
+          console.log(`Found existing research for ${companyName}, returning cached version`);
+          return res.json(existingResearch);
+        }
+      }
+
+      console.log(`Starting O1 Pro-level research for ${companyName}, platform: ${platform || 'all platforms'}`);
+
+      // Step 1: O1 Pro Intent Discovery with platform-specific focus
+      const platformIntentData = await intentEngine.discoverPlatformIntents(
+        companyName, 
+        platform || 'enterprise platforms'
+      );
+
+      console.log(`Intent analysis complete. Score: ${platformIntentData.intentScore}/100, Urgency: ${platformIntentData.urgencyLevel}`);
+
+      // Step 2: Hybrid research using multiple data sources
+      let researchData;
+      try {
+        researchData = await hybridResearchEngine.conductComprehensiveResearch(companyName, platform);
+        console.log(`Hybrid research completed for ${companyName}`);
+      } catch (error) {
+        console.error('Hybrid research failed, using platform intelligence fallback:', error);
+        // Fallback to platform intelligence analysis
+        researchData = await platformIntelligenceEngine.analyzePlatformSystems(companyName, {
+          company: companyName,
+          platform: platform
+        });
+      }
+
+      // Step 3: Enhanced platform intelligence analysis highlighting specific technologies
+      const platformAnalysis = await platformIntelligenceEngine.analyzePlatformSystems(companyName, researchData);
+      
+      // Enhanced current systems analysis with specific platform detection
+      const enhancedSystems = platformIntelligenceEngine.enhanceCurrentSystemsAnalysis(
+        JSON.stringify(researchData.systems || platformAnalysis.platformsIdentified)
+      );
+
+      console.log(`Platform analysis complete. Detected platforms: ${enhancedSystems.detected_platforms.map(p => p.platform).join(', ')}`);
+
+      // Step 4: Generate SCIPAB Framework using GPT-4o based on research findings
+      const scipabFramework = await scipabEngine.generateSCIPABFramework(platformIntentData, {
+        ...researchData,
+        platformAnalysis,
+        enhancedSystems
+      });
+
+      console.log(`SCIPAB framework generated with confidence: ${scipabFramework.confidence}%`);
+
+      // Step 5: Structure final research data with highlighted platforms
+      const finalResearchData = {
+        userId: req.user.id,
+        companyName,
+        industry: researchData.industry || platformAnalysis.integrationLandscape.primary_erp || 'Technology',
+        companySize: researchData.companySize || 'Unknown',
+        currentSystems: JSON.stringify({
+          original_analysis: researchData.systems || [],
+          detected_platforms: enhancedSystems.detected_platforms,
+          highlighted_technologies: extractHighlightedTechnologies(enhancedSystems),
+          qa_opportunities: enhancedSystems.qa_opportunities,
+          automation_potential: enhancedSystems.automation_potential
+        }),
+        recentJobPostings: JSON.stringify(platformIntentData.jobPostings || researchData.hiringPatterns || []),
+        initiatives: JSON.stringify({
+          strategic_initiatives: platformIntentData.strategicInitiatives || [],
+          platform_specific: platformAnalysis.platformPriorities || [],
+          intent_score: platformIntentData.intentScore,
+          urgency_level: platformIntentData.urgencyLevel
+        }),
+        painPoints: JSON.stringify(researchData.painPoints || platformAnalysis.recommendations.immediate_opportunities || []),
+        decisionMakers: JSON.stringify(platformIntentData.decisionMakers || researchData.decisionMakers || []),
+        scipabFramework: JSON.stringify(scipabFramework),
+        researchQuality: `${platformIntentData.dataQuality}-confidence-${scipabFramework.confidence}%`,
+        researchDate: new Date()
+      };
+
+      // Step 6: Save research and prevent future duplicates
+      const savedResearch = await storage.createAccountResearch(finalResearchData);
+      
+      console.log(`Research saved for ${companyName} with ID: ${savedResearch.id}`);
+      
+      res.json(savedResearch);
+    } catch (error) {
+      console.error('Account research generation error:', error);
+      res.status(500).json({ 
+        message: 'Failed to generate account research',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Helper function to extract highlighted technologies
+  function extractHighlightedTechnologies(enhancedSystems: any): string[] {
+    return enhancedSystems.detected_platforms
+      .filter((p: any) => p.confidence > 70)
+      .map((p: any) => `${p.platform.toUpperCase()}: ${p.products.join(', ')}`);
+  }
+
+  // Duplicate cleanup endpoint
+  app.post("/api/account-research/cleanup-duplicates", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const result = await storage.cleanupDuplicateAccountResearch(req.user.id);
+      res.json({
+        message: `Cleaned up ${result.removed} duplicate research entries`,
+        companies: result.companies,
+        removed_count: result.removed
+      });
+    } catch (error) {
+      console.error('Duplicate cleanup error:', error);
+      res.status(500).json({ message: 'Failed to cleanup duplicates' });
+    }
+  });
+
+  // O1 Pro Intent Discovery API Routes
+  app.post("/api/intent-discovery/search", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { companies, platforms, fortuneRanking, industryFocus, urgencyLevel, timeframe } = req.body;
+      
+      const results = await o1ProIntentDiscoveryAPI.searchF1000Intents({
+        companies,
+        platforms,
+        fortuneRanking,
+        industryFocus,
+        urgencyLevel,
+        timeframe
+      });
+      
+      res.json(results);
+    } catch (error) {
+      console.error('O1 Pro intent discovery error:', error);
+      res.status(500).json({ message: 'Failed to discover platform intents' });
+    }
+  });
+
+  app.get("/api/intent-discovery/trending", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const timeframe = (req.query.timeframe as '30days' | '60days' | '90days') || '60days';
+      
+      const trends = await o1ProIntentDiscoveryAPI.getTrendingPlatformInitiatives(timeframe);
+      
+      res.json(trends);
+    } catch (error) {
+      console.error('Trending initiatives error:', error);
+      res.status(500).json({ message: 'Failed to get trending initiatives' });
+    }
+  });
+
+  // Legacy account research generation endpoint (kept for backward compatibility)
+  app.post("/api/account-research/generate-legacy", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { companyName, platform, forceRefresh } = req.body;
+      
+      if (!companyName) {
+        return res.status(400).json({ message: "Company name is required" });
+      }
+
+      const existingResearch = await storage.getAccountResearchByCompany(companyName, req.user.id);
       
       if (existingResearch && !forceRefresh) {
         const researchAge = Date.now() - new Date(existingResearch.researchDate).getTime();
