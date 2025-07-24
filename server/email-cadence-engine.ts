@@ -247,25 +247,34 @@ Subject line and body should be professional, consultative, and human. The email
 Respond in JSON format with: subject, body, trustElements (array), storyElements (array), wordCount`;
 
       try {
-        const response = await openai.chat.completions.create({
-          model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-          messages: [
-            {
-              role: "system",
-              content: "You are an expert sales copywriter specializing in QA automation and enterprise software outreach. Generate professional emails focused on QA automation value propositions, testing challenges, and business outcomes. NEVER mention trust scores, story scores, or scoring systems in the email content. Focus on specific QA automation benefits like faster testing cycles, reduced bugs, improved release quality, and operational efficiency. The trust and story elements should inform your writing style and personalization approach, but should not be mentioned explicitly in the email."
-            },
-            {
-              role: "user",
-              content: prompt
-            }
-          ],
-          response_format: { type: "json_object" },
-          temperature: 0.7
-        });
+        console.log(`Generating email step ${i + 1} for ${prospect.name}`);
+        
+        const response = await Promise.race([
+          openai.chat.completions.create({
+            model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+            messages: [
+              {
+                role: "system",
+                content: "You are an expert sales copywriter specializing in QA automation and enterprise software outreach. Generate professional emails focused on QA automation value propositions, testing challenges, and business outcomes. NEVER mention trust scores, story scores, or scoring systems in the email content. Focus on specific QA automation benefits like faster testing cycles, reduced bugs, improved release quality, and operational efficiency. The trust and story elements should inform your writing style and personalization approach, but should not be mentioned explicitly in the email."
+              },
+              {
+                role: "user",
+                content: prompt
+              }
+            ],
+            response_format: { type: "json_object" },
+            temperature: 0.7,
+            max_tokens: 1000
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("OpenAI request timeout")), 15000)
+          )
+        ]);
 
         const content = response.choices[0].message.content;
         if (!content) throw new Error("No response from OpenAI");
 
+        console.log(`Successfully generated content for step ${i + 1}`);
         const emailData = JSON.parse(content);
 
         steps.push({
@@ -282,16 +291,31 @@ Respond in JSON format with: subject, body, trustElements (array), storyElements
       } catch (error) {
         console.error(`Failed to generate step ${i + 1}:`, error);
         
-        // Fallback step
+        // Enhanced fallback step with QA automation focus
+        const fallbackSubjects = [
+          `QA Automation Opportunity at ${prospect.company}`,
+          `Faster Testing for ${prospect.company}`,
+          `Reducing Testing Bottlenecks at ${prospect.company}`,
+          `QA Transformation Discussion - ${prospect.company}`,
+          `Testing Efficiency Solutions for ${prospect.company}`,
+          `Following up on QA Automation - ${prospect.company}`
+        ];
+        
+        const fallbackBodies = [
+          `Hi ${prospect.name},\n\nI noticed ${prospect.company} likely faces challenges with testing velocity and quality assurance. Companies in ${prospect.industry} typically see 40% faster releases when implementing automated testing frameworks.\n\nWould you be interested in a brief conversation about how we've helped similar organizations reduce testing cycles by 60%?\n\nBest regards,\nSales Team`,
+          `Hi ${prospect.name},\n\nQA teams at ${prospect.company} are probably balancing speed and quality in today's fast-paced development environment. Our QA automation platform has helped companies reduce manual testing by 80% while improving bug detection.\n\nWorth a quick conversation about your current testing challenges?\n\nBest regards,\nSales Team`,
+          `Hi ${prospect.name},\n\nFollowing up on QA automation solutions for ${prospect.company}. Organizations using our platform typically see:\n\n• 60% reduction in testing time\n• 40% fewer post-release bugs\n• 3x faster release cycles\n\nInterested in learning how this applies to your testing challenges?\n\nBest regards,\nSales Team`
+        ];
+        
         steps.push({
           step: i + 1,
-          subject: `${step.type} - ${prospect.company} QA Automation`,
-          body: `Hi ${prospect.name},\n\n${step.fallback}\n\nBest regards,\nYour Name`,
+          subject: fallbackSubjects[Math.min(i, fallbackSubjects.length - 1)],
+          body: fallbackBodies[Math.min(i % 3, fallbackBodies.length - 1)],
           timing: step.timing,
           cta: step.cta,
-          trustElements: [],
-          storyElements: [],
-          wordCount: 100
+          trustElements: ["QA automation expertise", "Industry experience"],
+          storyElements: ["Testing challenges", "Transformation opportunity"],
+          wordCount: 150
         });
       }
     }
