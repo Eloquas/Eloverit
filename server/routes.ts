@@ -455,9 +455,24 @@ Keep under 300 characters for LinkedIn. ${focusType === "trust" ? "Focus on buil
 
   app.get("/api/auth/linkedin/callback", async (req, res) => {
     try {
-      const { code } = req.query;
+      console.log('LinkedIn callback received:', {
+        query: req.query,
+        headers: req.headers,
+        url: req.url
+      });
+      
+      const { code, error, error_description } = req.query;
+      
+      if (error) {
+        console.error('LinkedIn OAuth error:', error, error_description);
+        return res.status(400).json({ 
+          error: `LinkedIn authentication failed: ${error}`,
+          description: error_description 
+        });
+      }
       
       if (!code) {
+        console.error('No authorization code in callback:', req.query);
         return res.status(400).json({ error: "No authorization code provided" });
       }
 

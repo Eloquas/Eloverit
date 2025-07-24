@@ -12,7 +12,7 @@ export class LinkedInAuthService {
       throw new Error('LinkedIn Client ID not configured');
     }
 
-    const scopes = 'r_liteprofile r_emailaddress';
+    const scopes = 'openid profile email';
     const state = Math.random().toString(36).substring(2, 15);
     
     return `https://www.linkedin.com/oauth/v2/authorization?` +
@@ -28,13 +28,16 @@ export class LinkedInAuthService {
       throw new Error('LinkedIn credentials not configured');
     }
 
-    const tokenResponse = await axios.post('https://www.linkedin.com/oauth/v2/accessToken', {
+    const tokenData = new URLSearchParams({
       grant_type: 'authorization_code',
       code: code,
       redirect_uri: this.REDIRECT_URI,
       client_id: this.CLIENT_ID,
       client_secret: this.CLIENT_SECRET,
-    }, {
+    });
+
+    const tokenResponse = await axios.post('https://www.linkedin.com/oauth/v2/accessToken', 
+      tokenData.toString(), {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
@@ -44,28 +47,20 @@ export class LinkedInAuthService {
   }
 
   static async getLinkedInProfile(accessToken: string): Promise<any> {
-    const [profileResponse, emailResponse] = await Promise.all([
-      axios.get('https://api.linkedin.com/v2/people/~?projection=(id,firstName,lastName,profilePicture(displayImage~:playableStreams))', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }),
-      axios.get('https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }),
-    ]);
+    const response = await axios.get('https://api.linkedin.com/v2/userinfo', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
 
-    const profile = profileResponse.data;
-    const email = emailResponse.data.elements[0]?.['handle~']?.emailAddress;
+    const profile = response.data;
 
     return {
-      id: profile.id,
-      firstName: profile.firstName?.localized?.en_US,
-      lastName: profile.lastName?.localized?.en_US,
-      emailAddress: email,
-      pictureUrl: profile.profilePicture?.['displayImage~']?.elements?.[0]?.identifiers?.[0]?.identifier,
+      id: profile.sub,
+      firstName: profile.given_name,
+      lastName: profile.family_name,
+      emailAddress: profile.email,
+      pictureUrl: profile.picture,
     };
   }
 
