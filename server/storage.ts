@@ -88,11 +88,7 @@ export interface IStorage {
   getOnboardingResponse(userId: number): Promise<OnboardingResponse | undefined>;
   createOnboardingResponse(onboarding: InsertOnboardingResponse): Promise<OnboardingResponse>;
   
-  // Email cadence methods (user-scoped)
-  getEmailCadences(userId: number): Promise<EmailCadence[]>;
-  createEmailCadence(cadenceData: InsertEmailCadence): Promise<EmailCadence>;
-  getEmailCadenceById(id: number, userId: number): Promise<EmailCadence | undefined>;
-  updateEmailCadenceStatus(id: number, userId: number, status: string): Promise<boolean>;
+  // Email cadence methods (user-scoped) - note: duplicated above, removing duplicates
   
   // Stats (user-scoped)
   getStats(userId: number): Promise<{
@@ -254,6 +250,9 @@ export class DatabaseStorage implements IStorage {
       scipabFramework: accountResearch.scipabFramework,
       researchDate: accountResearch.researchDate,
       researchQuality: accountResearch.researchQuality,
+      keyMetricsHypothesis: accountResearch.keyMetricsHypothesis,
+      businessPriorities: accountResearch.businessPriorities,
+      lastUpdated: accountResearch.lastUpdated,
     }).from(accountResearch)
       .where(
         and(
@@ -526,6 +525,11 @@ export class DatabaseStorage implements IStorage {
         nextSendDate: emailCadences.nextSendDate,
         status: emailCadences.status,
         createdAt: emailCadences.createdAt,
+        updatedAt: emailCadences.updatedAt,
+        steps: emailCadences.steps,
+        trustSignals: emailCadences.trustSignals,
+        storyElements: emailCadences.storyElements,
+        totalDuration: emailCadences.totalDuration,
         prospectName: prospects.name,
         prospectCompany: prospects.company
       })
