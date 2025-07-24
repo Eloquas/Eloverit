@@ -29,6 +29,7 @@ import { o1ProIntentDiscoveryAPI } from './api/o1-pro-intent-discovery';
 import { emailCadenceEngine } from './email-cadence-engine';
 import { predictiveIntelligence } from './predictive-intelligence';
 import { performanceAnalytics } from './performance-analytics';
+import { ScipabAnalysisEngine } from './scipab-analysis';
 import { insertOnboardingResponseSchema, type InsertOnboardingResponse } from "@shared/schema";
 
 // AI-powered onboarding recommendations function
@@ -116,6 +117,7 @@ const openai = new OpenAI({
 
 const upload = multer({ storage: multer.memoryStorage() });
 const platformDiscoveryEngine = new PlatformDiscoveryEngine();
+const scipabAnalysisEngine = new ScipabAnalysisEngine();
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
@@ -292,6 +294,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error changing password:", error);
       res.status(500).json({ error: "Failed to change password" });
+    }
+  });
+
+  // SCIPAB Analysis API endpoint
+  app.post("/api/scipab", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { companyName, extraContext } = req.body;
+      
+      if (!companyName) {
+        return res.status(400).json({ error: "Company name is required" });
+      }
+
+      // Check if user has access to PDL API
+      const PDL_API_KEY = process.env.PDL_API_KEY;
+      if (!PDL_API_KEY) {
+        return res.status(503).json({ 
+          error: "PDL API not configured", 
+          message: "People Data Labs API key required for company enrichment" 
+        });
+      }
+
+      // Enrich company data with PDL
+      const companyData = await scipabAnalysisEngine.enrichCompanyWithPDL(companyName);
+      
+      // Generate SCIPAB analysis
+      const scipabAnalysis = await scipabAnalysisEngine.generateScipabAnalysis(companyData, extraContext);
+
+      res.json({ 
+        scipab: scipabAnalysis, 
+        companyData,
+        generatedAt: new Date().toISOString()
+      });
+    } catch (error: any) {
+      console.error("Error generating SCIPAB analysis:", error);
+      
+      // Handle specific error types
+      if (error.message?.includes("PDL")) {
+        res.status(503).json({ 
+          error: "Company data unavailable", 
+          message: "Unable to enrich company data. Please check the company name or try again later." 
+        });
+      } else if (error.message?.includes("OpenAI")) {
+        res.status(503).json({ 
+          error: "AI analysis unavailable", 
+          message: "AI analysis service temporarily unavailable. Please try again later." 
+        });
+      } else {
+        res.status(500).json({ 
+          error: "SCIPAB analysis failed", 
+          message: error.message || "Failed to generate SCIPAB analysis" 
+        });
+      }
     }
   });
 

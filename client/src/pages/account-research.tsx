@@ -15,6 +15,7 @@ import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { motion } from "framer-motion";
+import ScipabAnalysisComponent from "@/components/scipab-analysis";
 
 export default function AccountResearch() {
   const { toast } = useToast();
@@ -47,7 +48,9 @@ export default function AccountResearch() {
   const parseJsonArray = (jsonString: string | null) => {
     if (!jsonString) return [];
     try {
-      return JSON.parse(jsonString);
+      const parsed = JSON.parse(jsonString);
+      // Ensure we always return an array
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }
@@ -56,10 +59,20 @@ export default function AccountResearch() {
   // Extract O1 Pro intent score from research entry
   const calculateIntentScore = (research: any) => {
     // First check if O1 Pro intent score is available
-    const initiatives = parseJsonArray(research.initiatives);
-    if (initiatives.intent_score) {
-      return initiatives.intent_score;
+    let initiativesData;
+    try {
+      initiativesData = JSON.parse(research.initiatives || '[]');
+    } catch {
+      initiativesData = [];
     }
+    
+    // If initiatives is an object with intent_score, return it
+    if (initiativesData && typeof initiativesData === 'object' && !Array.isArray(initiativesData) && initiativesData.intent_score) {
+      return initiativesData.intent_score;
+    }
+    
+    // Get array format for processing
+    const initiatives = Array.isArray(initiativesData) ? initiativesData : [];
     
     // Fallback to legacy calculation for backward compatibility
     let score = 0;
@@ -327,6 +340,8 @@ export default function AccountResearch() {
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Refresh
                   </Button>
+                  
+                  <ScipabAnalysisComponent companyName={selectedCompany} />
                 </div>
               </div>
             </TabsContent>
@@ -356,6 +371,8 @@ export default function AccountResearch() {
                     </>
                   )}
                 </Button>
+                
+                <ScipabAnalysisComponent companyName={manualCompany} />
               </div>
             </TabsContent>
             

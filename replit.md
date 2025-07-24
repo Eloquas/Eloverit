@@ -16,6 +16,22 @@ This repository contains two complementary platforms:
 - **Target Roles:** Manager+ level positions in QA, CRM, ERP, D365, SAP, Oracle, enterprise systems
 
 ## Recent Changes (Last Updated: July 24, 2025)
+- ✅ **AI-POWERED SCIPAB ANALYSIS FEATURE:** Complete implementation of comprehensive SCIPAB analysis system for account research
+  - **SCIPAB Analysis Engine:** PDL + OpenAI integration for generating structured consultative sales frameworks
+  - **Company Data Enrichment:** People Data Labs API integration for authentic company intelligence (employee count, industry, technologies, revenue)
+  - **AI-Generated Analysis:** GPT-4o powered SCIPAB framework generation (Situation, Complication, Implication, Position, Ask, Benefit)
+  - **Professional UI Component:** Modal dialog with company input, context fields, and structured analysis display
+  - **Account Research Integration:** SCIPAB analysis available directly within account research workflow
+  - **Error Handling:** Comprehensive error management for PDL/OpenAI API failures with user-friendly messaging
+  - **API Endpoint:** /api/scipab endpoint with authentication and data validation
+  - **Production Ready:** Complete SCIPAB analysis system ready for authentic company research and sales enablement
+
+- ✅ **CRITICAL FRONTEND BUG FIX:** Resolved parseJsonArray TypeError preventing account research page functionality
+  - **Data Type Safety:** Fixed array/object parsing conflicts in initiatives data processing
+  - **Intent Score Calculation:** Enhanced calculateIntentScore to handle both object and array data formats
+  - **Error Prevention:** Added proper type checking to prevent slice() method calls on non-array data
+  - **Account Research Stability:** Complete resolution of crashes in AccountResearch component
+
 - ✅ **RESEARCH ENGINES FULLY OPERATIONAL:** Complete resolution of database schema issues and research functionality restoration
   - **Account Research Generation:** Fixed database column mismatches and restored full O1 Pro-level account research capabilities
   - **F1000 Intent Discovery:** Verified working O1 Pro intent engine with 85% confidence scoring and comprehensive platform analysis
