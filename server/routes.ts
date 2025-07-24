@@ -983,6 +983,64 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
     }
   });
 
+  // Comprehensive PDL Connection Test endpoint
+  app.get("/api/pdl-connection-test", async (req, res) => {
+    try {
+      const { PDLConnectionTest } = await import('./api/pdl-test');
+      const tester = new PDLConnectionTest();
+      const report = await tester.generateDetailedReport();
+      res.json(report);
+    } catch (error) {
+      console.error("PDL Connection Test error:", error);
+      res.status(500).json({ 
+        error: "PDL connection test failed",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Test SCIPAB generation for specific company
+  app.post("/api/test-scipab", async (req, res) => {
+    try {
+      const { companyName } = req.body;
+      
+      if (!companyName) {
+        return res.status(400).json({ error: "Company name required" });
+      }
+
+      const { scipabGenerator } = await import("./scipab-framework");
+      
+      // Get PDL data
+      const scipabData = await pdlService.analyzeCompanyForSCIPAB(companyName);
+      
+      // Generate SCIPAB framework
+      const scipabFramework = await scipabGenerator.generateSCIPABFramework(
+        companyName,
+        scipabData.industry,
+        scipabData.companySize,
+        scipabData.systems,
+        scipabData.painPoints,
+        scipabData.initiatives,
+        scipabData.hiringPatterns
+      );
+
+      res.json({
+        success: true,
+        company: companyName,
+        pdlData: scipabData,
+        scipabFramework,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("SCIPAB Test error:", error);
+      res.status(500).json({ 
+        success: false,
+        error: "SCIPAB generation failed",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Export generated content as CSV
   app.get("/api/export/generated-content", async (req, res) => {
     try {

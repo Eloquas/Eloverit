@@ -29,6 +29,7 @@ import Integrations from "@/pages/integrations";
 import IntentDiscovery from "@/pages/intent-discovery";
 import ProspectValidation from "@/pages/prospect-validation";
 import AvoBusinessCase from "@/pages/avo-business-case";
+import PDLTestPage from "@/pages/pdl-test";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -81,6 +82,7 @@ function Router() {
         <Route path="/intent-discovery" component={IntentDiscovery} />
         <Route path="/prospect-validation/:id" component={ProspectValidation} />
         <Route path="/avo-business-case" component={AvoBusinessCase} />
+        <Route path="/pdl-test" component={PDLTestPage} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>

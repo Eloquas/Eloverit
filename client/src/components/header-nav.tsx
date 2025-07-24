@@ -34,7 +34,8 @@ import {
   ChevronDown,
   Menu,
   Calculator,
-  ExternalLink
+  ExternalLink,
+  Database
 } from "lucide-react";
 
 export default function HeaderNav() {
@@ -60,6 +61,7 @@ export default function HeaderNav() {
     ],
     tools: [
       { label: "Avo Business Case", href: "/avo-business-case", icon: Calculator, badge: "TOOL" },
+      { label: "PDL & SCIPAB Test", href: "/pdl-test", icon: Database, badge: "TEST" },
       { label: "Orchestrator", href: "/orchestrator", icon: TrendingUp },
       { label: "Achievements", href: "/achievements", icon: Trophy },
       { label: "Integrations", href: "/integrations", icon: Settings },
