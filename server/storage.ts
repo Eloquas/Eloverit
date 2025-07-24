@@ -40,6 +40,7 @@ export interface IStorage {
   getUserByLinkedInId(linkedinId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
+  getUser(id: number): Promise<User | undefined>;
   
   // Session management
   createSession(session: InsertSession): Promise<Session>;
@@ -154,6 +155,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return user || undefined;
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    return this.getUserById(id);
   }
 
   // Session management methods

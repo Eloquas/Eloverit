@@ -32,6 +32,8 @@ import ProspectValidation from "@/pages/prospect-validation";
 import AvoBusinessCase from "@/pages/avo-business-case";
 import PDLTestPage from "@/pages/pdl-test";
 import ContactResearch from "@/pages/contact-research";
+import Settings from "@/pages/settings";
+import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -80,6 +82,8 @@ function Router() {
           <Route path="/avo-business-case" component={AvoBusinessCase} />
           <Route path="/pdl-test" component={PDLTestPage} />
           <Route path="/contact-research" component={ContactResearch} />
+          <Route path="/settings" component={Settings} />
+          <Route path="/profile" component={Profile} />
           <Route component={NotFound} />
         </Switch>
       </AppLayout>

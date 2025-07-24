@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import UserProfileDropdown from "@/components/user-profile-dropdown";
 import {
   Sheet,
   SheetContent,
@@ -41,6 +43,7 @@ import {
 export default function HeaderNav() {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   const navigationGroups = {
     main: [
@@ -139,17 +142,29 @@ export default function HeaderNav() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-1">
-            {navigationGroups.main.map((item, index) => (
-              <NavItem key={index} item={item} />
-            ))}
-            <DropdownGroup title="Outbound" items={navigationGroups.outbound} />
-            <DropdownGroup title="Intelligence" items={navigationGroups.intelligence} />
-            <DropdownGroup title="Tools" items={navigationGroups.tools} />
-          </nav>
+          <div className="flex items-center space-x-4">
+            <nav className="hidden lg:flex items-center space-x-1">
+              {navigationGroups.main.map((item, index) => (
+                <NavItem key={index} item={item} />
+              ))}
+              <DropdownGroup title="Outbound" items={navigationGroups.outbound} />
+              <DropdownGroup title="Intelligence" items={navigationGroups.intelligence} />
+              <DropdownGroup title="Tools" items={navigationGroups.tools} />
+            </nav>
+            
+            {/* User Profile Dropdown */}
+            {isAuthenticated && (
+              <div className="hidden lg:block">
+                <UserProfileDropdown />
+              </div>
+            )}
+          </div>
 
           {/* Mobile Menu */}
-          <div className="lg:hidden">
+          <div className="lg:hidden flex items-center space-x-2">
+            {/* User Profile for Mobile */}
+            {isAuthenticated && <UserProfileDropdown />}
+            
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="sm">

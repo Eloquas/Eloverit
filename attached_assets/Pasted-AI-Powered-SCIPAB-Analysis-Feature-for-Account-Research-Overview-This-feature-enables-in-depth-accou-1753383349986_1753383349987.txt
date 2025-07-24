@@ -1,0 +1,115 @@
+AI-Powered SCIPAB Analysis Feature for Account Research
+Overview
+This feature enables in-depth account research using People Data Labs (PDL) and OpenAI’s ChatGPT API. The output is a SCIPAB (Situation, Complication, Implication, Position, Ask, Benefit) analysis, tailored to the context of Avo Automation’s QA test automation solutions.
+
+Features
+Enrich company data using PDL
+Generate a customized SCIPAB analysis via OpenAI (ChatGPT o1/o3/o3-pro)
+Securely use Replit secrets for API keys
+React frontend to trigger and display analysis
+1. Backend API Endpoint (/api/scipab)
+Node.js/Express example (TypeScript):
+
+TypeScript
+// server.ts
+import express from "express";
+import axios from "axios";
+
+const app = express();
+app.use(express.json());
+
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const PDL_API_KEY = process.env.PDL_API_KEY;
+
+app.post("/api/scipab", async (req, res) => {
+  const { companyName, extraContext } = req.body;
+  try {
+    // 1. Fetch company info from PDL
+    const pdlRes = await axios.get(
+      `https://api.peopledatalabs.com/v5/company/enrich`,
+      {
+        params: { name: companyName, api_key: PDL_API_KEY }
+      }
+    );
+    const companyData = pdlRes.data;
+
+    // 2. Build OpenAI prompt
+    const prompt = `
+You are an expert in QA test automation and B2B sales. Using the following company background, generate a SCIPAB analysis (Situation, Complication, Implication, Position, Ask, Benefit) that shows how Avo Automation can help this account. Output as a structured JSON with keys: situation, complication, implication, position, ask, benefit.
+
+Company background:
+${JSON.stringify(companyData, null, 2)}
+${extraContext ? "\nAdditional context: " + extraContext : ""}
+`;
+
+    // 3. Call OpenAI
+    const openaiRes = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-3.5-turbo", // or o1/o3/o3-pro if available
+        messages: [{ role: "user", content: prompt }]
+      },
+      {
+        headers: { Authorization: `Bearer ${OPENAI_API_KEY}` }
+      }
+    );
+    const aiText = openaiRes.data.choices[0].message.content;
+    const scipab = JSON.parse(aiText);
+
+    res.json({ scipab });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.listen(3000, () => console.log("Server running on port 3000"));
+2. OpenAI Prompt Template
+Text
+You are an expert in QA test automation and B2B sales. Using the following company background, generate a SCIPAB analysis (Situation, Complication, Implication, Position, Ask, Benefit) that shows how Avo Automation can help this account. Output as a structured JSON with keys: situation, complication, implication, position, ask, benefit.
+
+Company background:
+{insert PDL-enriched company data and any user-provided context here}
+3. Frontend React Fetch Example
+TypeScript
+// EnhancedAccountResearch.tsx
+
+async function generateScipab(companyName: string, extraContext: string = "") {
+  const res = await fetch("/api/scipab", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ companyName, extraContext })
+  });
+  const data = await res.json();
+  return data.scipab;
+}
+4. UI/UX Recommendations
+Add a "Generate SCIPAB with AI" button.
+Display loading and error states.
+Show the returned SCIPAB JSON in a readable format (e.g., as cards or sections).
+5. Replit Secrets (Environment Variables)
+Set your API keys in the Replit "Secrets" tab:
+OPENAI_API_KEY
+PDL_API_KEY
+6. Error Handling
+Display clear error messages on the frontend if the backend or either API fails.
+Optionally, allow the user to retry the operation.
+7. Example Usage Flow
+User enters/selects a company.
+User clicks "Generate SCIPAB with AI".
+Frontend sends companyName (and optional context) to /api/scipab.
+Backend fetches company data from PDL, then generates a SCIPAB analysis using OpenAI.
+Frontend displays the structured SCIPAB output.
+8. Dependencies
+Node.js/Express
+Axios (for HTTP requests)
+React (frontend)
+TypeScript (recommended)
+OpenAI & PDL accounts (API keys)
+9. Additional Tips
+Validate and sanitize user input before sending to backend.
+Ensure proper error logging on both frontend and backend.
+Customize the OpenAI prompt further for more specificity, if needed.
+10. References
+PDL Company Enrichment API
+OpenAI Chat API Docs
+SCIPAB Methodology
