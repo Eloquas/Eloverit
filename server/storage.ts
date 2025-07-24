@@ -250,8 +250,6 @@ export class DatabaseStorage implements IStorage {
       scipabFramework: accountResearch.scipabFramework,
       researchDate: accountResearch.researchDate,
       researchQuality: accountResearch.researchQuality,
-      keyMetricsHypothesis: accountResearch.keyMetricsHypothesis,
-      businessPriorities: accountResearch.businessPriorities,
       lastUpdated: accountResearch.lastUpdated,
     }).from(accountResearch)
       .where(

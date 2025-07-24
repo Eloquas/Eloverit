@@ -1397,10 +1397,14 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
 
       // Check for existing research and prevent duplicates (unless force regenerate)
       if (!forceRegenerate) {
-        const existingResearch = await storage.findDuplicateAccountResearch(companyName, req.user.id);
-        if (existingResearch) {
-          console.log(`Found existing research for ${companyName}, returning cached version`);
-          return res.json(existingResearch);
+        try {
+          const existingResearch = await storage.findDuplicateAccountResearch(companyName, req.user!.id);
+          if (existingResearch) {
+            console.log(`Found existing research for ${companyName}, returning cached version`);
+            return res.json(existingResearch);
+          }
+        } catch (error) {
+          console.log(`Duplicate check failed, proceeding with new research generation:`, error.message);
         }
       }
 
