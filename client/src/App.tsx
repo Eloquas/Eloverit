@@ -35,21 +35,53 @@ import NotFound from "@/pages/not-found";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
-
-  // Add a timeout to prevent infinite loading
-  const [showLoginAfterTimeout, setShowLoginAfterTimeout] = useState(false);
+  const [forceShowLogin, setForceShowLogin] = useState(false);
   
   useEffect(() => {
+    // Force show login after 1 second to bypass loading issues
     const timer = setTimeout(() => {
-      if (isLoading) {
-        setShowLoginAfterTimeout(true);
-      }
-    }, 3000); // Show login after 3 seconds if still loading
+      setForceShowLogin(true);
+    }, 1000);
 
     return () => clearTimeout(timer);
-  }, [isLoading]);
+  }, []);
 
-  if (isLoading && !showLoginAfterTimeout) {
+  // If authenticated, show main app
+  if (isAuthenticated && !forceShowLogin) {
+    return (
+      <AppLayout>
+        <Switch>
+          <Route path="/" component={Dashboard} />
+          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/prospect-identification" component={ProspectIdentification} />
+          <Route path="/generated-content" component={GeneratedContent} />
+          <Route path="/account-research" component={AccountResearch} />
+          <Route path="/enhanced-account-research" component={EnhancedAccountResearch} />
+          <Route path="/duplicates-management" component={DuplicatesManagement} />
+          <Route path="/onboarding" component={Onboarding} />
+          <Route path="/eloquas-ai" component={EloquasAI} />
+          <Route path="/linkedin-posts" component={LinkedInPosts} />
+          <Route path="/eloquas-linkedin-posts" component={EloquasLinkedInPosts} />
+          <Route path="/achievements" component={Achievements} />
+          <Route path="/outreach-mvp" component={OutreachMVP} />
+          <Route path="/call-assessment" component={CallAssessment} />
+          <Route path="/microlearning" component={MicrolearningPage} />
+          <Route path="/research-insights" component={ResearchInsights} />
+          <Route path="/email-cadences" component={EmailCadences} />
+          <Route path="/orchestrator" component={OrchestratorDashboard} />
+          <Route path="/integrations" component={Integrations} />
+          <Route path="/intent-discovery" component={IntentDiscovery} />
+          <Route path="/prospect-validation/:id" component={ProspectValidation} />
+          <Route path="/avo-business-case" component={AvoBusinessCase} />
+          <Route path="/pdl-test" component={PDLTestPage} />
+          <Route component={NotFound} />
+        </Switch>
+      </AppLayout>
+    );
+  }
+
+  // Show loading only briefly, then always show login
+  if (isLoading && !forceShowLogin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900">
         <div className="text-center">
@@ -60,46 +92,12 @@ function Router() {
     );
   }
 
-  // If not authenticated or timeout occurred, show auth routes
-  if (!isAuthenticated || showLoginAfterTimeout) {
-    return (
-      <Switch>
-        <Route path="/register" component={Register} />
-        <Route path="/*" component={Login} />
-      </Switch>
-    );
-  }
-
-  // If authenticated, show protected app routes
+  // Always show auth routes if not authenticated or forced
   return (
-    <AppLayout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/dashboard" component={Dashboard} />
-        <Route path="/prospect-identification" component={ProspectIdentification} />
-        <Route path="/generated-content" component={GeneratedContent} />
-        <Route path="/account-research" component={AccountResearch} />
-        <Route path="/enhanced-account-research" component={EnhancedAccountResearch} />
-        <Route path="/duplicates-management" component={DuplicatesManagement} />
-        <Route path="/onboarding" component={Onboarding} />
-        <Route path="/eloquas-ai" component={EloquasAI} />
-        <Route path="/linkedin-posts" component={LinkedInPosts} />
-        <Route path="/eloquas-linkedin-posts" component={EloquasLinkedInPosts} />
-        <Route path="/achievements" component={Achievements} />
-        <Route path="/outreach-mvp" component={OutreachMVP} />
-        <Route path="/call-assessment" component={CallAssessment} />
-        <Route path="/microlearning" component={MicrolearningPage} />
-        <Route path="/research-insights" component={ResearchInsights} />
-        <Route path="/email-cadences" component={EmailCadences} />
-        <Route path="/orchestrator" component={OrchestratorDashboard} />
-        <Route path="/integrations" component={Integrations} />
-        <Route path="/intent-discovery" component={IntentDiscovery} />
-        <Route path="/prospect-validation/:id" component={ProspectValidation} />
-        <Route path="/avo-business-case" component={AvoBusinessCase} />
-        <Route path="/pdl-test" component={PDLTestPage} />
-        <Route component={NotFound} />
-      </Switch>
-    </AppLayout>
+    <Switch>
+      <Route path="/register" component={Register} />
+      <Route path="/*" component={Login} />
+    </Switch>
   );
 }
 
