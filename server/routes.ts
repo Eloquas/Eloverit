@@ -1951,7 +1951,7 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
         return res.status(401).json({ message: "User not authenticated" });
       }
 
-      const { prospectId, useTrust, useStory } = req.body;
+      const { prospectId, useTrust = true, useStory = true } = req.body;
 
       if (!prospectId) {
         return res.status(400).json({ message: "Prospect ID is required" });
@@ -1970,10 +1970,10 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
         id: prospect.id,
         name: prospect.name,
         company: prospect.company,
-        role: prospect.role || "QA Manager",
-        industry: prospect.industry || "Technology",
+        role: prospect.position || "QA Manager",
+        industry: prospect.jobTitleCategory || "Technology",
         email: prospect.email,
-        linkedinProfile: prospect.linkedinProfile
+        linkedinProfile: prospect.linkedinUrl || ""
       };
 
       // Generate cadence with Trust and/or Story modes

@@ -511,7 +511,8 @@ export class DatabaseStorage implements IStorage {
 
   // Email cadence methods (user-scoped)
   async getEmailCadences(userId: number): Promise<(EmailCadence & { prospectName: string; prospectCompany: string })[]> {
-    const result = await db
+    try {
+      const result = await db
       .select({
         id: emailCadences.id,
         userId: emailCadences.userId,
@@ -536,11 +537,15 @@ export class DatabaseStorage implements IStorage {
       .where(eq(emailCadences.userId, userId))
       .orderBy(emailCadences.createdAt);
     
-    return result.map(item => ({
-      ...item,
-      prospectName: item.prospectName || "Unknown",
-      prospectCompany: item.prospectCompany || "Unknown"
-    }));
+      return result.map(item => ({
+        ...item,
+        prospectName: item.prospectName || "Unknown",
+        prospectCompany: item.prospectCompany || "Unknown"
+      }));
+    } catch (error) {
+      console.error("Error fetching email cadences:", error);
+      return [];
+    }
   }
 
   async getEmailCadencesByProspect(prospectId: number, userId: number): Promise<EmailCadence[]> {
