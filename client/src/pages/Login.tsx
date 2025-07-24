@@ -155,6 +155,20 @@ export default function Login() {
                   </svg>
                   Continue with LinkedIn
                 </Button>
+                
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <Button 
+                    onClick={() => login({ email: "demo@example.com", password: "demo123" })}
+                    variant="secondary" 
+                    className="w-full h-11 bg-green-50 hover:bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:hover:bg-green-900/30 dark:text-green-400 dark:border-green-800"
+                    disabled={isLoginPending}
+                  >
+                    🚀 Try Demo Account
+                  </Button>
+                  <p className="text-xs text-gray-500 text-center mt-2">
+                    Quick access to test all features
+                  </p>
+                </div>
               </form>
             </Form>
 
