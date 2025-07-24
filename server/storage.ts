@@ -36,6 +36,7 @@ import { eq, sql, count, like, or, and, desc } from "drizzle-orm";
 export interface IStorage {
   // User authentication
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserById(id: number): Promise<User | undefined>;
   getUserByLinkedInId(linkedinId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
@@ -129,6 +130,11 @@ export class DatabaseStorage implements IStorage {
   // User authentication methods
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async getUserById(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
   }
 

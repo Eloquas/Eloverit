@@ -42,6 +42,32 @@ export class AuthService {
     }
   }
 
+  // Hybrid authentication - supports both sessions and bearer tokens
+  static async authenticateRequest(req: Request): Promise<User | null> {
+    // Try bearer token first
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      const decoded = this.verifyAccessToken(token);
+      if (decoded) {
+        const user = await storage.getUserByEmail(decoded.email);
+        return user || null;
+      }
+    }
+
+    // Try session authentication
+    const sessionId = req.cookies?.sessionId;
+    if (sessionId) {
+      const session = await storage.getSession(sessionId);
+      if (session && session.expiresAt > new Date()) {
+        const user = await storage.getUserById(session.userId);
+        return user || null;
+      }
+    }
+
+    return null;
+  }
+
   static async login(email: string, password: string): Promise<{ user: User; token: string; sessionId: string } | null> {
     const user = await storage.getUserByEmail(email);
     if (!user || !user.passwordHash) {
@@ -188,36 +214,25 @@ export class AuthService {
   }
 }
 
-// Middleware for authentication
+// Middleware for authentication - supports both tokens and sessions
 export const authenticateToken = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-  
-  if (!token) {
-    res.status(401).json({ error: 'Access token required' });
-    return;
+  try {
+    const user = await AuthService.authenticateRequest(req);
+    
+    if (!user || !user.isActive) {
+      res.status(401).json({ error: 'Access token required' });
+      return;
+    }
+    
+    req.user = user;
+    next();
+  } catch (error) {
+    res.status(500).json({ error: 'Authentication error' });
   }
-
-  const decoded = AuthService.verifyAccessToken(token);
-  if (!decoded) {
-    res.status(403).json({ error: 'Invalid or expired token' });
-    return;
-  }
-
-  // Get user from database
-  const user = await storage.getUserByEmail(decoded.email);
-  
-  if (!user || !user.isActive) {
-    res.status(403).json({ error: 'User not found or inactive' });
-    return;
-  }
-
-  req.user = user;
-  next();
 };
 
 // Middleware for role-based access control

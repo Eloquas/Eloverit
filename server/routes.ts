@@ -485,8 +485,8 @@ Keep under 300 characters for LinkedIn. ${focusType === "trust" ? "Focus on buil
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
 
-      // Redirect to dashboard with token
-      res.redirect(`/?token=${result.token}`);
+      // Redirect to dashboard - let frontend handle token via session
+      res.redirect(`/`);
     } catch (error) {
       console.error('LinkedIn callback error:', error);
       res.status(500).json({ error: "LinkedIn authentication failed" });
