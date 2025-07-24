@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -35,7 +36,20 @@ import NotFound from "@/pages/not-found";
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
-  if (isLoading) {
+  // Add a timeout to prevent infinite loading
+  const [showLoginAfterTimeout, setShowLoginAfterTimeout] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        setShowLoginAfterTimeout(true);
+      }
+    }, 3000); // Show login after 3 seconds if still loading
+
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
+  if (isLoading && !showLoginAfterTimeout) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900">
         <div className="text-center">
@@ -46,8 +60,8 @@ function Router() {
     );
   }
 
-  // If not authenticated, show auth routes
-  if (!isAuthenticated) {
+  // If not authenticated or timeout occurred, show auth routes
+  if (!isAuthenticated || showLoginAfterTimeout) {
     return (
       <Switch>
         <Route path="/register" component={Register} />

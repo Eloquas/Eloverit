@@ -33,6 +33,9 @@ export function useAuth() {
     queryKey: ["/api/auth/me"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     retry: false,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
