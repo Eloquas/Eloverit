@@ -255,7 +255,7 @@ export default function EnhancedAccountResearch() {
       {/* Main Tabs Interface */}
       {selectedResearch && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-white shadow-sm">
+          <TabsList className="grid w-full grid-cols-3 bg-white shadow-sm">
             <TabsTrigger value="account-research" className="flex items-center space-x-2">
               <Building2 className="w-4 h-4" />
               <span>Account Research</span>
@@ -263,6 +263,10 @@ export default function EnhancedAccountResearch() {
             <TabsTrigger value="leads-contacts" className="flex items-center space-x-2">
               <Users className="w-4 h-4" />
               <span>Leads & Contacts</span>
+            </TabsTrigger>
+            <TabsTrigger value="contact-research" className="flex items-center space-x-2">
+              <Brain className="w-4 h-4" />
+              <span>Contact Research</span>
             </TabsTrigger>
           </TabsList>
 
@@ -621,6 +625,79 @@ export default function EnhancedAccountResearch() {
                       </div>
                     );
                   })()}
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TabsContent>
+
+          {/* Contact Research Tab */}
+          <TabsContent value="contact-research" className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-purple-900">
+                    <Brain className="w-5 h-5 mr-2" />
+                    Advanced Contact Research
+                  </CardTitle>
+                  <p className="text-sm text-purple-700">
+                    Deep prospect analysis combining role expertise with account insights using O3-level AI intelligence
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <Brain className="w-16 h-16 mx-auto text-purple-400 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Enhanced Contact Research Engine
+                    </h3>
+                    <p className="text-gray-600 mb-4 max-w-md mx-auto">
+                      Analyze individual prospects by combining their title/role with comprehensive account research. 
+                      Get personalized insights, messaging hooks, and outreach strategies.
+                    </p>
+                    <Link href="/contact-research">
+                      <Button className="bg-purple-600 hover:bg-purple-700">
+                        <Brain className="w-4 h-4 mr-2" />
+                        Open Contact Research
+                      </Button>
+                    </Link>
+                  </div>
+                  
+                  <div className="mt-6 pt-6 border-t border-purple-200">
+                    <h4 className="font-semibold text-gray-900 mb-3">Contact Research Features:</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-start space-x-3">
+                        <Target className="w-5 h-5 text-purple-600 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-gray-900">Role-Specific Analysis</p>
+                          <p className="text-sm text-gray-600">Analyzes prospects based on job title, seniority, and systems experience</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-3">
+                        <Building2 className="w-5 h-5 text-purple-600 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-gray-900">Account Context Integration</p>
+                          <p className="text-sm text-gray-600">Combines individual insights with company-level research data</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-3">
+                        <MessageSquare className="w-5 h-5 text-purple-600 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-gray-900">Personalized Messaging</p>
+                          <p className="text-sm text-gray-600">Generates role-specific messaging hooks and outreach approaches</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-3">
+                        <BarChart3 className="w-5 h-5 text-purple-600 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-gray-900">Business Impact Metrics</p>
+                          <p className="text-sm text-gray-600">Identifies metrics each prospect likely cares about based on their role</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>

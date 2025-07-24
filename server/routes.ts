@@ -1340,6 +1340,49 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
     }
   });
 
+  // Enhanced contact research endpoints
+  app.post("/api/contact-research/:prospectId", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const prospectId = parseInt(req.params.prospectId);
+      const { contactResearchEngine } = await import("./contact-research-engine");
+      
+      console.log(`Generating contact research for prospect ${prospectId}`);
+      
+      const research = await contactResearchEngine.generateContactResearch(prospectId, req.user.id);
+      
+      res.json(research);
+    } catch (error) {
+      console.error('Contact research generation error:', error);
+      res.status(500).json({
+        message: 'Failed to generate contact research',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.post("/api/contact-research/batch/:companyName", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const companyName = decodeURIComponent(req.params.companyName);
+      const { contactResearchEngine } = await import("./contact-research-engine");
+      
+      console.log(`Generating batch contact research for ${companyName}`);
+      
+      const research = await contactResearchEngine.generateAccountContactsResearch(companyName, req.user.id);
+      
+      res.json({
+        companyName,
+        contactsAnalyzed: research.length,
+        research
+      });
+    } catch (error) {
+      console.error('Batch contact research generation error:', error);
+      res.status(500).json({
+        message: 'Failed to generate batch contact research',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   app.post("/api/account-research/generate", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const { companyName, platform, forceRegenerate } = req.body;

@@ -31,6 +31,7 @@ import IntentDiscovery from "@/pages/intent-discovery";
 import ProspectValidation from "@/pages/prospect-validation";
 import AvoBusinessCase from "@/pages/avo-business-case";
 import PDLTestPage from "@/pages/pdl-test";
+import ContactResearch from "@/pages/contact-research";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -78,6 +79,7 @@ function Router() {
           <Route path="/prospect-validation/:id" component={ProspectValidation} />
           <Route path="/avo-business-case" component={AvoBusinessCase} />
           <Route path="/pdl-test" component={PDLTestPage} />
+          <Route path="/contact-research" component={ContactResearch} />
           <Route component={NotFound} />
         </Switch>
       </AppLayout>
