@@ -5,7 +5,7 @@ import axios from 'axios';
 export class LinkedInAuthService {
   private static readonly CLIENT_ID = process.env.LINKEDIN_CLIENT_ID;
   private static readonly CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET;
-  private static readonly REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI || 'http://localhost:5000/api/auth/linkedin/callback';
+  private static readonly REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI || 'https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/api/auth/linkedin/callback';
 
   static getAuthUrl(): string {
     if (!this.CLIENT_ID) {
