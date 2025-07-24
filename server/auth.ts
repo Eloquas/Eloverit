@@ -75,21 +75,34 @@ export class AuthService {
   static async linkedInLogin(linkedInProfile: any): Promise<{ user: User; token: string; sessionId: string } | null> {
     const { id, firstName, lastName, emailAddress, pictureUrl } = linkedInProfile;
     
-    // Check if LinkedIn user already exists
+    // Check if LinkedIn user already exists by LinkedIn ID
     let user = await storage.getUserByLinkedInId(id);
     
     if (!user) {
-      // Create new user from LinkedIn profile
-      user = await storage.createUser({
-        email: emailAddress,
-        linkedinId: id,
-        linkedinProfile: linkedInProfile,
-        firstName: firstName,
-        lastName: lastName,
-        profileImageUrl: pictureUrl,
-        role: 'rep',
-        isActive: true
-      });
+      // Check if user exists by email (existing account linking LinkedIn)
+      user = await storage.getUserByEmail(emailAddress);
+      
+      if (user) {
+        // Link LinkedIn profile to existing user account
+        await storage.updateUser(user.id, {
+          linkedinId: id,
+          linkedinProfile: linkedInProfile,
+          profileImageUrl: pictureUrl,
+          lastLoginAt: new Date()
+        });
+      } else {
+        // Create new user from LinkedIn profile
+        user = await storage.createUser({
+          email: emailAddress,
+          linkedinId: id,
+          linkedinProfile: linkedInProfile,
+          firstName: firstName,
+          lastName: lastName,
+          profileImageUrl: pictureUrl,
+          role: 'rep',
+          isActive: true
+        });
+      }
     } else {
       // Update existing user's LinkedIn profile
       await storage.updateUser(user.id, {
