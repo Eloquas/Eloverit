@@ -34,20 +34,24 @@ import PDLTestPage from "@/pages/pdl-test";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
-  const [forceShowLogin, setForceShowLogin] = useState(false);
-  
-  useEffect(() => {
-    // Force show login after 1 second to bypass loading issues
-    const timer = setTimeout(() => {
-      setForceShowLogin(true);
-    }, 1000);
+  const { isAuthenticated, isLoading, user } = useAuth();
 
-    return () => clearTimeout(timer);
-  }, []);
+  console.log('Router state:', { isAuthenticated, isLoading, user });
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // If authenticated, show main app
-  if (isAuthenticated && !forceShowLogin) {
+  if (isAuthenticated) {
     return (
       <AppLayout>
         <Switch>
