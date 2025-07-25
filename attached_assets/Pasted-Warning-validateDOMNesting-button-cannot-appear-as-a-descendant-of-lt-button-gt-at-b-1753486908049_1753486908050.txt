@@ -1,0 +1,38 @@
+Warning: validateDOMNesting(...): <button> cannot appear as a descendant of &lt;button&gt;.
+    at button
+    at https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PALV7G7K.js?v=e2e5add2:42:13
+    at Provider (https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=e2e5add2:38:15)
+    at https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-checkbox.js?v=e2e5add2:47:7
+    at _c (https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/src/components/ui/checkbox.tsx:22:11)
+    at div
+    at div
+    at div
+    at _c3 (https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/src/components/ui/card.tsx:45:12)
+    at button
+    at https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PALV7G7K.js?v=e2e5add2:42:13
+    at https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-collapsible.js?v=e2e5add2:83:13
+    at div
+    at https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PALV7G7K.js?v=e2e5add2:42:13
+    at Provider (https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=e2e5add2:38:15)
+    at https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-collapsible.js?v=e2e5add2:46:7
+    at div
+    at _c (https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at AccountGroupedProspects (https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/src/components/account-grouped-prospects.tsx:29:3)
+    at div
+    at div
+    at div
+    at div
+    at Dashboard (https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/src/pages/dashboard.tsx:25:53)
+    at Route (https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=e2e5add2:323:16)
+    at Switch (https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=e2e5add2:379:17)
+    at div
+    at main
+    at div
+    at AppLayout (https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/src/components/app-layout.tsx:19:37)
+    at Router (https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/src/App.tsx?v=TQT5Do9KRncGAelZvNyqL:58:48)
+    at Provider (https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=e2e5add2:38:15)
+    at TooltipProvider (https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=e2e5add2:64:5)
+    at QueryClientProvider (https://eb5ccdc5-bca0-4fb6-ae6b-185da7799b28-00-3vo5gbder18i5.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=e2e5add2:2805:3)
+    at App

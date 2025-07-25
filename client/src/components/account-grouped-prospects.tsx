@@ -194,56 +194,52 @@ export default function AccountGroupedProspects({
           return (
             <Card key={account.company} className="avo-card border-l-4 border-l-primary">
               <Collapsible>
-                <CollapsibleTrigger 
-                  className="w-full"
-                  onClick={() => toggleAccount(account.company)}
-                >
-                  <CardHeader className="hover:bg-avo-blue-50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                <CardHeader className="hover:bg-avo-blue-50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <CollapsibleTrigger 
+                        className="flex items-center gap-2 p-1 rounded hover:bg-gray-100"
+                        onClick={() => toggleAccount(account.company)}
+                      >
                         {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                        <Building className="h-5 w-5 text-blue-600" />
-                        <div className="text-left">
-                          <CardTitle 
-                            className="text-lg cursor-pointer hover:text-blue-600 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openCompanyDetail(account.company, account.prospects);
-                            }}
-                          >
-                            {account.company}
-                          </CardTitle>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Users className="h-3 w-3" />
-                              {account.totalContacts} contacts
-                            </span>
-                            <span className="text-green-600 font-medium">
-                              {account.managerPlusCount} Manager+
-                            </span>
-                          </div>
+                      </CollapsibleTrigger>
+                      <Building className="h-5 w-5 text-blue-600" />
+                      <div className="text-left">
+                        <div 
+                          className="text-lg font-semibold cursor-pointer hover:text-blue-600 transition-colors"
+                          onClick={() => openCompanyDetail(account.company, account.prospects)}
+                        >
+                          {account.company}
                         </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="flex gap-1">
-                          {account.targetRoles.map(role => (
-                            <Badge key={role} variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                              {role}
-                            </Badge>
-                          ))}
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            {account.totalContacts} contacts
+                          </span>
+                          <span className="text-green-600 font-medium">
+                            {account.managerPlusCount} Manager+
+                          </span>
                         </div>
-                        <Checkbox
-                          checked={isAccountSelected}
-                          ref={(el) => {
-                            if (el) el.indeterminate = isPartiallySelected;
-                          }}
-                          onCheckedChange={(checked) => toggleAccountSelection(account.company, checked as boolean)}
-                          onClick={(e) => e.stopPropagation()}
-                        />
                       </div>
                     </div>
-                  </CardHeader>
-                </CollapsibleTrigger>
+                    <div className="flex items-center gap-3">
+                      <div className="flex gap-1">
+                        {account.targetRoles.map(role => (
+                          <Badge key={role} variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                            {role}
+                          </Badge>
+                        ))}
+                      </div>
+                      <Checkbox
+                        checked={isAccountSelected}
+                        ref={(el) => {
+                          if (el) el.indeterminate = isPartiallySelected;
+                        }}
+                        onCheckedChange={(checked) => toggleAccountSelection(account.company, checked as boolean)}
+                      />
+                    </div>
+                  </div>
+                </CardHeader>
 
                 <CollapsibleContent>
                   <CardContent className="pt-0">
