@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +53,7 @@ interface LookupResponse {
 export default function AccountResearchLookup() {
   const { toast } = useToast();
   const [results, setResults] = useState<LookupResponse | null>(null);
+  const [generatingResearch, setGeneratingResearch] = useState<string | null>(null);
   
   // Filter inputs
   const [industry, setIndustry] = useState("");
@@ -110,6 +111,43 @@ export default function AccountResearchLookup() {
     }
   });
 
+  const generateResearchMutation = useMutation({
+    mutationFn: async ({ companyName, platform }: { companyName: string, platform?: string }) => {
+      const response = await apiRequest("POST", "/api/account-research/generate", { 
+        companyName, 
+        platform: platform || "enterprise_systems",
+        forceRegenerate: false 
+      });
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      setGeneratingResearch(null);
+      // Invalidate account research cache to show new data
+      queryClient.invalidateQueries({ queryKey: ["/api/account-research"] });
+      
+      toast({
+        title: "Research Generated!",
+        description: `Detailed research completed for ${variables.companyName}. View it in Account Research.`,
+        action: (
+          <button 
+            onClick={() => window.location.href = '/account-research'}
+            className="text-sm underline"
+          >
+            View Research
+          </button>
+        ),
+      });
+    },
+    onError: (error: any, variables) => {
+      setGeneratingResearch(null);
+      toast({
+        title: "Research Failed",
+        description: error.message || `Failed to generate research for ${variables.companyName}`,
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleLookup = () => {
     lookupMutation.mutate({
       industry,
@@ -123,6 +161,14 @@ export default function AccountResearchLookup() {
 
   const handleTestLookup = () => {
     testLookupMutation.mutate();
+  };
+
+  const handleGenerateResearch = (company: CompanyResult) => {
+    setGeneratingResearch(company.company_name);
+    generateResearchMutation.mutate({
+      companyName: company.company_name,
+      platform: company.system
+    });
   };
 
   const exportToCsv = () => {
@@ -343,8 +389,11 @@ export default function AccountResearchLookup() {
               </div>
               <div className="flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3" />
-                Fallback Mechanism
+                Generate Detailed Research
               </div>
+            </div>
+            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
+              <strong>Research Flow:</strong> Discover companies → Generate research → View detailed analysis in <a href="/account-research" className="underline">Account Research</a>
             </div>
           </div>
         </CardContent>
@@ -455,8 +504,20 @@ export default function AccountResearchLookup() {
                         </a>
                       ))}
                     </div>
-                    <Button variant="outline" size="sm">
-                      Generate Research
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleGenerateResearch(company)}
+                      disabled={generatingResearch === company.company_name}
+                    >
+                      {generatingResearch === company.company_name ? (
+                        <>
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        "Generate Research"
+                      )}
                     </Button>
                   </div>
                 </CardContent>
