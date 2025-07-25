@@ -977,8 +977,8 @@ export default function AccountResearch() {
                           <div>
                             <div className="font-medium text-blue-900">Active QA Hiring</div>
                             <div className="text-sm text-blue-700">
-                              {parseJsonArray(selectedResearch.recentJobPostings).filter((posting: string) =>
-                                ['qa', 'quality', 'test'].some(keyword => posting.toLowerCase().includes(keyword))
+                              {parseJsonArray(selectedResearch.recentJobPostings).filter((posting: any) =>
+                                typeof posting === 'string' && ['qa', 'quality', 'test'].some(keyword => posting.toLowerCase().includes(keyword))
                               ).length} QA-related positions posted recently
                             </div>
                           </div>
