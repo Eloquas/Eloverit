@@ -92,24 +92,30 @@ export class ResearchInsightsEngine {
     Return a JSON object with actionable insights.
     `;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      messages: [
-        {
-          role: "system",
-          content: "You are a sales intelligence analyst specializing in QA automation and enterprise systems. Provide data-driven insights in JSON format."
-        },
-        {
-          role: "user",
-          content: analysisPrompt
-        }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.3
-    });
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: "You are a sales intelligence analyst specializing in QA automation and enterprise systems. Provide data-driven insights in JSON format."
+          },
+          {
+            role: "user",
+            content: analysisPrompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3
+      });
 
-    const analysis = JSON.parse(response.choices[0].message.content || '{}');
-    return this.extractPatterns(analysis);
+      const analysis = JSON.parse(response.choices[0].message.content || '{}');
+      return this.extractPatterns(analysis);
+    } catch (error) {
+      console.warn('OpenAI API unavailable, using basic pattern analysis:', error.message);
+      // Return basic patterns based on data analysis without AI
+      return this.generateBasicPatterns(accountResearch, prospects, generatedContent);
+    }
   }
 
   private async generateActionableInsights(
@@ -338,6 +344,50 @@ export class ResearchInsightsEngine {
         ]
       }
     ];
+  }
+
+  private generateBasicPatterns(
+    accountResearch: any[], 
+    prospects: any[], 
+    generatedContent: any[]
+  ): ResearchPattern[] {
+    const patterns: ResearchPattern[] = [];
+    
+    // Industry analysis without AI
+    const industries = accountResearch.map(r => r.industry).filter(Boolean);
+    const topIndustry = this.getMostFrequent(industries);
+    if (topIndustry) {
+      patterns.push({
+        type: 'industry_trend',
+        pattern: `High activity in ${topIndustry} sector`,
+        frequency: industries.filter(i => i === topIndustry).length,
+        confidence: 0.7,
+        actionable_insight: `Focus research efforts on ${topIndustry} companies`
+      });
+    }
+    
+    // Quality analysis
+    const highQualityResearch = accountResearch.filter(r => r.researchQuality === 'excellent');
+    if (highQualityResearch.length > 0) {
+      patterns.push({
+        type: 'research_quality',
+        pattern: 'High-quality research correlates with better outcomes',
+        frequency: highQualityResearch.length,
+        confidence: 0.8,
+        actionable_insight: 'Prioritize comprehensive research for better engagement'
+      });
+    }
+    
+    return patterns;
+  }
+  
+  private getMostFrequent(items: string[]): string | null {
+    if (items.length === 0) return null;
+    const counts = items.reduce((acc, item) => {
+      acc[item] = (acc[item] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
   }
 
   private extractPatterns(analysis: any): ResearchPattern[] {

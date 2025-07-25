@@ -1,0 +1,41 @@
+Role:
+You are a full-stack AI developer working on the Eloverit app (repo: Eloquas/Eloverit). The stack is React + TypeScript (frontend), Express.js + TypeScript (backend), and PostgreSQL. The project uses Google Drive integration and relies on API endpoints prefixed with /api/.
+
+Objective:
+Investigate and resolve a persistent frontend error:
+
+"failed to fetch window"
+
+This occurs when attempting to use certain features that fetch or export data, or when integrating with Google Drive through the UI. The error suggests failed network requests or incorrect handling of the window object.
+
+Context:
+
+The error appears during fetch requests from the frontend to the backend (e.g. /api/prospects, /api/export/generated-content, Google Drive file fetches).
+The frontend is a React app using Vite and TanStack Query.
+Backend is Express.js with Google Drive integration.
+The app is being run/developed in Replit.
+File for inspection: client/src/lib/queryClient.ts
+Tasks:
+
+Inspect client/src/lib/queryClient.ts and related fetch logic.
+Identify any misuse of fetch, incorrect API paths, or improper context where window is referenced.
+Check if fetch requests are correctly routed to the backend, considering Replit environment and Vite proxy setup.
+Are API endpoints accessible from the frontend in this environment?
+Is there a CORS or proxy configuration issue?
+Validate that all uses of window (e.g. window.open, window.URL.createObjectURL) are only executed in the browser context (not during SSR or in Node).
+Suggest proper guards or move such logic inside useEffect or event handlers if needed.
+Test the API endpoints directly (e.g. /api/prospects) from Replit and browser to confirm backend availability.
+Suggest or implement fixes:
+Correct API endpoint paths or add proxy configuration if missing.
+Add CORS headers to backend if requests are blocked.
+Guard any window usage with environment checks.
+Improve error handling for fetch failures to show more user-friendly messages and log actual error details.
+Deliverable:
+
+A summary of the root cause(s) and the specific code changes or configuration updates needed to fix the "failed to fetch window" error.
+Updated code snippets or configuration files as needed.
+Brief explanation of how to avoid similar issues in Replit/Vite/React environments.
+References:
+
+client/src/lib/queryClient.ts
+Example of fetch usage in client/src/components/header.tsx

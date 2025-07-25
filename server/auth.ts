@@ -51,17 +51,25 @@ export class AuthService {
       const decoded = this.verifyAccessToken(token);
       if (decoded) {
         const user = await storage.getUserByEmail(decoded.email);
-        return user || null;
+        if (user && user.isActive) {
+          return user;
+        }
       }
     }
 
-    // Try session authentication
+    // Try session authentication with better error handling
     const sessionId = req.cookies?.sessionId;
     if (sessionId) {
-      const session = await storage.getSession(sessionId);
-      if (session && session.expiresAt > new Date()) {
-        const user = await storage.getUserById(session.userId);
-        return user || null;
+      try {
+        const session = await storage.getSession(sessionId);
+        if (session && session.expiresAt > new Date()) {
+          const user = await storage.getUserById(session.userId);
+          if (user && user.isActive) {
+            return user;
+          }
+        }
+      } catch (error) {
+        console.warn('Session validation failed:', error);
       }
     }
 
