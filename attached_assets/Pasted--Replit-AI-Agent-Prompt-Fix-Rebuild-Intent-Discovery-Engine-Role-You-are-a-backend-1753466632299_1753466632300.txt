@@ -1,0 +1,76 @@
+## 🧠 Replit AI Agent Prompt — Fix & Rebuild Intent Discovery Engine
+
+### 🛠️ Role
+You are a backend+AI full-stack engineer working inside a Replit app called Eloquas (also branded as Eloverit). This platform is built to help sales teams identify high-intent accounts based on deep research models and public data signals. You will fix the **Intent Discovery Engine** which is currently broken.
+
+---
+
+### 🎯 Objective
+Fix and rebuild the **Intent Discovery** feature so that:
+- It surfaces companies exhibiting **real buying intent** around SDLC/STLC initiatives.
+- It uses an o3-based or similarly capable deep research model to identify intent from **indirect signals**, not just keyword matches.
+
+---
+
+### ⚙️ Input Logic
+The system should:
+1. Accept filters from the user: Industry, Geography, Revenue, ERP/CRM System (e.g., Dynamics 365, SAP).
+2. Search for public signals that indicate SDLC/STLC-related initiatives:
+   - Migrations
+   - Integrations
+   - ERP/CRM Replacements
+   - New application rollouts
+   - QA or test automation investments
+   - Layoffs/hiring in IT/QA roles
+3. Use news articles, 10-Ks, investor releases, company blogs, earnings calls, and job postings to extract **intent signals**.
+4. Use NER + NLP + intent classification to infer whether the initiative is high-value and time-sensitive.
+
+---
+
+### ✅ Output Requirements
+Each company should show a tile with:
+- **Company Name**  
+- **Intent Summary** (1–2 sentence description in natural language)
+- **Matched Keywords/Phrases** (e.g., "migrating to Microsoft Dynamics 365")
+- **Source Type** (e.g., Job Post, News Article)
+- **Link to Original Source**
+- **Confidence Score (0–100%)**
+
+---
+
+### 🔌 Technical Tasks
+1. Fix the current error in the Intent Discovery module (returning no results and crashing).
+2. Ensure the intent detection uses vector or semantic retrieval (not just keywords).
+3. Add fallback: if no companies match exactly, show lookalike companies in the same vertical with similar initiatives.
+4. Add sorting/filtering options by intent strength, recency, or company size.
+5. Add a loader + error-handling message: "No intent found. Try a different filter or industry."
+
+---
+
+### 🔄 Integration Points
+- Connect to Account Research module: Accounts that show up in Intent Discovery should auto-load into the Account Research tab.
+- Connect to SCIPAB: Intent description should become the seed for Situation/Complication.
+- Save results to user’s profile for export.
+
+---
+
+### 💡 Design Suggestions
+Keep the UX simple:
+- Results shown as scrollable cards or table.
+- Include option to export top 10 accounts as CSV.
+- Use pagination if >25 results returned.
+
+---
+
+### 🔍 Optional Enhancements (Phase 2)
+- Intent Trends heatmap by industry
+- Visual timeline of intent activity for each company
+- Slack/email alert when new intent matches user filters
+
+---
+
+Once complete, tag this module version as **IntentDiscovery_v1.5** and notify the frontend to wire into the Account Research and Outreach flows.
+
+---
+
+Let me know when this module is working and visible in staging or prod so we can proceed to Module 2: SCIPAB Intelligence Enhancement.

@@ -17,29 +17,46 @@ import { useToast } from "@/hooks/use-toast";
 
 interface IntentSignal {
   companyName: string;
-  fortuneRank?: number;
-  signalType: string;
+  intentSummary: string;
+  matchedKeywords: string[];
+  signalType: 'job_posting' | 'press_release' | 'linkedin_post' | 'company_announcement' | 'earnings_call' | 'news_article' | 'sec_filing';
   source: string;
+  sourceLink?: string;
   content: string;
-  extractedKeywords: string[];
-  intentScore: number;
-  urgencyLevel: string;
+  confidenceScore: number; // 0-100% confidence
+  urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
   signalDate: string;
-  url?: string;
+  fortuneRank?: number;
+  industry?: string;
   department?: string;
   initiative?: string;
   technology?: string;
+  geographyInfo?: {
+    headquarters?: string;
+    region?: string;
+    country?: string;
+  };
+  companySize?: {
+    employees?: number;
+    revenue?: string;
+  };
 }
 
 export default function IntentDiscovery() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("search");
   const [searchFilters, setSearchFilters] = useState({
+    industry: '',
+    geography: '',
+    revenue: '',
+    erpCrmSystem: '',
     fortuneRanking: '1000',
     timeframe: '60',
     technologies: '',
     departments: '',
-    minIntentScore: '70'
+    minConfidenceScore: '70',
+    companySize: '',
+    searchMode: 'hybrid'
   });
 
   const { data: trendingData, isLoading: trendingLoading } = useQuery({
@@ -52,7 +69,7 @@ export default function IntentDiscovery() {
         ...filters,
         fortuneRanking: parseInt(filters.fortuneRanking),
         timeframe: parseInt(filters.timeframe),
-        minIntentScore: parseInt(filters.minIntentScore),
+        minConfidenceScore: parseInt(filters.minConfidenceScore),
         technologies: filters.technologies ? filters.technologies.split(',').map((t: string) => t.trim()) : [],
         departments: filters.departments ? filters.departments.split(',').map((d: string) => d.trim()) : []
       };
@@ -258,9 +275,9 @@ export default function IntentDiscovery() {
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-green-600">
-                        {intentSearchMutation.data.summary?.averageIntentScore || 0}
+                        {intentSearchMutation.data.summary?.avgConfidence || 0}%
                       </div>
-                      <div className="text-sm text-gray-600">Avg Intent Score</div>
+                      <div className="text-sm text-gray-600">Avg Confidence</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-orange-600">
@@ -297,13 +314,14 @@ export default function IntentDiscovery() {
                             )}
                           </h4>
                           <p className="text-sm text-gray-600">{signal.source} • {signal.signalDate}</p>
+                          <p className="text-sm text-blue-600 mt-1">{signal.intentSummary}</p>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Badge className={getUrgencyColor(signal.urgencyLevel)}>
                             {signal.urgencyLevel}
                           </Badge>
-                          <div className={`px-2 py-1 rounded text-sm font-medium ${getScoreColor(signal.intentScore)}`}>
-                            {signal.intentScore}/100
+                          <div className={`px-2 py-1 rounded text-sm font-medium ${getScoreColor(signal.confidenceScore)}`}>
+                            {signal.confidenceScore}/100
                           </div>
                         </div>
                       </div>
@@ -332,21 +350,34 @@ export default function IntentDiscovery() {
                       </div>
 
                       <div className="flex flex-wrap gap-1 mb-4">
-                        {signal.extractedKeywords.slice(0, 5).map((keyword, kIndex) => (
+                        {signal.matchedKeywords.slice(0, 5).map((keyword, kIndex) => (
                           <Badge key={kIndex} variant="secondary" className="text-xs">
                             {keyword}
                           </Badge>
                         ))}
                       </div>
 
-                      {signal.url && (
-                        <Button variant="outline" size="sm" className="text-blue-600" asChild>
-                          <a href={signal.url} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="w-3 h-3 mr-2" />
-                            View Source
-                          </a>
+                      <div className="flex space-x-2">
+                        {signal.sourceLink && (
+                          <Button variant="outline" size="sm" className="text-blue-600" asChild>
+                            <a href={signal.sourceLink} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="w-3 h-3 mr-2" />
+                              View Source
+                            </a>
+                          </Button>
+                        )}
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => {
+                            // Integration with Account Research
+                            window.location.href = `/account-research?company=${encodeURIComponent(signal.companyName)}`;
+                          }}
+                        >
+                          <Target className="w-3 h-3 mr-2" />
+                          Research Account
                         </Button>
-                      )}
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
