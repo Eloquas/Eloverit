@@ -16,6 +16,17 @@ This repository contains two complementary platforms:
 - **Target Roles:** Manager+ level positions in QA, CRM, ERP, D365, SAP, Oracle, enterprise systems
 
 ## Recent Changes (Last Updated: July 25, 2025)
+- ✅ **SCIPAB ENHANCEMENT ENGINE MODULE 2 COMPLETE:** Advanced SCIPAB framework generator with Intent Discovery integration and role-based messaging
+  - **Enhanced SCIPAB Engine v1.5:** Real-time Intent Discovery integration with personalized business case generation for specific companies, systems, and roles
+  - **Role-Based Messaging:** Automatic tone profile detection distinguishing between executive (risk & ROI focused) vs practitioner (efficiency & speed focused) messaging
+  - **Intent Discovery Integration:** Pulls real-time data from Intent Discovery engine to strengthen business case messaging and link intent signals to test automation urgency
+  - **Comprehensive Input Parameters:** Accepts company_name, industry, role_title, system_type, intent_signal, pain_points for personalized analysis
+  - **Clean Markdown Output:** Professional SCIPAB format with copy/export functionality and regeneration options with tone variations (formal, consultative, bold)
+  - **New Balance Test Validation:** Successfully tested with specified example (New Balance, QA Manager, Dynamics 365, "Migrating to cloud-based ERP")
+  - **Enhanced API Endpoints:** /api/scipab/enhanced and /api/scipab/test-new-balance for Module 2 functionality
+  - **Professional UI Component:** Complete SCIPAB Enhancement page with Module 2 feature indicators and acceptance criteria validation
+  - **Production Ready:** SCIPAB_v1.5 system operational with enhanced personalization, data-driven insights, and Avo Automation value proposition alignment
+
 - ✅ **F1000 INTENT DISCOVERY SYSTEM RESTORED & UPGRADED:** Complete resolution of critical system failures with o3-Pro integration
   - **o3-Pro AI Model Integration:** Upgraded from GPT-4o to o3-Pro for more reliable D365 customer discovery as requested
   - **Critical Bug Fixes:** Resolved API endpoint syntax errors, corrupted code, and server startup failures preventing system operation

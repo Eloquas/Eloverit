@@ -297,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // SCIPAB Analysis API endpoint
+  // SCIPAB Analysis API endpoint  
   app.post("/api/scipab", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const { companyName, extraContext } = req.body;
@@ -346,6 +346,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: error.message || "Failed to generate SCIPAB analysis" 
         });
       }
+    }
+  });
+
+  // Enhanced SCIPAB Analysis endpoint - v1.5
+  app.post('/api/scipab/enhanced', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { 
+        company_name, 
+        industry,
+        role_title, 
+        system_type, 
+        intent_signal, 
+        pain_points,
+        urgency_level 
+      } = req.body;
+      
+      if (!company_name || !role_title || !system_type) {
+        return res.status(400).json({ 
+          error: 'Required fields: company_name, role_title, system_type' 
+        });
+      }
+
+      console.log(`🚀 Enhanced SCIPAB v1.5 generation for ${company_name} - ${role_title} - ${system_type}`);
+      
+      const enhancedInput = {
+        company_name,
+        industry,
+        role_title,
+        system_type,
+        intent_signal,
+        pain_points,
+        urgency_level
+      };
+
+      const { scipabEnhancementEngine } = await import('./scipab-enhancement-engine');
+      const result = await scipabEnhancementEngine.generateEnhancedScipab(enhancedInput);
+
+      res.json({
+        success: true,
+        ...result,
+        generatedAt: new Date().toISOString(),
+        engineVersion: 'SCIPAB_v1.5'
+      });
+
+    } catch (error: any) {
+      console.error('Enhanced SCIPAB analysis error:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate enhanced SCIPAB analysis',
+        details: error.message || 'Unknown error'
+      });
+    }
+  });
+
+  // Test Enhanced SCIPAB with New Balance example
+  app.post('/api/scipab/test-new-balance', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      console.log('🧪 Testing Enhanced SCIPAB with New Balance example...');
+      
+      const { scipabEnhancementEngine } = await import('./scipab-enhancement-engine');
+      const result = await scipabEnhancementEngine.testNewBalanceExample();
+
+      res.json({
+        success: true,
+        test_case: 'New Balance QA Manager - Dynamics 365 Migration',
+        ...result,
+        generatedAt: new Date().toISOString()
+      });
+
+    } catch (error: any) {
+      console.error('New Balance test error:', error);
+      res.status(500).json({ 
+        error: 'Failed to run New Balance test',
+        details: error.message || 'Unknown error'
+      });
     }
   });
 

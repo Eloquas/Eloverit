@@ -34,6 +34,7 @@ import PDLTestPage from "@/pages/pdl-test";
 import ContactResearch from "@/pages/contact-research";
 import Settings from "@/pages/settings";
 import Profile from "@/pages/profile";
+import ScipabEnhancement from "@/pages/scipab-enhancement";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -82,6 +83,7 @@ function Router() {
           <Route path="/avo-business-case" component={AvoBusinessCase} />
           <Route path="/pdl-test" component={PDLTestPage} />
           <Route path="/contact-research" component={ContactResearch} />
+          <Route path="/scipab-enhancement" component={ScipabEnhancement} />
           <Route path="/settings" component={Settings} />
           <Route path="/profile" component={Profile} />
           <Route component={NotFound} />

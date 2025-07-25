@@ -37,7 +37,8 @@ import {
   Menu,
   Calculator,
   ExternalLink,
-  Database
+  Database,
+  Zap
 } from "lucide-react";
 
 export default function HeaderNav() {
@@ -58,6 +59,7 @@ export default function HeaderNav() {
       { label: "Outreach MVP", href: "/outreach-mvp", icon: Target, badge: "NEW" },
     ],
     intelligence: [
+      { label: "SCIPAB Enhancement", href: "/scipab-enhancement", icon: Zap, badge: "v1.5" },
       { label: "Research Insights", href: "/research-insights", icon: Lightbulb },
       { label: "Call Assessment", href: "/call-assessment", icon: FileText },
       { label: "Generated Content", href: "/generated-content", icon: BarChart3 },

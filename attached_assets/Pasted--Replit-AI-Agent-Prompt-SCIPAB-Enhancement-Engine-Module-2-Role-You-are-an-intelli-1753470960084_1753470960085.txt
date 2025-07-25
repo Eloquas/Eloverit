@@ -1,0 +1,71 @@
+## ✍️ Replit AI Agent Prompt — SCIPAB Enhancement Engine (Module 2)
+
+### 🛠️ Role
+You are an intelligent AI writing agent embedded in a Replit app (Eloquas/Eloverit). Your job is to improve the quality and context-awareness of the **SCIPAB framework generator**, which is used to craft highly personalized sales outreach messages. SCIPAB stands for **Situation, Complication, Implication, Position, Action, Benefit**.
+
+---
+
+### 🎯 Objective
+Enhance the current SCIPAB generator so it:
+1. Pulls real-time data from the **Intent Discovery** engine (Module 1)
+2. Tailors output to the specific company, system (e.g., Dynamics 365, SAP), and role (e.g., QA Manager, Director of IT)
+3. Strengthens business case messaging, linking intent signals to test automation urgency
+
+---
+
+### ⚙️ Input Requirements
+The agent should accept:
+- `company_name`
+- `industry`
+- `role_title` (e.g., Director of QA, Head of IT Ops)
+- `system_type` (e.g., Dynamics 365, Oracle)
+- `intent_signal` (e.g., "migrating to Dynamics 365," "expanding Salesforce footprint")
+- `pain_points` (optional: defaults pulled from database by industry + role)
+
+---
+
+### 🧠 Output Structure
+Output must be a clean, complete SCIPAB block in Markdown:
+```markdown
+**SITUATION:** [Pull from company + intent]
+**COMPLICATION:** [Tie change to QA/SDLC bottlenecks]
+**IMPLICATION:** [Business risk from inefficient QA/testing coverage]
+**POSITION:** [Introduce Avo Automation as no-code test platform]
+**ACTION:** [Request time or share CTA]
+**BENEFIT:** [Quantifiable outcome — saved time, increased velocity, avoided bugs]
+```
+
+---
+
+### 🧩 Smart Enhancements
+1. If the company is **already in the Intent Discovery engine**, pull the summary and use it as the SITUATION.
+2. If no intent exists, fallback to a **generic SITUATION** based on industry trends.
+3. Make the POSITION section always mention that the platform is:
+   - Recognized in Gartner’s Market Guide
+   - Used by Fortune 500 teams for Dynamics 365, SAP, and 200+ technologies
+   - Business-user-friendly (no-code)
+4. If role is high-level (VP, Director, CXO), emphasize **risk and ROI**.
+   If role is practitioner (QA Engineer, Manager), emphasize **efficiency and speed**.
+
+---
+
+### 📤 Output Formatting
+- Always include full SCIPAB with headers.
+- Allow single-click **copy**, **export to CSV**, or **push to Outreach tab**.
+- Include a "Regenerate" button for fast iteration with slight tone shifts (formal, consultative, bold).
+
+---
+
+### ✅ Acceptance Criteria
+- Test with: `company=New Balance`, `role=QA Manager`, `system=Dynamics 365`, `intent="Migrating to cloud-based ERP"`
+- Ensure output is:
+  - Personalized
+  - Insightful
+  - Uses real-world data when available
+  - Aligned with Avo's value prop
+
+---
+
+Once complete, mark this module version as `SCIPAB_v1.5` and notify frontend to replace old generator with updated logic.
+
+Next module: **Account Research Fix + Lookup Expansion**
