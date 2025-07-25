@@ -543,28 +543,9 @@ Perform deep semantic analysis to identify the strongest intent signals matching
   }
 
   private generateDefaultLookalikes(filters: IntentDiscoveryFilters): IntentSignal[] {
-    const defaultCompanies = [
-      { name: 'Boeing', rank: 27, industry: 'Aerospace' },
-      { name: 'Lockheed Martin', rank: 56, industry: 'Defense' },
-      { name: 'General Dynamics', rank: 97, industry: 'Defense' }
-    ];
-
-    return defaultCompanies.map(company => ({
-      companyName: company.name,
-      intentSummary: `${company.name} shows potential for QA automation initiatives based on industry modernization trends and digital transformation needs.`,
-      matchedKeywords: ['digital transformation', 'system modernization', 'quality improvement'],
-      signalType: 'company_announcement' as const,
-      source: 'Lookalike Analysis',
-      content: `Industry analysis suggests ${company.name} may benefit from automation initiatives similar to peer companies.`,
-      confidenceScore: 65,
-      urgencyLevel: 'medium' as const,
-      signalDate: new Date().toISOString().split('T')[0],
-      fortuneRank: company.rank,
-      industry: company.industry,
-      department: 'IT',
-      initiative: 'Digital Transformation',
-      technology: 'Enterprise Systems'
-    }));
+    // REMOVED: All default/simulated data eliminated per data integrity requirements
+    console.log('⚠️ Default lookalike generation disabled - using only authentic data sources');
+    return [];
   }
 
   // Sort and rank signals based on multiple criteria

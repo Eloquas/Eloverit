@@ -336,7 +336,7 @@ Analyze each speaker's sentiment, energy level, and influence score.`;
           influence: 6
         }
       ],
-      summary: "Discovery call with Sarah Johnson (QA Director at TechCorp) discussing manual testing challenges. Strong interest in Avo Automation's D365 integration and 80% testing time reduction capabilities. Next steps include technical demo and ROI analysis.",
+      summary: "Discovery call with QA Director discussing manual testing challenges. Strong interest in Avo Automation's D365 integration and 80% testing time reduction capabilities. Next steps include technical demo and ROI analysis.",
       action_items: [
         {
           task: "Send ROI calculator showing 80% testing time reduction",

@@ -316,54 +316,15 @@ export class AccountResearchLookupEngine {
   }
 
   private getStaticFilteredCompanies(filters: AccountLookupFilters, needed: number): CompanyLookupResult[] {
-    // Static fallback data as last resort
-    const staticCompanies = [
-      {
-        company_name: "Adobe Inc.",
-        industry: "Software",
-        system: "Salesforce CRM",
-        hq_location: "San Jose, CA",
-        employee_count: "20,000+",
-        revenue_est: "$15.8B",
-        intent_summary: "Scaling creative software platforms with enterprise testing needs",
-        source_links: ["https://adobe.com"],
-        confidence_score: 80,
-        research_quality: 'good' as const
-      },
-      {
-        company_name: "Marriott International",
-        industry: "Hospitality",
-        system: "Oracle PMS",
-        hq_location: "Bethesda, MD",
-        employee_count: "130,000+",
-        revenue_est: "$20.9B",
-        intent_summary: "Hospitality technology modernization with testing automation needs",
-        source_links: ["https://marriott.com"],
-        confidence_score: 75,
-        research_quality: 'good' as const
-      }
-    ];
-
-    return staticCompanies.slice(0, needed);
+    // REMOVED: All static/simulated data eliminated per data integrity requirements
+    console.log('⚠️ Static company data disabled - using only authentic data sources');
+    return [];
   }
 
   private getDefaultFallbackCompanies(needed: number): CompanyLookupResult[] {
-    const defaultCompanies = [
-      {
-        company_name: "Technology Solutions Corp",
-        industry: "Technology Services",
-        system: "Custom Enterprise Systems",
-        hq_location: "Austin, TX",
-        employee_count: "1,000-5,000",
-        revenue_est: "$500M-$1B",
-        intent_summary: "Enterprise modernization with QA automation opportunities",
-        source_links: ["https://example.com"],
-        confidence_score: 65,
-        research_quality: 'fair' as const
-      }
-    ];
-
-    return defaultCompanies.slice(0, needed);
+    // REMOVED: All default/fallback data eliminated per data integrity requirements
+    console.log('⚠️ Default fallback companies disabled - using only authentic data sources');
+    return [];
   }
 }
 

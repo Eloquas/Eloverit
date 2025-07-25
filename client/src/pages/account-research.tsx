@@ -81,28 +81,28 @@ export default function AccountResearch() {
     
     // QA hiring activity (40%)
     const qaKeywords = ['qa', 'quality', 'test', 'automation', 'testing'];
-    const qaPostings = postings.filter((posting: string) => 
-      qaKeywords.some(keyword => posting.toLowerCase().includes(keyword))
+    const qaPostings = postings.filter((posting: any) => 
+      typeof posting === 'string' && qaKeywords.some(keyword => posting.toLowerCase().includes(keyword))
     );
     score += Math.min((qaPostings.length / 3) * 40, 40);
     
     // Testing initiatives (30%)
-    const testingInitiatives = initiatives.filter((init: string) =>
-      qaKeywords.some(keyword => init.toLowerCase().includes(keyword))
+    const testingInitiatives = initiatives.filter((init: any) =>
+      typeof init === 'string' && qaKeywords.some(keyword => init.toLowerCase().includes(keyword))
     );
     score += Math.min((testingInitiatives.length / 2) * 30, 30);
     
     // Enterprise systems (20%)
     const enterpriseSystems = ['salesforce', 'sap', 'oracle', 'dynamics', 'workday'];
-    const hasEnterpriseSystems = systems.some((system: string) =>
-      enterpriseSystems.some(es => system.toLowerCase().includes(es))
+    const hasEnterpriseSystems = systems.some((system: any) =>
+      typeof system === 'string' && enterpriseSystems.some(es => system.toLowerCase().includes(es))
     );
     if (hasEnterpriseSystems) score += 20;
     
     // Quality challenges (10%)
     const painPoints = parseJsonArray(research.painPoints);
-    const qualityChallenges = painPoints.filter((pain: string) =>
-      ['quality', 'bugs', 'testing', 'reliability'].some(keyword => 
+    const qualityChallenges = painPoints.filter((pain: any) =>
+      typeof pain === 'string' && ['quality', 'bugs', 'testing', 'reliability'].some(keyword => 
         pain.toLowerCase().includes(keyword)
       )
     );

@@ -411,12 +411,10 @@ class ProactiveMonitoringEngine {
   }
 
   private async getOrganizationAccounts(organizationId: number): Promise<any[]> {
-    // Simulate getting accounts for organization
-    return [
-      { id: 'account-1', name: 'TechCorp', industry: 'Technology' },
-      { id: 'account-2', name: 'DataFlow', industry: 'Data' },
-      { id: 'account-3', name: 'InnovateCorp', industry: 'Innovation' }
-    ];
+    // REMOVED: All simulated account data eliminated per data integrity requirements
+    // Should integrate with authentic account data from storage system
+    console.log('⚠️ Simulated organization accounts disabled - integrate with authentic storage');
+    return [];
   }
 
   private async detectNewSignals(account: any): Promise<any> {

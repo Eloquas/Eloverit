@@ -132,8 +132,9 @@ export class PlatformDiscoveryEngine {
 
       const result = JSON.parse(response.choices[0].message.content || "{}");
       if (!result.accounts || result.accounts.length === 0) {
-        // Return structured demo data for testing purposes
-        return this.generateDemoAccounts(filters);
+        // REMOVED: No fallback to demo data - return authentic empty result
+        console.log('⚠️ No authentic data available from API - returning empty result');
+        return [];
       }
       return result.accounts;
       
@@ -144,7 +145,12 @@ export class PlatformDiscoveryEngine {
   }
 
   private generateDemoAccounts(filters: DiscoveryFilters): DiscoveredAccount[] {
-    // Demo accounts for testing purposes when authentic data is unavailable
+    // REMOVED: All demo/simulated data eliminated per data integrity requirements
+    // Only authentic data from verified sources should be used
+    console.log('⚠️ Demo account generation disabled - using only authentic data sources');
+    return [];
+    
+    /* DELETED SIMULATED DATA:
     const demoAccounts: DiscoveredAccount[] = [
       {
         companyName: "United Airlines",
@@ -305,24 +311,7 @@ export class PlatformDiscoveryEngine {
         intentScore: 82,
         researchQuality: "excellent"
       }
-    ];
-
-    // Filter accounts based on platform and other criteria
-    const filteredAccounts = demoAccounts.filter(account => {
-      // Platform filter - check if any initiative matches the platform
-      if (filters.platform && filters.platform !== 'all') {
-        const platformMatch = account.platformInitiatives.some(init => 
-          init.title.toLowerCase().includes(filters.platform.toLowerCase()) ||
-          init.description.toLowerCase().includes(filters.platform.toLowerCase())
-        );
-        if (!platformMatch) return false;
-      }
-
-      // Apply other filters
-      return this.matchesFilters(account, filters);
-    });
-
-    return filteredAccounts;
+    ]; */
   }
 
   private matchesFilters(account: any, filters: DiscoveryFilters): boolean {
