@@ -9,7 +9,6 @@ import {
   onboardingResponses,
   contacts,
   personalizedOutreach,
-  adminContent,
   type Prospect, 
   type InsertProspect, 
   type GeneratedContent, 
@@ -29,9 +28,7 @@ import {
   type Contact,
   type InsertContact,
   type PersonalizedOutreach,
-  type InsertPersonalizedOutreach,
-  type AdminContent,
-  type InsertAdminContent
+  type InsertPersonalizedOutreach
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, count, like, or, and, desc } from "drizzle-orm";
@@ -124,13 +121,6 @@ export interface IStorage {
     totalContent: number;
     totalCallAssessments: number;
   }>;
-
-  // Admin content management
-  getAdminContentByKey(contentKey: string): Promise<AdminContent | undefined>;
-  getAllAdminContent(): Promise<AdminContent[]>;
-  createAdminContent(content: InsertAdminContent): Promise<AdminContent>;
-  updateAdminContent(id: number, content: Partial<InsertAdminContent>): Promise<AdminContent | undefined>;
-  deleteAdminContent(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {

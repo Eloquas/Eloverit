@@ -274,23 +274,6 @@ export const activityLog = pgTable("activity_log", {
   index("activity_log_activity_type_idx").on(table.activityType),
 ]);
 
-// Admin content management table for dynamic site content
-export const adminContent = pgTable("admin_content", {
-  id: serial("id").primaryKey(),
-  contentKey: varchar("content_key", { length: 100 }).notNull().unique(), // 'analytics_metrics', 'hero_section', etc.
-  contentType: varchar("content_type", { length: 50 }).notNull(), // 'metrics', 'text', 'json'
-  title: varchar("title", { length: 255 }),
-  content: json("content").notNull(), // Flexible JSON content
-  isActive: boolean("is_active").default(true),
-  createdBy: integer("created_by").references(() => users.id),
-  lastModifiedBy: integer("last_modified_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => [
-  index("admin_content_key_idx").on(table.contentKey),
-  index("admin_content_type_idx").on(table.contentType),
-]);
-
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   prospects: many(prospects),
@@ -456,10 +439,6 @@ export const insertOnboardingResponseSchema = createInsertSchema(onboardingRespo
 export type InsertOnboardingResponse = z.infer<typeof insertOnboardingResponseSchema>;
 export type OnboardingResponse = typeof onboardingResponses.$inferSelect;
 
-// Admin content types
-export type AdminContent = typeof adminContent.$inferSelect;
-export type InsertAdminContent = typeof adminContent.$inferInsert;
-
 // Contact and outreach types
 export type Contact = typeof contacts.$inferSelect;
 export type InsertContact = typeof contacts.$inferInsert;
@@ -475,13 +454,7 @@ export const insertContactSchema = createInsertSchema(contacts).omit({
 
 export const insertPersonalizedOutreachSchema = createInsertSchema(personalizedOutreach).omit({
   id: true,
-  createdAt: true,
-});
-
-export const insertAdminContentSchema = createInsertSchema(adminContent).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+  generatedAt: true,
 });
 
 // Call Assessment types
@@ -623,20 +596,6 @@ export const registerSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   role: z.enum(["rep", "admin"]).default("rep"),
-});
-
-// Admin content management schemas
-export const adminLoginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
-
-export const adminContentSchema = z.object({
-  contentKey: z.string().min(1),
-  contentType: z.enum(["metrics", "text", "json"]),
-  title: z.string().optional(),
-  content: z.any(), // JSON content
-  isActive: z.boolean().default(true),
 });
 
 export type LoginRequest = z.infer<typeof loginSchema>;
