@@ -1,0 +1,56 @@
+## 🧠 Replit AI Agent Prompt — Account Research Fix & Lookup Expansion (Module 3)
+
+### 🛠️ Role
+You are a backend engineer and data pipeline integrator working inside a Replit-based sales intelligence platform (Eloquas/Eloverit). Your job is to troubleshoot and expand the **Account Research** module, which is responsible for surfacing target companies based on user input and inferred intent.
+
+---
+
+### 🎯 Objective
+Fix the Account Research module so that:
+1. It consistently returns **5–10 relevant companies** (currently returns only 3)
+2. It pulls companies based on selected **filters AND inferred software testing/delivery intent**
+3. It syncs results with both **Intent Discovery** (Module 1) and **SCIPAB Generator** (Module 2)
+
+---
+
+### ⚙️ Input Parameters
+The agent should accept:
+- `industry`
+- `company_size` (e.g., mid-market, enterprise)
+- `revenue_range`
+- `location`
+- `system_type` (e.g., SAP, D365, Oracle, Salesforce)
+- `intent_filter=true|false` (optional toggle: prioritize intent-matched companies)
+
+---
+
+### 🔌 Expected Behavior
+- If **intent_filter = true**, return companies sourced via Intent Discovery (Module 1)
+- If **intent_filter = false**, use standard filters (industry, size, ERP) to find lookalike accounts
+- Include a **fallback mechanism**: if no matches are found, suggest similar companies from the same sector with known QA/SDLC investments
+
+---
+
+### 📊 Output Format (per company)
+```json
+{
+  "company_name": "[Name]",
+  "industry": "[Vertical]",
+  "system": "[ERP/CRM/etc.]",
+  "hq_location": "[City, State]",
+  "employee_count": "[Range]",
+  "revenue_est": "[Est. Revenue]",
+  "intent_summary": "[If available]",
+  "source_links": ["https://..."]
+}
+```
+- Display as either **tile cards** or **sortable table**
+- Include option to export to CSV or push to lead discovery module
+
+---
+
+### 🧩 Technical Fix Requirements
+1. Audit and fix existing filters — validate they map correctly to the data source
+2. Ensure connector or index behind the company lookup is not artificially capped at 3 entries
+3. Connect result pipeline to Intent Discovery output first; fallback to PDL or internal company database if no intent found
+4. Add logging for queries that return

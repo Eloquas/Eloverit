@@ -35,6 +35,7 @@ import ContactResearch from "@/pages/contact-research";
 import Settings from "@/pages/settings";
 import Profile from "@/pages/profile";
 import ScipabEnhancement from "@/pages/scipab-enhancement";
+import AccountResearchLookup from "@/pages/account-research-lookup";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -84,6 +85,7 @@ function Router() {
           <Route path="/pdl-test" component={PDLTestPage} />
           <Route path="/contact-research" component={ContactResearch} />
           <Route path="/scipab-enhancement" component={ScipabEnhancement} />
+          <Route path="/account-research-lookup" component={AccountResearchLookup} />
           <Route path="/settings" component={Settings} />
           <Route path="/profile" component={Profile} />
           <Route component={NotFound} />

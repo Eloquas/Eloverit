@@ -50,7 +50,8 @@ export default function HeaderNav() {
     main: [
       { label: "Dashboard", href: "/", icon: Home },
       { label: "Account Research", href: "/account-research", icon: Building2 },
-      { label: "Intent Discovery", href: "/intent-discovery", icon: Search },
+      { label: "Account Lookup", href: "/account-research-lookup", icon: Search, badge: "Module 3" },
+      { label: "Intent Discovery", href: "/intent-discovery", icon: Target },
       { label: "Prospect Identification", href: "/prospect-identification", icon: Users },
     ],
     outbound: [

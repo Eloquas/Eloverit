@@ -424,6 +424,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced Account Research API endpoints
+
+  // Account Research Lookup/Discovery endpoint - Module 3
+  app.post('/api/account-research/lookup', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { 
+        industry,
+        company_size,
+        revenue_range,
+        location,
+        system_type,
+        intent_filter = false
+      } = req.body;
+      
+      console.log(`🔍 Module 3: Account Research Lookup initiated by user ${req.user!.id}`);
+      console.log('Filters:', { industry, company_size, revenue_range, location, system_type, intent_filter });
+
+      const { accountResearchLookupEngine } = await import('./account-research-lookup-engine');
+      
+      const lookupResult = await accountResearchLookupEngine.discoverCompanies({
+        industry,
+        company_size,
+        revenue_range,
+        location,
+        system_type,
+        intent_filter
+      });
+
+      console.log(`✅ Module 3: Successfully discovered ${lookupResult.companies.length} companies`);
+      
+      res.json({
+        success: true,
+        module: 'Account Research Lookup - Module 3',
+        ...lookupResult,
+        generatedAt: new Date().toISOString()
+      });
+
+    } catch (error: any) {
+      console.error('Module 3: Account Research Lookup error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to discover companies',
+        details: error.message || 'Unknown error',
+        module: 'Account Research Lookup - Module 3'
+      });
+    }
+  });
+
+  // Test Account Research Lookup endpoint
+  app.post('/api/account-research/test-lookup', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      console.log('🧪 Testing Module 3: Account Research Lookup...');
+      
+      const { accountResearchLookupEngine } = await import('./account-research-lookup-engine');
+      
+      // Test with sample filters
+      const testFilters = {
+        industry: 'Technology',
+        company_size: 'enterprise',
+        system_type: 'Dynamics 365',
+        intent_filter: true
+      };
+      
+      const result = await accountResearchLookupEngine.discoverCompanies(testFilters);
+
+      res.json({
+        success: true,
+        test_case: 'Module 3 Account Research Lookup Test',
+        test_filters: testFilters,
+        ...result,
+        generatedAt: new Date().toISOString()
+      });
+
+    } catch (error: any) {
+      console.error('Module 3 test error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to run Module 3 test',
+        details: error.message || 'Unknown error'
+      });
+    }
+  });
   
   // Duplicate management endpoints
   app.get("/api/duplicates/check", authenticateToken, async (req: AuthenticatedRequest, res) => {
