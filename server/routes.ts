@@ -3146,14 +3146,13 @@ Keep it conversational and human - like one professional helping another.`;
   // Intent Discovery API Routes - O3-Level Semantic Intelligence
   app.post("/api/intent-discovery/search", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const { IntentDiscoveryEngine } = await import("./intent-discovery-engine");
-      const intentEngine = new IntentDiscoveryEngine();
+      const { intentDiscoveryEngine } = await import("./intent-discovery-engine");
       const filters = req.body;
       
       console.log('🚀 Starting O3-level intent discovery with filters:', filters);
       
-      const intentSignals = await intentEngine.discoverIntentSignals(filters);
-      const summary = await intentEngine.getIntentSummary(intentSignals);
+      const intentSignals = await intentDiscoveryEngine.discoverIntentSignals(filters);
+      const summary = await intentDiscoveryEngine.getIntentSummary(intentSignals);
       
       res.json({
         success: true,
@@ -3171,38 +3170,38 @@ Keep it conversational and human - like one professional helping another.`;
           totalSignals: intentSignals.length,
           analysisConfidence: summary.avgConfidence,
           engineVersion: 'IntentDiscovery_v1.5',
-          dataAuthenticity: 'Verified enterprise intelligence sources'
+          dataAuthenticity: 'AI-Generated Enterprise Intelligence'
         }
       });
     } catch (error) {
       console.error("❌ Intent discovery error:", error);
       
       // Enhanced error handling
-      if (error.message?.includes('API key')) {
+      if (error instanceof Error && error.message?.includes('API key')) {
         return res.status(500).json({
           success: false,
-          error: 'OpenAI API configuration required',
-          message: 'Please configure OPENAI_API_KEY environment variable',
-          fallbackAvailable: true
+          error: 'OpenAI API key not configured. Please contact administrator.',
+          signals: [],
+          summary: { totalSignals: 0, avgConfidence: 0, urgencyDistribution: {}, industryDistribution: {}, topCompanies: [] }
         });
       }
       
       res.status(500).json({
         success: false,
-        error: 'Intent discovery failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
-        fallbackMessage: 'Try different filters or contact support'
+        error: "Intent discovery failed",
+        signals: [],
+        summary: { totalSignals: 0, avgConfidence: 0, urgencyDistribution: {}, industryDistribution: {}, topCompanies: [] },
+        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
       });
     }
   });
 
   app.get("/api/intent-discovery/trending", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const { IntentDiscoveryEngine } = await import("./intent-discovery-engine");
-      const intentEngine = new IntentDiscoveryEngine();
+      const { intentDiscoveryEngine } = await import("./intent-discovery-engine");
       
       // Get trending technologies and initiatives
-      const trendingSignals = await intentEngine.discoverIntentSignals({
+      const trendingSignals = await intentDiscoveryEngine.discoverIntentSignals({
         timeframe: 30,
         minConfidenceScore: 80,
         fortuneRanking: 500
@@ -3222,7 +3221,16 @@ Keep it conversational and human - like one professional helping another.`;
       });
     } catch (error) {
       console.error("Trending intent discovery error:", error);
-      res.status(500).json({ error: "Failed to get trending intent data" });
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to get trending intent data",
+        trending: {
+          topTechnologies: [],
+          emergingInitiatives: [],
+          hotCompanies: [],
+          urgentSignals: 0
+        }
+      });
     }
   });
 

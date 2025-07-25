@@ -75,13 +75,14 @@ export default function IntentDiscovery() {
       };
       return await apiRequest("/api/intent-discovery/search", "POST", processedFilters);
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       toast({
         title: "Intent Discovery Complete",
         description: `Found ${data.signals?.length || 0} high-intent signals from F${searchFilters.fortuneRanking} companies`,
       });
     },
     onError: (error) => {
+      console.error("Intent Discovery Error:", error);
       toast({
         title: "Discovery Error",
         description: "Failed to discover intent signals. Please try again.",
