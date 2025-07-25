@@ -196,7 +196,7 @@ export class IntentDiscoveryEngine {
     const searchPrompt = this.buildO3LevelSearchPrompt(filters);
     
     const response = await openai.chat.completions.create({
-      model: "o3-pro", // Upgraded to o3-pro for more reliable D365 customer discovery as requested by user
+      model: "gpt-4o", // Using gpt-4o with o3-level prompting until o3-pro org verification is available
       messages: [
         {
           role: "system",
@@ -509,7 +509,7 @@ Perform deep semantic analysis to identify the strongest intent signals matching
 
     try {
       const response = await openai.chat.completions.create({
-        model: "o3-pro", // Upgraded for consistency with main intent discovery
+        model: "gpt-4o", // Using gpt-4o with enhanced prompting until o3-pro verification
         messages: [
           {
             role: "system",
