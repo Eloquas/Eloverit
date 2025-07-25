@@ -49,14 +49,14 @@ export default function IntentDiscovery() {
     industry: '',
     geography: '',
     revenue: '',
-    erpCrmSystem: '',
+    erpCrmSystem: 'Dynamics 365', // Default to D365 focus as per user feedback
     fortuneRanking: '1000',
     timeframe: '60',
-    technologies: '',
-    departments: '',
-    minConfidenceScore: '70',
+    technologies: 'D365, Test Automation, QA Engineering',
+    departments: 'IT, QA, Engineering',
+    minConfidenceScore: '80', // Higher threshold for more reliable results
     companySize: '',
-    searchMode: 'hybrid'
+    searchMode: 'semantic' // Focus on semantic analysis for D365
   });
 
   const { data: trendingData, isLoading: trendingLoading } = useQuery({
@@ -121,9 +121,9 @@ export default function IntentDiscovery() {
             Advanced AI-powered intelligence for Fortune 1000 companies with automation initiatives
           </p>
         </div>
-        <Badge variant="outline" className="text-blue-600 border-blue-300">
+        <Badge variant="outline" className="text-purple-600 border-purple-300">
           <Zap className="w-4 h-4 mr-1" />
-          Enhanced o3Pro Intelligence
+          Powered by o3-Pro
         </Badge>
       </div>
 
@@ -141,10 +141,20 @@ export default function IntentDiscovery() {
                 <Search className="w-5 h-5 mr-2" />
                 AI-Powered Intent Discovery Engine
               </CardTitle>
-              <p className="text-sm text-gray-600">
-                Search across LinkedIn, job boards, company websites, press releases, and industry publications 
-                for F1000 companies with recent automation initiatives
-              </p>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">
+                  Search across LinkedIn, job boards, company websites, press releases, and industry publications 
+                  for F1000 companies with recent automation initiatives
+                </p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800 font-medium">
+                    🎯 Intent Discovery Focus: Finding high-intent D365 customers with active initiatives
+                  </p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    For confirmed system analysis, use Account Research. This tab focuses on discovery signals only.
+                  </p>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

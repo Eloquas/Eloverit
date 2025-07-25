@@ -183,7 +183,7 @@ export class IntentDiscoveryEngine {
       console.error('❌ Intent discovery error:', error);
       
       // Robust error handling with detailed fallback
-      if (error.message?.includes('API key')) {
+      if (error instanceof Error && error.message?.includes('API key')) {
         throw new Error('OpenAI API key not configured. Please check environment variables.');
       }
       
@@ -196,7 +196,7 @@ export class IntentDiscoveryEngine {
     const searchPrompt = this.buildO3LevelSearchPrompt(filters);
     
     const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      model: "o3-pro", // Upgraded to o3-pro for more reliable D365 customer discovery as requested by user
       messages: [
         {
           role: "system",
@@ -465,7 +465,7 @@ Perform deep semantic analysis to identify the strongest intent signals matching
     
     return techLower.includes(targetLower) || 
            targetLower.includes(techLower) ||
-           this.platformSignatures[targetPlatform]?.some(sig => 
+           this.platformSignatures[targetPlatform as keyof typeof this.platformSignatures]?.some((sig: string) => 
              techLower.includes(sig.toLowerCase())
            ) || false;
   }
@@ -509,7 +509,7 @@ Perform deep semantic analysis to identify the strongest intent signals matching
 
     try {
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "o3-pro", // Upgraded for consistency with main intent discovery
         messages: [
           {
             role: "system",
