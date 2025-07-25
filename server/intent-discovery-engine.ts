@@ -595,107 +595,14 @@ Perform deep semantic analysis to identify the strongest intent signals matching
     });
   }
 
-  // Generate intelligent fallback when main discovery fails
+  // Generate intelligent fallback when main discovery fails - NO HARD-CODED DATA
   private generateIntelligentFallback(filters: IntentDiscoveryFilters): IntentSignal[] {
-    console.log('🔄 Generating intelligent fallback signals');
+    console.log('🔄 Generating intelligent fallback - respecting search filters');
+    console.log('❌ No hard-coded company data will be returned');
     
-    const fallbackSignals: IntentSignal[] = [
-      {
-        companyName: "United Airlines",
-        intentSummary: "United Airlines is modernizing their testing infrastructure to support digital transformation initiatives and improve operational efficiency.",
-        matchedKeywords: ["digital transformation", "testing infrastructure", "operational efficiency"],
-        signalType: "job_posting",
-        source: "LinkedIn Jobs",
-        sourceLink: "https://www.linkedin.com/jobs/united-airlines-qa",
-        content: "Seeking Senior QA Automation Engineer to lead testing modernization initiatives as part of our digital transformation project.",
-        confidenceScore: 85,
-        urgencyLevel: "high",
-        signalDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        fortuneRank: 87,
-        industry: "Airlines",
-        department: "IT",
-        initiative: "Digital Transformation",
-        technology: "Test Automation",
-        geographyInfo: {
-          headquarters: "Chicago, IL",
-          region: "North America"
-        },
-        companySize: {
-          employees: 95000,
-          revenue: "$44.9B"
-        }
-      },
-      {
-        companyName: "JPMorgan Chase",
-        intentSummary: "JPMorgan Chase is expanding their enterprise automation capabilities with focus on Microsoft Dynamics 365 implementation and testing automation.",
-        matchedKeywords: ["Microsoft Dynamics 365", "enterprise automation", "testing automation"],
-        signalType: "company_announcement",
-        source: "Company Press Release",
-        sourceLink: "https://www.jpmorganchase.com/news/enterprise-automation",
-        content: "JPMorgan Chase announces significant investment in enterprise automation and D365 implementation across all business units.",
-        confidenceScore: 92,
-        urgencyLevel: "critical",
-        signalDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        fortuneRank: 12,
-        industry: "Financial Services",
-        department: "IT",
-        initiative: "D365 Implementation",
-        technology: "Microsoft Dynamics 365",
-        geographyInfo: {
-          headquarters: "New York, NY",
-          region: "North America"
-        },
-        companySize: {
-          employees: 270000,
-          revenue: "$128.7B"
-        }
-      },
-      {
-        companyName: "General Electric",
-        intentSummary: "GE is investing heavily in software delivery automation and continuous integration to accelerate product development cycles.",
-        matchedKeywords: ["software delivery automation", "continuous integration", "product development"],
-        signalType: "press_release",
-        source: "GE News Center",
-        sourceLink: "https://www.ge.com/news/software-automation",
-        content: "GE announces major investment in software delivery automation and CI/CD capabilities to accelerate innovation.",
-        confidenceScore: 88,
-        urgencyLevel: "high",
-        signalDate: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        fortuneRank: 33,
-        industry: "Industrial",
-        department: "Engineering",
-        initiative: "Software Delivery Optimization",
-        technology: "CI/CD",
-        geographyInfo: {
-          headquarters: "Boston, MA",
-          region: "North America"
-        },
-        companySize: {
-          employees: 174000,
-          revenue: "$74.2B"
-        }
-      }
-    ];
-
-    // Filter by criteria if specified
-    let filteredSignals = fallbackSignals;
-    
-    if (filters.industry) {
-      filteredSignals = filteredSignals.filter(signal => 
-        signal.industry?.toLowerCase().includes(filters.industry!.toLowerCase())
-      );
-    }
-    
-    if (filters.erpCrmSystem) {
-      filteredSignals = filteredSignals.filter(signal =>
-        signal.technology?.toLowerCase().includes(filters.erpCrmSystem!.toLowerCase()) ||
-        signal.matchedKeywords.some(keyword => 
-          keyword.toLowerCase().includes(filters.erpCrmSystem!.toLowerCase())
-        )
-      );
-    }
-
-    return filteredSignals;
+    // Return empty array instead of hard-coded data to prevent data hallucination
+    // Real discovery should work or return accurate "no results found" status
+    return [];
   }
 
   // Get intent summary for API response
@@ -727,101 +634,6 @@ Perform deep semantic analysis to identify the strongest intent signals matching
         urgency: s.urgencyLevel
       }))
     };
-  }
-}
-
-  private generateFallbackIntentSignals(filters: IntentDiscoveryFilters): IntentSignal[] {
-    // Generate realistic fallback signals based on known enterprise patterns
-    const fallbackSignals: IntentSignal[] = [
-      {
-        companyName: "United Airlines",
-        fortuneRank: 87,
-        signalType: "job_posting",
-        source: "LinkedIn Jobs",
-        content: "Seeking Senior QA Automation Engineer to lead test automation initiatives for our digital transformation project. Experience with Selenium, CI/CD pipelines, and cloud testing required.",
-        extractedKeywords: ["test automation", "QA automation", "Selenium", "CI/CD", "digital transformation"],
-        intentScore: 92,
-        urgencyLevel: "high",
-        signalDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        department: "IT",
-        initiative: "Digital Transformation",
-        technology: "Selenium"
-      },
-      {
-        companyName: "General Electric",
-        fortuneRank: 33,
-        signalType: "press_release",
-        source: "GE News Center",
-        content: "GE announces major investment in software delivery automation and continuous integration capabilities to accelerate product development cycles.",
-        extractedKeywords: ["software delivery automation", "continuous integration", "product development"],
-        intentScore: 88,
-        urgencyLevel: "high",
-        signalDate: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        department: "Engineering",
-        initiative: "Software Delivery Optimization",
-        technology: "CI/CD"
-      },
-      {
-        companyName: "JPMorgan Chase",
-        fortuneRank: 12,
-        signalType: "job_posting",
-        source: "Company Career Page",
-        content: "Multiple openings for Microsoft D365 Consultants to support enterprise-wide Dynamics 365 implementation across all business units.",
-        extractedKeywords: ["Microsoft D365", "Dynamics 365", "enterprise implementation"],
-        intentScore: 95,
-        urgencyLevel: "critical",
-        signalDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        department: "IT",
-        initiative: "D365 Implementation",
-        technology: "Microsoft D365"
-      }
-    ];
-
-    return fallbackSignals.filter(signal => 
-      signal.intentScore >= (filters.minIntentScore || 70)
-    );
-  }
-
-  async getIntentSummary(signals: IntentSignal[]): Promise<any> {
-    const summary = {
-      totalSignals: signals.length,
-      averageIntentScore: Math.round(signals.reduce((sum, s) => sum + s.intentScore, 0) / signals.length),
-      urgencyBreakdown: {
-        critical: signals.filter(s => s.urgencyLevel === 'critical').length,
-        high: signals.filter(s => s.urgencyLevel === 'high').length,
-        medium: signals.filter(s => s.urgencyLevel === 'medium').length,
-        low: signals.filter(s => s.urgencyLevel === 'low').length
-      },
-      technologyBreakdown: this.getTechnologyBreakdown(signals),
-      topCompanies: signals.slice(0, 10).map(s => ({
-        name: s.companyName,
-        score: s.intentScore,
-        initiative: s.initiative
-      }))
-    };
-
-    return summary;
-  }
-
-  private getTechnologyBreakdown(signals: IntentSignal[]): Record<string, number> {
-    const techCount: Record<string, number> = {};
-    
-    signals.forEach(signal => {
-      signal.extractedKeywords.forEach(keyword => {
-        const normalizedKeyword = keyword.toLowerCase();
-        if (normalizedKeyword.includes('d365') || normalizedKeyword.includes('dynamics')) {
-          techCount['Microsoft D365'] = (techCount['Microsoft D365'] || 0) + 1;
-        } else if (normalizedKeyword.includes('oracle')) {
-          techCount['Oracle Systems'] = (techCount['Oracle Systems'] || 0) + 1;
-        } else if (normalizedKeyword.includes('test') || normalizedKeyword.includes('automation')) {
-          techCount['Test Automation'] = (techCount['Test Automation'] || 0) + 1;
-        } else if (normalizedKeyword.includes('ci/cd') || normalizedKeyword.includes('delivery')) {
-          techCount['Software Delivery'] = (techCount['Software Delivery'] || 0) + 1;
-        }
-      });
-    });
-
-    return techCount;
   }
 }
 
