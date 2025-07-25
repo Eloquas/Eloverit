@@ -1342,9 +1342,10 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
   });
 
   // Export generated content as CSV
-  app.get("/api/export/generated-content", async (req, res) => {
+  app.get("/api/export/generated-content", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const content = await storage.getGeneratedContent();
+      const userId = req.user!.id;
+      const content = await storage.getGeneratedContent(userId);
       
       if (content.length === 0) {
         return res.status(404).json({ message: "No generated content to export" });
@@ -1396,10 +1397,11 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
   });
 
   // Export prospects with generated content for workflow (Excel format)
-  app.get("/api/export/workflow", async (req, res) => {
+  app.get("/api/export/workflow", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const prospects = await storage.getProspects();
-      const allContent = await storage.getGeneratedContent();
+      const userId = req.user!.id;
+      const prospects = await storage.getProspects(userId);
+      const allContent = await storage.getGeneratedContent(userId);
       
       if (prospects.length === 0) {
         return res.status(404).json({ message: "No prospects to export" });

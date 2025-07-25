@@ -8,7 +8,23 @@ export default function Header() {
 
   const handleExportProspects = async () => {
     try {
-      const response = await fetch("/api/prospects");
+      // Use proper authenticated API request
+      const token = localStorage.getItem("authToken");
+      const headers: Record<string, string> = {};
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch("/api/prospects", {
+        headers,
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch prospects: ${response.status} ${response.statusText}`);
+      }
+
       const prospects = await response.json();
       
       // Convert to CSV
@@ -24,54 +40,86 @@ export default function Header() {
         ].map(field => `"${field}"`).join(","))
       ].join("\n");
       
-      // Download file
-      const blob = new Blob([csvContent], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "prospects.csv";
-      a.click();
-      window.URL.revokeObjectURL(url);
+      // Guard window operations - only execute if we have data
+      if (typeof window !== "undefined" && csvContent) {
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "prospects.csv";
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }
     } catch (error) {
-      console.error("Export failed:", error);
+      console.error("Export prospects failed:", error);
+      alert(`Export failed: ${error.message}`);
     }
   };
 
   const handleExportGeneratedContent = async () => {
     try {
-      const response = await fetch("/api/export/generated-content");
+      // Use proper authenticated API request
+      const token = localStorage.getItem("authToken");
+      const headers: Record<string, string> = {};
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch("/api/export/generated-content", {
+        headers,
+        credentials: "include",
+      });
       
       if (!response.ok) {
-        throw new Error("Failed to export generated content");
+        throw new Error(`Failed to export generated content: ${response.status} ${response.statusText}`);
       }
       
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "generated-content-export.csv";
-      a.click();
-      window.URL.revokeObjectURL(url);
+      // Guard window operations - only execute in browser context
+      if (typeof window !== "undefined") {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "generated-content-export.csv";
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }
     } catch (error) {
-      console.error("Export failed:", error);
+      console.error("Export generated content failed:", error);
+      alert(`Export failed: ${error.message}`);
     }
   };
 
   const handleExportWorkflow = async () => {
     try {
-      const response = await fetch("/api/export/workflow");
+      // Use proper authenticated API request
+      const token = localStorage.getItem("authToken");
+      const headers: Record<string, string> = {};
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch("/api/export/workflow", {
+        headers,
+        credentials: "include",
+      });
       
       if (!response.ok) {
-        throw new Error("Failed to export workflow data");
+        throw new Error(`Failed to export workflow data: ${response.status} ${response.statusText}`);
       }
       
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "prospects-with-content.xlsx";
-      a.click();
-      window.URL.revokeObjectURL(url);
+      // Guard window operations - only execute in browser context
+      if (typeof window !== "undefined") {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "prospects-with-content.xlsx";
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }
     } catch (error) {
       console.error("Workflow export failed:", error);
     }
