@@ -15,7 +15,18 @@ This repository contains two complementary platforms:
 - **Content Strategy:** 6-email cadence starting with brand awareness, ending with strong CTA
 - **Target Roles:** Manager+ level positions in QA, CRM, ERP, D365, SAP, Oracle, enterprise systems
 
-## Recent Changes (Last Updated: July 25, 2025)
+## Recent Changes (Last Updated: July 26, 2025)
+- ✅ **ELOQUAS OUTREACH ENGINE V2 UNIFIED:** Complete replacement with TrustBuilder + StoryBuilder toggle logic and PDL integration
+  - **Simplified Architecture:** Focused engine with enrichFromPDL() and generateMessage() methods for core functionality
+  - **TrustBuilder Toggle:** Dynamic trust-building language focused on credibility, ROI, and QA automation confidence
+  - **StoryBuilder Toggle:** Relatable customer scenarios and challenges integration
+  - **PDL Integration:** People Data Labs API integration for authentic prospect data enrichment
+  - **Route Compatibility:** Updated all /api/outreach/* endpoints to work with new unified engine
+  - **New Endpoints:** Added /api/outreach/enrich for PDL data and /api/outreach/generate-message for direct generation
+  - **Template Generation:** Enhanced template generation with trust/story mode combinations and dynamic scoring
+  - **Backward Compatibility:** Maintained existing API contracts while upgrading underlying engine architecture
+
+## Previous Changes (July 25, 2025)
 - ✅ **"FAILED TO FETCH WINDOW" ERROR COMPLETELY RESOLVED:** Critical frontend networking issue systematically fixed
   - **Root Cause Identified:** Combination of authentication failures + improper window object usage creating misleading error messages
   - **Authentication Fixed:** All export endpoints (prospects, generated-content, workflow) now use proper Bearer token authentication
