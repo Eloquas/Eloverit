@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { Mail, Target, TrendingUp, Users, Plus, Calendar, CheckCircle, Clock, Play, Pause } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Mail, Target, TrendingUp, Users, Plus, Calendar, CheckCircle, Clock, Play, Pause, Zap, Heart, Database, Download } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 
 interface PersonalizationData {
@@ -122,6 +123,12 @@ export default function OutreachMVP() {
     } as PersonalizationData
   });
 
+  // New Eloquas Engine v2 States
+  const [trustBuilderEnabled, setTrustBuilderEnabled] = useState(true);
+  const [storyBuilderEnabled, setStoryBuilderEnabled] = useState(true);
+  const [pdlEnrichmentData, setPdlEnrichmentData] = useState<any>(null);
+  const [prospectEmail, setProspectEmail] = useState('');
+
   const queryClient = useQueryClient();
 
   // Fetch campaigns
@@ -155,12 +162,43 @@ export default function OutreachMVP() {
     }
   });
 
-  // Generate template mutation
+  // Generate template mutation (Updated for Engine v2)
   const generateTemplateMutation = useMutation({
-    mutationFn: (templateData: any) => apiRequest('/api/outreach/template', {
+    mutationFn: (templateData: any) => apiRequest('/api/outreach/generate-message', {
       method: 'POST',
-      body: JSON.stringify(templateData)
+      body: JSON.stringify({
+        ...templateData,
+        options: {
+          trustBuilder: trustBuilderEnabled,
+          storyBuilder: storyBuilderEnabled
+        }
+      })
     })
+  });
+
+  // PDL Enrichment mutation
+  const enrichProspectMutation = useMutation({
+    mutationFn: (email: string) => apiRequest('/api/outreach/enrich', {
+      method: 'POST',
+      body: JSON.stringify({ email })
+    }),
+    onSuccess: (data) => {
+      setPdlEnrichmentData(data);
+      // Auto-populate form with enriched data
+      if (data.person) {
+        setTemplateData(prev => ({
+          ...prev,
+          personalizationData: {
+            ...prev.personalizationData,
+            firstName: data.person.first_name || prev.personalizationData.firstName,
+            lastName: data.person.last_name || prev.personalizationData.lastName,
+            company: data.person.organization?.name || prev.personalizationData.company,
+            role: data.person.job_title || prev.personalizationData.role,
+            industry: data.person.organization?.industry || prev.personalizationData.industry
+          }
+        }));
+      }
+    }
   });
 
   // Update campaign status mutation
@@ -182,6 +220,12 @@ export default function OutreachMVP() {
 
   const handleGenerateTemplate = () => {
     generateTemplateMutation.mutate(templateData);
+  };
+
+  const handleEnrichProspect = () => {
+    if (prospectEmail) {
+      enrichProspectMutation.mutate(prospectEmail);
+    }
   };
 
   const handleUpdateCampaignStatus = (campaignId: string, status: string) => {
@@ -261,15 +305,31 @@ export default function OutreachMVP() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold gradient-text">Eloquas Outreach MVP</h1>
-          <p className="text-gray-600 mt-2">Specialized sales outreach engine for QA and enterprise systems professionals</p>
+          <h1 className="text-3xl font-bold gradient-text">Eloquas Outreach Engine v2</h1>
+          <p className="text-gray-600 mt-2">
+            TrustBuilder + StoryBuilder unified engine with PDL integration
+          </p>
+          <div className="flex space-x-2 mt-2">
+            <Badge variant="outline" className="bg-blue-50 text-blue-700">
+              <Zap className="w-3 h-3 mr-1" />
+              TrustBuilder™
+            </Badge>
+            <Badge variant="outline" className="bg-purple-50 text-purple-700">
+              <Heart className="w-3 h-3 mr-1" />
+              StoryBuilder™
+            </Badge>
+            <Badge variant="outline" className="bg-green-50 text-green-700">
+              <Database className="w-3 h-3 mr-1" />
+              PDL Enhanced
+            </Badge>
+          </div>
         </div>
         <div className="space-x-2">
           <Dialog open={showTemplateModal} onOpenChange={setShowTemplateModal}>
             <DialogTrigger asChild>
               <Button variant="outline">
-                <Mail className="w-4 h-4 mr-2" />
-                Generate Template
+                <Zap className="w-4 h-4 mr-2" />
+                Engine v2 Template
               </Button>
             </DialogTrigger>
           </Dialog>
@@ -674,15 +734,91 @@ export default function OutreachMVP() {
       <Dialog open={showTemplateModal} onOpenChange={setShowTemplateModal}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Generate Email Template</DialogTitle>
+            <DialogTitle>Eloquas Engine v2 - Message Generator</DialogTitle>
             <DialogDescription>
-              Create a personalized email template using the modular architecture
+              Create personalized messages with TrustBuilder™ + StoryBuilder™ toggles and PDL enrichment
             </DialogDescription>
           </DialogHeader>
           
           <div className="grid grid-cols-2 gap-6">
             {/* Input Form */}
             <div className="space-y-4">
+              {/* Engine v2 Controls */}
+              <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50">
+                <h3 className="font-semibold mb-3 text-gray-800">Engine v2 Controls</h3>
+                
+                {/* PDL Enrichment */}
+                <div className="space-y-3 mb-4">
+                  <Label htmlFor="prospectEmail">Prospect Email (PDL Enrichment)</Label>
+                  <div className="flex space-x-2">
+                    <Input
+                      id="prospectEmail"
+                      value={prospectEmail}
+                      onChange={(e) => setProspectEmail(e.target.value)}
+                      placeholder="john.smith@company.com"
+                      className="flex-1"
+                    />
+                    <Button 
+                      variant="outline" 
+                      onClick={handleEnrichProspect}
+                      disabled={!prospectEmail || enrichProspectMutation.isPending}
+                    >
+                      {enrichProspectMutation.isPending ? (
+                        <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full"></div>
+                      ) : (
+                        <Database className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                  {pdlEnrichmentData && (
+                    <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
+                      ✓ Enriched: {pdlEnrichmentData.person?.full_name} at {pdlEnrichmentData.person?.organization?.name}
+                    </div>
+                  )}
+                </div>
+
+                {/* TrustBuilder/StoryBuilder Toggles */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="trustBuilder"
+                      checked={trustBuilderEnabled}
+                      onCheckedChange={setTrustBuilderEnabled}
+                    />
+                    <Label htmlFor="trustBuilder" className="flex items-center space-x-1">
+                      <Zap className="w-4 h-4 text-blue-600" />
+                      <span>TrustBuilder™</span>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="storyBuilder"
+                      checked={storyBuilderEnabled}
+                      onCheckedChange={setStoryBuilderEnabled}
+                    />
+                    <Label htmlFor="storyBuilder" className="flex items-center space-x-1">
+                      <Heart className="w-4 h-4 text-purple-600" />
+                      <span>StoryBuilder™</span>
+                    </Label>
+                  </div>
+                </div>
+
+                {/* Mode Indicator */}
+                <div className="mt-3 p-2 bg-white rounded border">
+                  <p className="text-sm font-medium text-gray-700">
+                    Active Mode: {trustBuilderEnabled && storyBuilderEnabled ? (
+                      <span className="text-green-600">Trust + Story Combined</span>
+                    ) : trustBuilderEnabled ? (
+                      <span className="text-blue-600">TrustBuilder Only</span>
+                    ) : storyBuilderEnabled ? (
+                      <span className="text-purple-600">StoryBuilder Only</span>
+                    ) : (
+                      <span className="text-gray-500">Standard Mode</span>
+                    )}
+                  </p>
+                </div>
+              </Card>
+
               <div>
                 <Label htmlFor="templateType">Template Type</Label>
                 <Select
@@ -761,9 +897,9 @@ export default function OutreachMVP() {
               <Button 
                 onClick={handleGenerateTemplate}
                 disabled={generateTemplateMutation.isPending}
-                className="w-full"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
               >
-                {generateTemplateMutation.isPending ? 'Generating...' : 'Generate Template'}
+                {generateTemplateMutation.isPending ? 'Generating with Engine v2...' : 'Generate with Engine v2'}
               </Button>
             </div>
 
@@ -772,14 +908,32 @@ export default function OutreachMVP() {
               {generateTemplateMutation.data && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Generated Template</CardTitle>
-                    <div className="flex space-x-2">
-                      <Badge variant="outline">
+                    <CardTitle className="text-lg">Engine v2 Generated Message</CardTitle>
+                    <div className="flex space-x-2 flex-wrap">
+                      <Badge variant="outline" className="bg-blue-50">
                         Trust Score: {generateTemplateMutation.data.trustStoryScore}
                       </Badge>
                       <Badge variant="outline">
                         {generateTemplateMutation.data.wordCount} words
                       </Badge>
+                      {trustBuilderEnabled && (
+                        <Badge className="bg-blue-100 text-blue-800">
+                          <Zap className="w-3 h-3 mr-1" />
+                          TrustBuilder
+                        </Badge>
+                      )}
+                      {storyBuilderEnabled && (
+                        <Badge className="bg-purple-100 text-purple-800">
+                          <Heart className="w-3 h-3 mr-1" />
+                          StoryBuilder
+                        </Badge>
+                      )}
+                      {pdlEnrichmentData && (
+                        <Badge className="bg-green-100 text-green-800">
+                          <Database className="w-3 h-3 mr-1" />
+                          PDL Enhanced
+                        </Badge>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -807,8 +961,16 @@ export default function OutreachMVP() {
               
               {generateTemplateMutation.isPending && (
                 <div className="text-center p-8">
-                  <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                  <p className="text-gray-600">Generating personalized template...</p>
+                  <div className="animate-spin w-8 h-8 border-4 border-gradient-to-r from-blue-500 to-purple-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                  <p className="text-gray-600">
+                    Generating with Engine v2...
+                    <br />
+                    <span className="text-sm">
+                      {trustBuilderEnabled && storyBuilderEnabled ? 'Trust + Story Combined Mode' : 
+                       trustBuilderEnabled ? 'TrustBuilder Mode' :
+                       storyBuilderEnabled ? 'StoryBuilder Mode' : 'Standard Mode'}
+                    </span>
+                  </p>
                 </div>
               )}
             </div>
