@@ -157,16 +157,16 @@ export class LinkedInPostGenerator {
 
   private getIndustryTemplate(industry: string): string {
     const templates = {
-      'SaaS': 'product-usage stories and innovation hooks',
-      'Tech': 'product-usage stories and innovation hooks',
-      'Finance': 'compliance wins and risk-mitigation insights',
-      'Consulting': 'compliance wins and strategic insights',
-      'Manufacturing': 'efficiency gains and supply-chain stories',
-      'Logistics': 'efficiency gains and supply-chain stories',
-      'Healthcare': 'patient outcomes and regulatory learnings',
-      'Pharma': 'patient outcomes and regulatory learnings'
+      'SaaS': 'software testing automation and API quality challenges',
+      'Tech': 'CI/CD testing integration and DevOps quality practices',
+      'Finance': 'compliance testing and risk validation in enterprise systems',
+      'Consulting': 'client system testing and QA process optimization',
+      'Manufacturing': 'ERP testing automation and supply chain system quality',
+      'Logistics': 'operational system testing and automation efficiency gains',
+      'Healthcare': 'regulatory testing compliance and patient system quality',
+      'Pharma': 'validation testing and regulatory system compliance'
     };
-    return templates[industry] || 'operational improvements and strategic insights';
+    return templates[industry] || 'enterprise system testing and QA automation challenges';
   }
 
   private getToneGuidance(toneStyle: string): string {
@@ -222,11 +222,23 @@ export class LinkedInPostGenerator {
 
       const toneGuidance = this.getToneGuidance(inputs.toneStyle);
       
-      const prompt = `You are Eloquas AI. Generate a LinkedIn post following the EXACT 5-part structure with these specifications:
+      const prompt = `You are Eloquas AI. Generate a LinkedIn post about QA automation, enterprise systems, or SDLC challenges. 
+
+CRITICAL: DO NOT mention TrustScore, StoryScore, or any scoring systems in the content. These are internal quality metrics only.
+
+CONTENT FOCUS:
+Generate content about one of these QA/enterprise topics:
+- QA automation challenges and solutions
+- SDLC/SDTC process improvements  
+- Enterprise systems testing (D365, SAP, Oracle, Salesforce)
+- Testing bottlenecks and efficiency gains
+- Quality engineering best practices
+- DevOps and CI/CD testing integration
+- Test automation ROI and business impact
+- Manual vs automated testing transformation
 
 REQUIRED INPUTS:
 - Company Name: ${inputs.companyName}${brandVoiceContext}
-- Score Type: ${inputs.scoreType}
 - Tone Style: ${inputs.toneStyle} - ${toneGuidance}
 - Trigger Event: ${inputs.triggerEvent}
 - Industry: ${inputs.industry}
@@ -236,38 +248,41 @@ REQUIRED INPUTS:
 - Desired Action: ${inputs.desiredAction}
 - Word Count Target: ${inputs.wordCountTarget} words
 
+EXACT 5-PART STRUCTURE (follow precisely):
+1. **Hook (1-2 sentences)**: Start with a compelling QA/testing challenge or insight using ${inputs.toneStyle} tone
+2. **Context & Company (1 sentence)**: "At ${inputs.companyName}, we faced [specific QA/testing challenge in ${inputs.industry}]"  
+3. **Insight + Metric (1-2 sentences)**: Share the key insight about QA/testing improvements and quantifiable results: "${inputs.keyInsight}, which led to ${inputs.metric}"
+4. **Question + Desired Action (1 sentence)**: Ask about their QA/testing experience and invite engagement: "${inputs.desiredAction}"
+5. **Hashtags & Branding (optional)**: Up to 3 relevant hashtags for QA/testing/enterprise systems
+
+CONTENT EXAMPLES:
+- "Manual testing was consuming 60% of our release cycle..."
+- "Our D365 migration testing revealed something surprising..."
+- "After automating our regression tests, we discovered..."
+- "The biggest QA bottleneck wasn't what we expected..."
+
 TONE REQUIREMENTS:
 ${toneGuidance}
-
-EXACT 5-PART STRUCTURE (follow precisely):
-1. **Hook (1-2 sentences)**: Frame the insight or surprise from the ${inputs.scoreType} activity using ${inputs.toneStyle} tone
-2. **Context & Company (1 sentence)**: "At ${inputs.companyName}, I... [brief challenge or setup in ${inputs.industry}]"
-3. **Insight + Metric (1-2 sentences)**: "Our ${inputs.scoreType} activity showed that ${inputs.keyInsight}, driving ${inputs.metric}"
-4. **Question + Desired Action (1 sentence)**: "How have you...? ${inputs.desiredAction}"
-5. **Hashtags & Branding (optional)**: Up to 3 relevant hashtags for ${inputs.industry}
-
-INDUSTRY FOCUS (${inputs.industry}): Emphasize ${industryFocus}
-
-TONE REQUIREMENTS:
-- First-person, authentic and conversational
-- Humble-brag: share wins and curiosity
-- No fluff: every word must serve insight or action
-- Thought-leadership focus: position as peer expert
+- First-person, authentic experience sharing
+- Focus on real QA/testing challenges and solutions
+- Position as peer expert in quality engineering
+- Include quantifiable business impact
 
 CONSTRAINTS:
 - Target exactly ${inputs.wordCountTarget} words (hard limit 150 words)
 - Professional but conversational tone
-- Include the trigger event naturally: ${inputs.triggerEvent}
-- No direct product pitching
+- Reference the trigger event naturally: ${inputs.triggerEvent}
+- NO mention of scoring systems - focus purely on QA/SDLC content
+- NO direct product pitching
 
-Write the post now:`;
+Generate a LinkedIn post about QA automation or enterprise testing now:`;
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: "You are Eloquas AI, an expert LinkedIn content strategist. Generate posts that exactly match the word count target and follow the 5-part structure precisely."
+            content: "You are Eloquas AI, an expert QA automation and enterprise systems content strategist. Generate posts about testing challenges, automation wins, and quality engineering insights. NEVER mention scoring systems in the content - focus purely on QA/SDLC topics. Follow the 5-part structure precisely and match the word count target."
           },
           {
             role: "user",
@@ -301,18 +316,18 @@ Write the post now:`;
   }
 
   private async generatePost(userId: number, trigger: PostTrigger): Promise<LinkedInPost | null> {
-    // Use default inputs for auto-generated posts
+    // Use default inputs for auto-generated posts focused on QA/enterprise systems
     const defaultInputs: PostInputs = {
-      companyName: 'Eloquas AI',
-      companyWebsite: 'https://eloquas.ai',
-      scoreType: trigger.type.includes('trust') ? 'TrustScore' : 'StoryScore',
+      companyName: 'TechCorp',
+      companyWebsite: 'https://techcorp.com',
+      scoreType: trigger.type.includes('trust') ? 'TrustScore' : 'StoryScore', // Internal use only
       toneStyle: 'Consultative',
       triggerEvent: trigger.metric,
       industry: 'SaaS',
-      targetAudience: 'Sales Managers, VPs of Sales, Account Executives',
-      keyInsight: 'Personalized messaging drives better engagement',
-      metric: trigger.metric,
-      desiredAction: "Let's compare notes!",
+      targetAudience: 'QA Managers, Test Engineers, DevOps Leaders, QA Directors',
+      keyInsight: 'Automated testing reduced our regression time by 75%',
+      metric: '4 hours vs 16 hours for full regression suite',
+      desiredAction: "What's been your biggest QA automation win?",
       wordCountTarget: 100
     };
 

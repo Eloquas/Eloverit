@@ -398,7 +398,7 @@ export default function EloquasLinkedInPosts() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Eloquas AI LinkedIn Posts</h1>
-          <p className="text-gray-600">Weekly LinkedIn post generation powered by StoryScore and TrustScore data</p>
+          <p className="text-gray-600">Generate QA automation and enterprise systems content with AI-powered quality scoring</p>
         </div>
         <div className="flex items-center space-x-3">
           <Badge variant="outline" className="text-blue-600 border-blue-200">
@@ -414,9 +414,9 @@ export default function EloquasLinkedInPosts() {
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Generate LinkedIn Post - Eloquas AI</DialogTitle>
+                <DialogTitle>Generate QA/SDLC LinkedIn Post - Eloquas AI</DialogTitle>
                 <DialogDescription>
-                  Complete all 11 required fields to generate a brand-aligned, high-impact LinkedIn post
+                  Generate professional content about QA automation, testing challenges, and enterprise systems with internal quality scoring
                 </DialogDescription>
               </DialogHeader>
 
@@ -436,23 +436,24 @@ export default function EloquasLinkedInPosts() {
                     <CardHeader>
                       <CardTitle className="flex items-center space-x-2">
                         <Target className="w-5 h-5" />
-                        <span>Score & Tone Selection</span>
+                        <span>Quality Assessment & Tone</span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
-                        <Label>Score Type</Label>
+                        <Label>Quality Assessment Mode (Internal)</Label>
+                        <p className="text-xs text-gray-500 mb-2">This controls internal quality scoring - content will focus on QA/SDLC topics</p>
                         <RadioGroup
                           value={formData.scoreType}
                           onValueChange={(value) => setFormData(prev => ({ ...prev, scoreType: value as 'StoryScore' | 'TrustScore' }))}
                         >
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="StoryScore" id="story" />
-                            <Label htmlFor="story">StoryScore Activity</Label>
+                            <Label htmlFor="story">Narrative Quality Assessment</Label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="TrustScore" id="trust" />
-                            <Label htmlFor="trust">TrustScore Activity</Label>
+                            <Label htmlFor="trust">Credibility Quality Assessment</Label>
                           </div>
                         </RadioGroup>
                       </div>
@@ -548,7 +549,7 @@ export default function EloquasLinkedInPosts() {
                       <div>
                         <Label>Trigger Event</Label>
                         <Input
-                          placeholder="e.g. TrustScore > 80 reply"
+                          placeholder="e.g. Automated 75% of regression tests"
                           value={formData.triggerEvent}
                           onChange={(e) => setFormData(prev => ({ ...prev, triggerEvent: e.target.value }))}
                         />
@@ -566,7 +567,7 @@ export default function EloquasLinkedInPosts() {
                       <div>
                         <Label>Target Audience *</Label>
                         <Input
-                          placeholder="e.g. Head of Business Systems"
+                          placeholder="e.g. QA Managers, Test Engineers, DevOps Leaders"
                           value={formData.targetAudience}
                           onChange={(e) => setFormData(prev => ({ ...prev, targetAudience: e.target.value }))}
                         />
@@ -575,7 +576,7 @@ export default function EloquasLinkedInPosts() {
                       <div>
                         <Label>Metric *</Label>
                         <Input
-                          placeholder="e.g. +47% response rate"
+                          placeholder="e.g. 4 hours vs 16 hours for full regression"
                           value={formData.metric}
                           onChange={(e) => setFormData(prev => ({ ...prev, metric: e.target.value }))}
                         />
@@ -584,7 +585,7 @@ export default function EloquasLinkedInPosts() {
                       <div className="md:col-span-2">
                         <Label>Key Insight *</Label>
                         <Textarea
-                          placeholder="e.g. Personalizing around regression bottlenecks"
+                          placeholder="e.g. Automated testing revealed our biggest bottleneck was manual D365 validation"
                           value={formData.keyInsight}
                           onChange={(e) => setFormData(prev => ({ ...prev, keyInsight: e.target.value }))}
                         />
@@ -593,7 +594,7 @@ export default function EloquasLinkedInPosts() {
                       <div className="md:col-span-2">
                         <Label>Desired Action *</Label>
                         <Input
-                          placeholder="e.g. Let's compare notes!"
+                          placeholder="e.g. What's been your biggest QA automation win?"
                           value={formData.desiredAction}
                           onChange={(e) => setFormData(prev => ({ ...prev, desiredAction: e.target.value }))}
                         />
