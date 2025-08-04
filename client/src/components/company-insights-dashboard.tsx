@@ -49,9 +49,25 @@ export default function CompanyInsightsDashboard({ selectedCompany }: CompanyIns
         try {
           const jobPostings = JSON.parse(r.recentJobPostings || '[]');
           const initiatives = JSON.parse(r.initiatives || '[]');
-          return jobPostings.length > 2 || initiatives.some((i: string) => 
-            i.toLowerCase().includes('qa') || i.toLowerCase().includes('test')
-          );
+          const enhancedInitiatives = JSON.parse(r.recent_initiatives || '[]');
+          const hiringActivity = JSON.parse(r.hiring_activity || '[]');
+          
+          const hasQASignals = 
+            jobPostings.length > 2 || 
+            initiatives.some((i: any) => {
+              const text = typeof i === 'string' ? i : (i.title || i.description || '');
+              return text.toLowerCase().includes('qa') || text.toLowerCase().includes('test');
+            }) ||
+            enhancedInitiatives.some((i: any) => {
+              const text = typeof i === 'string' ? i : (i.title || i.description || '');
+              return text.toLowerCase().includes('qa') || text.toLowerCase().includes('test');
+            }) ||
+            hiringActivity.some((h: any) => {
+              const role = typeof h === 'string' ? h : (h.role_title || h.title || '');
+              return role.toLowerCase().includes('qa') || role.toLowerCase().includes('test');
+            });
+            
+          return hasQASignals;
         } catch {
           return false;
         }
@@ -457,9 +473,25 @@ export default function CompanyInsightsDashboard({ selectedCompany }: CompanyIns
                       try {
                         const jobPostings = JSON.parse(r.recentJobPostings || '[]');
                         const initiatives = JSON.parse(r.initiatives || '[]');
-                        return jobPostings.length > 2 || initiatives.some((i: string) => 
-                          i.toLowerCase().includes('qa') || i.toLowerCase().includes('test')
-                        );
+                        const enhancedInitiatives = JSON.parse(r.recent_initiatives || '[]');
+                        const hiringActivity = JSON.parse(r.hiring_activity || '[]');
+                        
+                        const hasQASignals = 
+                          jobPostings.length > 2 || 
+                          initiatives.some((i: any) => {
+                            const text = typeof i === 'string' ? i : (i.title || i.description || '');
+                            return text.toLowerCase().includes('qa') || text.toLowerCase().includes('test');
+                          }) ||
+                          enhancedInitiatives.some((i: any) => {
+                            const text = typeof i === 'string' ? i : (i.title || i.description || '');
+                            return text.toLowerCase().includes('qa') || text.toLowerCase().includes('test');
+                          }) ||
+                          hiringActivity.some((h: any) => {
+                            const role = typeof h === 'string' ? h : (h.role_title || h.title || '');
+                            return role.toLowerCase().includes('qa') || role.toLowerCase().includes('test');
+                          });
+                          
+                        return hasQASignals;
                       } catch {
                         return false;
                       }
@@ -483,42 +515,71 @@ export default function CompanyInsightsDashboard({ selectedCompany }: CompanyIns
                         <div className="text-sm text-gray-600 space-y-1">
                           {(() => {
                             try {
-                              const jobPostings = JSON.parse(company.recentJobPostings || '[]');
-                              const initiatives = JSON.parse(company.initiatives || '[]');
-                              const techStack = JSON.parse(company.currentSystems || '[]');
+                              // Handle both legacy and enhanced research data structures
+                              const legacyJobPostings = JSON.parse(company.recentJobPostings || '[]');
+                              const legacyInitiatives = JSON.parse(company.initiatives || '[]');
+                              const legacyTechStack = JSON.parse(company.currentSystems || '[]');
+                              
+                              // Enhanced research data (if available)
+                              const enhancedInitiatives = JSON.parse(company.recent_initiatives || '[]');
+                              const enhancedHiringActivity = JSON.parse(company.hiring_activity || '[]');
+                              const enhancedTechStack = JSON.parse(company.current_tech_stack || '[]');
+                              
+                              // Combine legacy and enhanced data
+                              const allJobPostings = [...legacyJobPostings];
+                              const allInitiatives = [...legacyInitiatives, ...enhancedInitiatives];
+                              const allTechStack = [...legacyTechStack, ...enhancedTechStack];
                               
                               return (
                                 <>
-                                  {jobPostings.length > 0 && (
-                                    <p>• {jobPostings.length} QA/Testing job posting{jobPostings.length > 1 ? 's' : ''}</p>
+                                  {/* Job postings and hiring activity */}
+                                  {(allJobPostings.length > 0 || enhancedHiringActivity.length > 0) && (
+                                    <p>• {allJobPostings.length + enhancedHiringActivity.length} QA/Testing job posting{(allJobPostings.length + enhancedHiringActivity.length) > 1 ? 's' : ''}</p>
                                   )}
                                   
+                                  {/* Display enhanced hiring activity */}
+                                  {enhancedHiringActivity.slice(0, 2).map((activity: any, idx: number) => (
+                                    <p key={`hiring-${idx}`}>
+                                      • {typeof activity === 'string' ? activity : (
+                                        activity.role_title || activity.title || 'QA Role'
+                                      )}
+                                      {activity.department && (
+                                        <span className="text-xs text-blue-600 ml-1">({activity.department})</span>
+                                      )}
+                                    </p>
+                                  ))}
+                                  
                                   {/* Display enhanced initiatives with categories */}
-                                  {initiatives.filter((i: any) => {
-                                    const text = typeof i === 'string' ? i : i.title || i.description || '';
+                                  {allInitiatives.filter((i: any) => {
+                                    const text = typeof i === 'string' ? i : (i.title || i.description || '');
                                     return text.toLowerCase().includes('qa') || text.toLowerCase().includes('test') || text.toLowerCase().includes('automation');
                                   }).slice(0, 2).map((initiative: any, idx: number) => (
-                                    <p key={idx}>
+                                    <p key={`initiative-${idx}`}>
                                       • {typeof initiative === 'string' ? initiative : (
                                         initiative.title || initiative.description || 'QA Initiative'
                                       )}
                                       {initiative.category && (
-                                        <span className="text-xs text-blue-600 ml-1">({initiative.category.replace('_', ' ')})</span>
+                                        <span className="text-xs text-blue-600 ml-1">({String(initiative.category).replace('_', ' ')})</span>
                                       )}
                                     </p>
                                   ))}
                                   
                                   {/* Display tech stack if available */}
-                                  {techStack.length > 0 && techStack.some((tech: any) => 
-                                    typeof tech === 'object' && tech.category === 'QA_Tools'
+                                  {allTechStack.length > 0 && allTechStack.some((tech: any) => 
+                                    (typeof tech === 'object' && (tech.category === 'QA_Tools' || tech.category === 'SDLC')) ||
+                                    (typeof tech === 'string' && (tech.toLowerCase().includes('qa') || tech.toLowerCase().includes('test')))
                                   ) && (
-                                    <p>• QA tools in tech stack: {techStack.filter((tech: any) => 
-                                      typeof tech === 'object' && tech.category === 'QA_Tools'
-                                    ).map((tech: any) => tech.platform).join(', ')}</p>
+                                    <p>• QA tools: {allTechStack.filter((tech: any) => 
+                                      (typeof tech === 'object' && (tech.category === 'QA_Tools' || tech.category === 'SDLC')) ||
+                                      (typeof tech === 'string' && (tech.toLowerCase().includes('qa') || tech.toLowerCase().includes('test')))
+                                    ).map((tech: any) => 
+                                      typeof tech === 'string' ? tech : (tech.platform || tech.name || 'QA Tool')
+                                    ).join(', ')}</p>
                                   )}
                                 </>
                               );
-                            } catch {
+                            } catch (error) {
+                              console.log('Error parsing research data:', error);
                               return <p>• QA automation signals detected</p>;
                             }
                           })()}
@@ -556,9 +617,25 @@ export default function CompanyInsightsDashboard({ selectedCompany }: CompanyIns
                       try {
                         const jobPostings = JSON.parse(r.recentJobPostings || '[]');
                         const initiatives = JSON.parse(r.initiatives || '[]');
-                        return jobPostings.length > 2 || initiatives.some((i: string) => 
-                          i.toLowerCase().includes('qa') || i.toLowerCase().includes('test')
-                        );
+                        const enhancedInitiatives = JSON.parse(r.recent_initiatives || '[]');
+                        const hiringActivity = JSON.parse(r.hiring_activity || '[]');
+                        
+                        const hasQASignals = 
+                          jobPostings.length > 2 || 
+                          initiatives.some((i: any) => {
+                            const text = typeof i === 'string' ? i : (i.title || i.description || '');
+                            return text.toLowerCase().includes('qa') || text.toLowerCase().includes('test');
+                          }) ||
+                          enhancedInitiatives.some((i: any) => {
+                            const text = typeof i === 'string' ? i : (i.title || i.description || '');
+                            return text.toLowerCase().includes('qa') || text.toLowerCase().includes('test');
+                          }) ||
+                          hiringActivity.some((h: any) => {
+                            const role = typeof h === 'string' ? h : (h.role_title || h.title || '');
+                            return role.toLowerCase().includes('qa') || role.toLowerCase().includes('test');
+                          });
+                          
+                        return hasQASignals;
                       } catch {
                         return false;
                       }
