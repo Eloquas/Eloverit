@@ -134,27 +134,36 @@ export default function OutreachMVP() {
   // Fetch campaigns
   const { data: campaigns = [], isLoading: campaignsLoading } = useQuery({
     queryKey: ['/api/outreach/campaigns'],
-    queryFn: () => apiRequest('/api/outreach/campaigns')
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/outreach/campaigns');
+      return response.json();
+    }
   });
 
   // Fetch sequences
   const { data: sequences = [], isLoading: sequencesLoading } = useQuery({
     queryKey: ['/api/outreach/sequences'],
-    queryFn: () => apiRequest('/api/outreach/sequences')
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/outreach/sequences');
+      return response.json();
+    }
   });
 
   // Fetch analytics
   const { data: analytics } = useQuery({
     queryKey: ['/api/outreach/analytics'],
-    queryFn: () => apiRequest('/api/outreach/analytics')
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/outreach/analytics');
+      return response.json();
+    }
   });
 
   // Create campaign mutation
   const createCampaignMutation = useMutation({
-    mutationFn: (campaignData: any) => apiRequest('/api/outreach/campaigns', {
-      method: 'POST',
-      body: JSON.stringify(campaignData)
-    }),
+    mutationFn: async (campaignData: any) => {
+      const response = await apiRequest('POST', '/api/outreach/campaigns', campaignData);
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/outreach/campaigns'] });
       queryClient.invalidateQueries({ queryKey: ['/api/outreach/analytics'] });
@@ -164,24 +173,24 @@ export default function OutreachMVP() {
 
   // Generate template mutation (Updated for Engine v2)
   const generateTemplateMutation = useMutation({
-    mutationFn: (templateData: any) => apiRequest('/api/outreach/generate-message', {
-      method: 'POST',
-      body: JSON.stringify({
+    mutationFn: async (templateData: any) => {
+      const response = await apiRequest('POST', '/api/outreach/generate-message', {
         ...templateData,
         options: {
           trustBuilder: trustBuilderEnabled,
           storyBuilder: storyBuilderEnabled
         }
-      })
-    })
+      });
+      return response.json();
+    }
   });
 
   // PDL Enrichment mutation
   const enrichProspectMutation = useMutation({
-    mutationFn: (email: string) => apiRequest('/api/outreach/enrich', {
-      method: 'POST',
-      body: JSON.stringify({ email })
-    }),
+    mutationFn: async (email: string) => {
+      const response = await apiRequest('POST', '/api/outreach/enrich', { email });
+      return response.json();
+    },
     onSuccess: (data) => {
       setPdlEnrichmentData(data);
       // Auto-populate form with enriched data

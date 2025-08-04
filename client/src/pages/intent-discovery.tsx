@@ -55,11 +55,12 @@ export default function IntentDiscovery() {
     technologies: 'D365, Test Automation, QA Engineering',
     departments: 'IT, QA, Engineering',
     minConfidenceScore: '80', // Higher threshold for more reliable results
+    minIntentScore: '75', // Minimum intent score threshold
     companySize: '',
     searchMode: 'semantic' // Focus on semantic analysis for D365
   });
 
-  const { data: trendingData, isLoading: trendingLoading } = useQuery({
+  const { data: trendingData = { trending: [] }, isLoading: trendingLoading } = useQuery({
     queryKey: ["/api/intent-discovery/trending"],
   });
 
@@ -73,7 +74,8 @@ export default function IntentDiscovery() {
         technologies: filters.technologies ? filters.technologies.split(',').map((t: string) => t.trim()) : [],
         departments: filters.departments ? filters.departments.split(',').map((d: string) => d.trim()) : []
       };
-      return await apiRequest("/api/intent-discovery/search", "POST", processedFilters);
+      const response = await apiRequest("POST", "/api/intent-discovery/search", processedFilters);
+      return response.json();
     },
     onSuccess: (data: any) => {
       toast({

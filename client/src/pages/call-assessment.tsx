@@ -104,8 +104,9 @@ export default function CallAssessment() {
   // Fetch file content from Google Drive
   const fetchDriveContent = useMutation({
     mutationFn: async (fileId: string) => {
-      const response = await apiRequest(`/api/google-drive/file/${fileId}`);
-      return response.content;
+      const response = await apiRequest('GET', `/api/google-drive/file/${fileId}`);
+      const data = await response.json();
+      return data.content;
     },
     onSuccess: (content) => {
       setTranscriptText(content);
@@ -116,13 +117,19 @@ export default function CallAssessment() {
   // Fetch demo assessment for preview
   const { data: demoAssessment, isLoading: demoLoading } = useQuery({
     queryKey: ['/api/call-assessment/demo'],
-    queryFn: () => apiRequest('/api/call-assessment/demo')
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/call-assessment/demo');
+      return response.json();
+    }
   });
 
   // Fetch call history and stats
   const { data: historyData, isLoading: historyLoading } = useQuery({
     queryKey: ['/api/call-assessment/history'],
-    queryFn: () => apiRequest('/api/call-assessment/history')
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/call-assessment/history');
+      return response.json();
+    }
   });
 
   // Process transcript mutation
