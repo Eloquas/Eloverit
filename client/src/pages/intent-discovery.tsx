@@ -68,13 +68,13 @@ export default function IntentDiscovery() {
     mutationFn: async (companyName: string) => {
       return apiRequest("POST", "/api/account-research/enhanced", { companyName });
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data: any, variables: string) => {
       toast({
         title: "Enhanced Research Complete",
-        description: `Comprehensive analysis completed for ${data?.research?.company_name || companyName} with quality score ${data?.research?.research_quality_score || 'high'}`,
+        description: `Comprehensive analysis completed for ${data?.research?.company_name || variables} with quality score ${data?.research?.research_quality_score || 'high'}`,
       });
       // Navigate to account research page to view results
-      window.location.href = `/account-research?company=${encodeURIComponent(data?.research?.company_name || companyName)}`;
+      window.location.href = `/account-research?company=${encodeURIComponent(data?.research?.company_name || variables)}`;
     },
     onError: (error: any) => {
       toast({
