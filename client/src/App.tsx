@@ -40,6 +40,7 @@ import NotFound from "@/pages/not-found";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [forceShowLogin, setForceShowLogin] = useState(false);
 
   console.log('Router state:', { isAuthenticated, isLoading, user });
 

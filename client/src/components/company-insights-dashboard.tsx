@@ -14,12 +14,17 @@ export default function CompanyInsightsDashboard({ selectedCompany }: CompanyIns
   const [animationPhase, setAnimationPhase] = useState(0);
 
   // Fetch all prospects and account research data
-  const { data: prospects = [] } = useQuery({
+  const { data: prospects = [] } = useQuery<any[]>({
     queryKey: ["/api/prospects"],
   });
 
-  const { data: accountResearch = [] } = useQuery({
+  const { data: accountResearch = [] } = useQuery<any[]>({
     queryKey: ["/api/account-research"],
+  });
+
+  // Fetch intent discovery data for QA Ready companies
+  const { data: intentSignals = { trending: [] } } = useQuery<{ trending?: any[] }>({
+    queryKey: ["/api/intent-discovery/trending"],
   });
 
   // Fetch company-specific research if a company is selected
@@ -38,7 +43,7 @@ export default function CompanyInsightsDashboard({ selectedCompany }: CompanyIns
   const companyMetrics = () => {
     if (!selectedCompany) {
       // Overall metrics
-      const totalCompanies = [...new Set(prospects.map((p: any) => p.company))].length;
+      const totalCompanies = Array.from(new Set(prospects.map((p: any) => p.company))).length;
       const researchedCompanies = accountResearch.length;
       const highIntentCompanies = accountResearch.filter((r: any) => {
         try {
@@ -442,6 +447,108 @@ export default function CompanyInsightsDashboard({ selectedCompany }: CompanyIns
                       </div>
                     </div>
                   </>
+                )}
+
+                {activeMetric === 'intent' && (
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-purple-600 mb-3">QA Ready Companies</h4>
+                    {/* Show QA Ready companies from account research */}
+                    {accountResearch.filter((r: any) => {
+                      try {
+                        const jobPostings = JSON.parse(r.recentJobPostings || '[]');
+                        const initiatives = JSON.parse(r.initiatives || '[]');
+                        return jobPostings.length > 2 || initiatives.some((i: string) => 
+                          i.toLowerCase().includes('qa') || i.toLowerCase().includes('test')
+                        );
+                      } catch {
+                        return false;
+                      }
+                    }).map((company: any, index: number) => (
+                      <motion.div
+                        key={company.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border border-purple-100"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-purple-600" />
+                            <span className="font-medium text-gray-900">{company.companyName}</span>
+                          </div>
+                          <Badge className="bg-purple-100 text-purple-800 border-purple-200">
+                            High Intent
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-gray-600 space-y-1">
+                          {(() => {
+                            try {
+                              const jobPostings = JSON.parse(company.recentJobPostings || '[]');
+                              const initiatives = JSON.parse(company.initiatives || '[]');
+                              return (
+                                <>
+                                  {jobPostings.length > 0 && (
+                                    <p>• {jobPostings.length} QA/Testing job posting{jobPostings.length > 1 ? 's' : ''}</p>
+                                  )}
+                                  {initiatives.filter((i: string) => 
+                                    i.toLowerCase().includes('qa') || i.toLowerCase().includes('test')
+                                  ).slice(0, 2).map((initiative: string, idx: number) => (
+                                    <p key={idx}>• {initiative}</p>
+                                  ))}
+                                </>
+                              );
+                            } catch {
+                              return <p>• QA automation signals detected</p>;
+                            }
+                          })()}
+                        </div>
+                      </motion.div>
+                    ))}
+                    
+                    {/* Show intent discovery signals if available */}
+                    {intentSignals.trending?.slice(0, 3).map((signal: any, index: number) => (
+                      <motion.div
+                        key={`intent-${index}`}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: (accountResearch.length + index) * 0.1 }}
+                        className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-100"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Target className="h-4 w-4 text-green-600" />
+                            <span className="font-medium text-gray-900">{signal.companyName}</span>
+                          </div>
+                          <Badge className="bg-green-100 text-green-800 border-green-200">
+                            Intent Score: {signal.intentScore}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          <p>• {signal.signal || 'QA automation opportunity detected'}</p>
+                          <p>• Platform: {signal.platform || 'Enterprise Systems'}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                    
+                    {/* Empty state if no QA ready companies */}
+                    {accountResearch.filter((r: any) => {
+                      try {
+                        const jobPostings = JSON.parse(r.recentJobPostings || '[]');
+                        const initiatives = JSON.parse(r.initiatives || '[]');
+                        return jobPostings.length > 2 || initiatives.some((i: string) => 
+                          i.toLowerCase().includes('qa') || i.toLowerCase().includes('test')
+                        );
+                      } catch {
+                        return false;
+                      }
+                    }).length === 0 && (!intentSignals.trending || intentSignals.trending.length === 0) && (
+                      <div className="text-center py-8 text-gray-500">
+                        <Target className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                        <p className="font-medium">No QA Ready Companies Found</p>
+                        <p className="text-sm">Run Intent Discovery to find high-intent accounts</p>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </Card>
