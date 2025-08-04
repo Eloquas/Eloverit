@@ -1502,6 +1502,70 @@ Write as Avo Automation's sales representative selling QA automation platform.`;
       res.status(500).json({ message: "Failed to fetch account research" });
     }
   });
+
+  // Enhanced Account Research with O3-Pro Intelligence
+  app.post("/api/account-research/enhanced", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { companyName } = req.body;
+      const userId = req.user!.id;
+      
+      if (!companyName) {
+        return res.status(400).json({ message: "Company name is required" });
+      }
+
+      console.log(`🔬 Starting Enhanced Account Research for ${companyName}...`);
+      
+      const { EnhancedAccountResearchEngine } = await import("./enhanced-account-research");
+      const researchEngine = new EnhancedAccountResearchEngine();
+      
+      const enhancedResearch = await researchEngine.generateComprehensiveResearch(companyName);
+      
+      // Store the enhanced research in the database
+      const researchData = {
+        userId,
+        companyName: enhancedResearch.company_name,
+        industry: enhancedResearch.industry,
+        
+        // Store as JSON strings for compatibility with existing schema
+        initiatives: JSON.stringify(enhancedResearch.recent_initiatives),
+        recentJobPostings: JSON.stringify(enhancedResearch.hiring_activity),
+        currentSystems: JSON.stringify(enhancedResearch.current_tech_stack),
+        scipabFramework: JSON.stringify(enhancedResearch.scipab_analysis),
+        
+        // Additional metadata
+        researchQuality: enhancedResearch.research_quality_score.toString(),
+        dataSources: JSON.stringify(enhancedResearch.data_sources),
+        researchDate: new Date(enhancedResearch.generated_at)
+      };
+      
+      const savedResearch = await storage.createAccountResearch(researchData);
+      
+      res.json({
+        success: true,
+        research: enhancedResearch,
+        saved_id: savedResearch.id,
+        message: `Enhanced research completed for ${companyName} with quality score ${enhancedResearch.research_quality_score}`
+      });
+      
+    } catch (error) {
+      console.error("Enhanced account research failed:", error);
+      
+      // Check if it's an OpenAI API issue
+      if (error.message?.includes('API key') || error.message?.includes('unauthorized')) {
+        return res.status(500).json({ 
+          success: false,
+          message: "OpenAI API key not configured. Enhanced research requires valid API access.",
+          fallback: "Please contact administrator to configure API keys for comprehensive research."
+        });
+      }
+      
+      res.status(500).json({ 
+        success: false,
+        message: `Failed to generate enhanced research: ${error.message}`,
+        companyName
+      });
+    }
+  });
   
   // Get recent company news and remarks
   app.get("/api/company-news/:companyName", async (req, res) => {

@@ -485,16 +485,37 @@ export default function CompanyInsightsDashboard({ selectedCompany }: CompanyIns
                             try {
                               const jobPostings = JSON.parse(company.recentJobPostings || '[]');
                               const initiatives = JSON.parse(company.initiatives || '[]');
+                              const techStack = JSON.parse(company.currentSystems || '[]');
+                              
                               return (
                                 <>
                                   {jobPostings.length > 0 && (
                                     <p>• {jobPostings.length} QA/Testing job posting{jobPostings.length > 1 ? 's' : ''}</p>
                                   )}
-                                  {initiatives.filter((i: string) => 
-                                    i.toLowerCase().includes('qa') || i.toLowerCase().includes('test')
-                                  ).slice(0, 2).map((initiative: string, idx: number) => (
-                                    <p key={idx}>• {initiative}</p>
+                                  
+                                  {/* Display enhanced initiatives with categories */}
+                                  {initiatives.filter((i: any) => {
+                                    const text = typeof i === 'string' ? i : i.title || i.description || '';
+                                    return text.toLowerCase().includes('qa') || text.toLowerCase().includes('test') || text.toLowerCase().includes('automation');
+                                  }).slice(0, 2).map((initiative: any, idx: number) => (
+                                    <p key={idx}>
+                                      • {typeof initiative === 'string' ? initiative : (
+                                        initiative.title || initiative.description || 'QA Initiative'
+                                      )}
+                                      {initiative.category && (
+                                        <span className="text-xs text-blue-600 ml-1">({initiative.category.replace('_', ' ')})</span>
+                                      )}
+                                    </p>
                                   ))}
+                                  
+                                  {/* Display tech stack if available */}
+                                  {techStack.length > 0 && techStack.some((tech: any) => 
+                                    typeof tech === 'object' && tech.category === 'QA_Tools'
+                                  ) && (
+                                    <p>• QA tools in tech stack: {techStack.filter((tech: any) => 
+                                      typeof tech === 'object' && tech.category === 'QA_Tools'
+                                    ).map((tech: any) => tech.platform).join(', ')}</p>
+                                  )}
                                 </>
                               );
                             } catch {

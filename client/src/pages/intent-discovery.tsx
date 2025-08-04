@@ -60,9 +60,34 @@ export default function IntentDiscovery() {
     searchMode: 'semantic' // Focus on semantic analysis for D365
   });
 
-  const { data: trendingData = { trending: [] }, isLoading: trendingLoading } = useQuery({
+  const { data: trendingData = {}, isLoading: trendingLoading } = useQuery({
     queryKey: ["/api/intent-discovery/trending"],
   });
+
+  const enhancedResearchMutation = useMutation({
+    mutationFn: async (companyName: string) => {
+      return apiRequest("POST", "/api/account-research/enhanced", { companyName });
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Enhanced Research Complete",
+        description: `Comprehensive analysis completed for ${data?.research?.company_name || companyName} with quality score ${data?.research?.research_quality_score || 'high'}`,
+      });
+      // Navigate to account research page to view results
+      window.location.href = `/account-research?company=${encodeURIComponent(data?.research?.company_name || companyName)}`;
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Enhanced Research Failed",
+        description: error.message || "Failed to generate enhanced research. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEnhancedResearch = (companyName: string) => {
+    enhancedResearchMutation.mutate(companyName);
+  };
 
   const intentSearchMutation = useMutation({
     mutationFn: async (filters: any) => {
@@ -379,17 +404,30 @@ export default function IntentDiscovery() {
                             </a>
                           </Button>
                         )}
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => {
-                            // Integration with Account Research
-                            window.location.href = `/account-research?company=${encodeURIComponent(signal.companyName)}`;
-                          }}
-                        >
-                          <Target className="w-3 h-3 mr-2" />
-                          Research Account
-                        </Button>
+                        <div className="flex space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                              // Integration with Account Research
+                              window.location.href = `/account-research?company=${encodeURIComponent(signal.companyName)}`;
+                            }}
+                          >
+                            <Target className="w-3 h-3 mr-2" />
+                            Research Account
+                          </Button>
+                          
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                            onClick={() => handleEnhancedResearch(signal.companyName)}
+                            disabled={enhancedResearchMutation.isPending}
+                          >
+                            <Zap className="w-3 h-3 mr-2" />
+                            {enhancedResearchMutation.isPending ? "Analyzing..." : "Enhanced"}
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -422,12 +460,16 @@ export default function IntentDiscovery() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {trendingData?.trending?.topTechnologies?.map((tech: string, index: number) => (
+                {(trendingData as any)?.trending?.topTechnologies?.map((tech: string, index: number) => (
                   <div key={index} className="flex justify-between items-center py-2">
                     <span className="text-gray-900">{tech}</span>
                     <Badge variant="outline">Hot</Badge>
                   </div>
-                ))}
+                )) || (
+                  <div className="text-gray-500 text-center py-4">
+                    Loading trending technologies...
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -439,12 +481,16 @@ export default function IntentDiscovery() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {trendingData?.trending?.emergingInitiatives?.map((initiative: string, index: number) => (
+                {(trendingData as any)?.trending?.emergingInitiatives?.map((initiative: string, index: number) => (
                   <div key={index} className="flex justify-between items-center py-2">
                     <span className="text-gray-900">{initiative}</span>
                     <Badge variant="secondary">Trending</Badge>
                   </div>
-                ))}
+                )) || (
+                  <div className="text-gray-500 text-center py-4">
+                    Loading trending initiatives...
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -457,12 +503,16 @@ export default function IntentDiscovery() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {trendingData?.trending?.hotCompanies?.map((company: string, index: number) => (
+                  {(trendingData as any)?.trending?.hotCompanies?.map((company: string, index: number) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                       <span className="font-medium text-blue-900">{company}</span>
                       <AlertTriangle className="w-4 h-4 text-orange-500" />
                     </div>
-                  ))}
+                  )) || (
+                    <div className="text-gray-500 text-center py-4 col-span-3">
+                      Loading high intent companies...
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
