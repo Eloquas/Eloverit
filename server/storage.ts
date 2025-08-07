@@ -34,7 +34,7 @@ export class DatabaseStorage implements IStorage {
   async createAccount(accountData: InsertAccount): Promise<Account> {
     const [account] = await db
       .insert(accounts)
-      .values(accountData)
+      .values([accountData])
       .returning();
     return account;
   }
@@ -42,7 +42,7 @@ export class DatabaseStorage implements IStorage {
   async updateAccount(id: number, updates: Partial<InsertAccount>): Promise<Account> {
     const [account] = await db
       .update(accounts)
-      .set(updates)
+      .set({ ...updates, updatedAt: new Date() })
       .where(eq(accounts.id, id))
       .returning();
     return account;
@@ -56,7 +56,7 @@ export class DatabaseStorage implements IStorage {
   async createContact(contactData: InsertContact): Promise<Contact> {
     const [contact] = await db
       .insert(contacts)
-      .values(contactData)
+      .values([contactData])
       .returning();
     return contact;
   }
@@ -64,7 +64,7 @@ export class DatabaseStorage implements IStorage {
   async updateContact(id: number, updates: Partial<InsertContact>): Promise<Contact> {
     const [contact] = await db
       .update(contacts)
-      .set(updates)
+      .set({ ...updates, updatedAt: new Date() })
       .where(eq(contacts.id, id))
       .returning();
     return contact;

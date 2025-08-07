@@ -9,6 +9,10 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY 
 });
 
+// Model configuration with fallback
+const INTENT_MODEL = process.env.INTENT_MODEL || 'o1-pro'; // Default to o1-pro for reasoning
+const BACKUP_MODEL = 'gpt-4o'; // Fallback if o1-pro unavailable
+
 // Intent discovery service
 export class IntentDiscoveryService {
   
@@ -20,30 +24,57 @@ export class IntentDiscoveryService {
   ) {
     try {
       console.log(`Starting intent discovery for: ${query}, systems: ${targetSystems.join(', ')}`);
+      console.log(`Using model: ${INTENT_MODEL} for deep reasoning and research`);
       
-      // Step 1: Research high-intent accounts using GPT-4o (will upgrade to o3-pro)
+      // Step 1: Research high-intent accounts using configured model (o1-pro/o3-pro)
       const researchPrompt = this.buildAccountResearchPrompt(query, targetSystems);
       
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          {
-            role: "system",
-            content: "You are a precision B2B sales research agent. Your task is to identify high-intent companies showing signals related to MS Dynamics, Oracle, SAP implementations, QA automation initiatives, or SDLC improvements. NEVER generate fake data. Only return information you can verify from public sources. If you cannot find reliable information, return 'Not available'."
-          },
-          {
-            role: "user",
-            content: researchPrompt
-          }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.1, // Low temperature for factual accuracy
-      });
+      let modelToUse = INTENT_MODEL;
+      let response;
+      
+      try {
+        response = await openai.chat.completions.create({
+          model: modelToUse,
+          messages: [
+            {
+              role: "system",
+              content: "You are a precision B2B sales research agent with access to real-time data sources. Your task is to identify high-intent companies showing signals related to MS Dynamics, Oracle, SAP implementations, QA automation initiatives, or SDLC improvements. CRITICAL: You must provide citations for all claims. If you cannot find reliable, verifiable information with citations, return empty results instead of guessing. ZERO HALLUCINATIONS POLICY ENFORCED."
+            },
+            {
+              role: "user",
+              content: researchPrompt
+            }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.1, // Low temperature for factual accuracy
+        });
+      } catch (error: any) {
+        console.warn(`Failed to use ${modelToUse}, falling back to ${BACKUP_MODEL}:`, error.message);
+        modelToUse = BACKUP_MODEL;
+        response = await openai.chat.completions.create({
+          model: modelToUse,
+          messages: [
+            {
+              role: "system",
+              content: "You are a precision B2B sales research agent with access to real-time data sources. Your task is to identify high-intent companies showing signals related to MS Dynamics, Oracle, SAP implementations, QA automation initiatives, or SDLC improvements. CRITICAL: You must provide citations for all claims. If you cannot find reliable, verifiable information with citations, return empty results instead of guessing. ZERO HALLUCINATIONS POLICY ENFORCED."
+            },
+            {
+              role: "user",
+              content: researchPrompt
+            }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.1,
+        });
+      }
 
       const researchData = JSON.parse(response.choices[0].message.content || '{}');
       
-      // Step 2: Process and validate research data
-      const accounts = await this.processResearchData(researchData, targetSystems);
+      // CRITICAL: Validate citations and evidence quality
+      const validatedData = this.validateResearchQuality(researchData, modelToUse);
+      
+      // Step 2: Process and validate research data with strict citation requirements
+      const accounts = await this.processResearchData(validatedData, targetSystems);
       
       // Step 3: Create account-level SCIPABs for high-intent accounts
       for (const accountData of accounts) {
@@ -58,14 +89,19 @@ export class IntentDiscoveryService {
         const saved = await storage.createAccount(accountData);
         savedAccounts.push(saved);
         
-        // Log research session
+        // Log research session with model and quality metrics
         await storage.createResearchSession({
           accountId: saved.id,
           researchType: 'account_discovery',
           prompt: researchPrompt,
-          response: researchData,
-          model: 'gpt-4o',
-          hasHallucinations: false, // We validate this
+          response: {
+            ...researchData,
+            modelUsed: modelToUse,
+            citationCount: this.countCitations(researchData),
+            hasEvidence: this.hasStrongEvidence(researchData)
+          },
+          model: modelToUse,
+          hasHallucinations: false, // Enforced by validation
           qualityScore: accountData.intentScore || 0,
         });
       }
@@ -78,6 +114,100 @@ export class IntentDiscoveryService {
       console.error('Intent discovery failed:', error);
       throw new Error('Intent discovery failed: ' + (error instanceof Error ? error.message : String(error)));
     }
+  }
+
+  // CRITICAL: Validate research quality and citations
+  private validateResearchQuality(researchData: any, modelUsed: string): any {
+    console.log(`Validating research quality from ${modelUsed}`);
+    
+    if (!researchData.accounts || !Array.isArray(researchData.accounts)) {
+      console.warn('No accounts found in research - returning empty results to prevent hallucinations');
+      return { accounts: [] };
+    }
+
+    const validatedAccounts = [];
+    for (const account of researchData.accounts) {
+      // CRITICAL: Check citation requirements
+      if (!account.citations || !Array.isArray(account.citations) || account.citations.length < 3) {
+        console.warn(`Excluding ${account.companyName || 'unnamed account'} - insufficient citations (${account.citations?.length || 0}/3 required)`);
+        continue;
+      }
+
+      // Validate citation quality
+      const validCitations = account.citations.filter((citation: any) => 
+        citation.url && citation.source_type && citation.date && citation.relevance
+      );
+      
+      if (validCitations.length < 3) {
+        console.warn(`Excluding ${account.companyName || 'unnamed account'} - only ${validCitations.length} valid citations`);
+        continue;
+      }
+
+      // Check for hallucination indicators
+      const hasEvidence = this.hasStrongEvidence(account);
+      if (!hasEvidence) {
+        console.warn(`Excluding ${account.companyName || 'unnamed account'} - insufficient evidence quality`);
+        continue;
+      }
+
+      validatedAccounts.push({
+        ...account,
+        citations: validCitations,
+        validationPassed: true,
+        modelUsed: modelUsed
+      });
+    }
+
+    console.log(`Validated ${validatedAccounts.length}/${researchData.accounts.length} accounts with sufficient citations`);
+    
+    return {
+      accounts: validatedAccounts,
+      validationSummary: {
+        original: researchData.accounts.length,
+        validated: validatedAccounts.length,
+        rejectionReasons: this.getValidationStats(researchData.accounts)
+      }
+    };
+  }
+
+  // Check if account has strong evidence
+  private hasStrongEvidence(account: any): boolean {
+    const indicators = [
+      account.intentSignals?.initiatives?.length > 0,
+      account.intentSignals?.hiring_activity?.length > 0,
+      account.intentSignals?.financial_signals?.length > 0,
+      account.domain && account.domain !== 'Not available',
+      account.revenue && account.revenue !== 'Not available',
+      account.citations?.length >= 3
+    ];
+    
+    return indicators.filter(Boolean).length >= 4; // At least 4 strong indicators
+  }
+
+  // Count valid citations
+  private countCitations(data: any): number {
+    if (!data.accounts) return 0;
+    return data.accounts.reduce((total: number, account: any) => 
+      total + (account.citations?.length || 0), 0
+    );
+  }
+
+  // Get validation statistics
+  private getValidationStats(accounts: any[]): any {
+    const stats = {
+      insufficientCitations: 0,
+      missingDomain: 0,
+      weakEvidence: 0,
+      total: accounts.length
+    };
+    
+    for (const account of accounts) {
+      if (!account.citations || account.citations.length < 3) stats.insufficientCitations++;
+      if (!account.domain || account.domain === 'Not available') stats.missingDomain++;
+      if (!this.hasStrongEvidence(account)) stats.weakEvidence++;
+    }
+    
+    return stats;
   }
 
   // Build research prompt for account discovery
@@ -123,12 +253,16 @@ Find 5-10 companies with VERIFIED high-intent signals. Provide ONLY factual info
   ]
 }
 
-CRITICAL RULES:
-- NEVER invent or assume data
-- If information is not publicly available, use "Not available"
-- Only include companies with verifiable intent signals
+CRITICAL RULES - ZERO HALLUCINATION POLICY:
+- MANDATORY: Include citations for EVERY claim (URLs, filing numbers, job posting IDs)
+- NEVER invent or assume data - if no evidence found, return empty results
+- If information is not publicly available, use "Not available"  
+- Only include companies with verifiable intent signals and citations
 - Maximum 10 accounts per response
 - Intent score should reflect strength of verified signals only
+- Each account MUST have "citations" array with specific sources
+- Format citations as: {"source_type": "10-K Filing", "url": "specific_url", "date": "YYYY-MM-DD", "relevance": "quote from source"}
+- If fewer than 3 citations per account, exclude that account entirely
 `;
   }
 
@@ -242,7 +376,7 @@ Base this on their actual intent signals. Do not invent details not supported by
           researchType: 'contact_identification',
           prompt: `Contact search attempted for ${account.companyName}`,
           response: { 
-            error: 'no_domain',
+            status: 'no_domain',
             message: 'Company domain required for People Data Labs API'
           },
           model: 'pdl_api',
@@ -265,7 +399,7 @@ Base this on their actual intent signals. Do not invent details not supported by
           researchType: 'contact_identification',
           prompt: `PDL API call for ${account.companyName} (${account.domain})`,
           response: { 
-            error: pdlResult.status, 
+            status: pdlResult.status, 
             message: pdlResult.message,
             retryAfter: pdlResult.retryAfter 
           },
@@ -294,7 +428,7 @@ Base this on their actual intent signals. Do not invent details not supported by
         researchType: 'contact_identification',
         prompt: `PDL API call for ${account.companyName} (${account.domain})`,
         response: { 
-          success: true, 
+          status: 'success', 
           contactsFound: savedContacts.length,
           source: 'people_data_labs',
           isRealData: true

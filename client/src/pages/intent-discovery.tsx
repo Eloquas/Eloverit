@@ -29,6 +29,8 @@ export default function IntentDiscovery() {
   const [selectedSystems, setSelectedSystems] = useState<string[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [showContacts, setShowContacts] = useState(false);
+  const [currentResearchResults, setCurrentResearchResults] = useState<Account[]>([]);
+  const [lastResearchRun, setLastResearchRun] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -65,12 +67,26 @@ export default function IntentDiscovery() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error('Discovery failed');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Discovery failed');
+      }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // CRITICAL: Use fresh results immediately instead of relying on stale DB query
+      console.log(`Fresh research completed: ${data.accounts.length} accounts with ${data.researchSummary.modelUsed}`);
+      setCurrentResearchResults(data.accounts || []);
+      setLastResearchRun(data.researchSummary.timestamp);
+      
+      // Invalidate cache as secondary action
       queryClient.invalidateQueries({ queryKey: ['/api/accounts'] });
     },
+    onError: (error) => {
+      console.error('Discovery failed:', error);
+      setCurrentResearchResults([]);
+      setLastResearchRun(null);
+    }
   });
 
   // Contact identification mutation
@@ -221,18 +237,20 @@ export default function IntentDiscovery() {
                   High-Intent Accounts
                 </div>
                 <Badge className="bg-green-100 text-green-800">
-                  {Array.isArray(accounts) ? accounts.length : 0} Found
+                  {currentResearchResults.length} Found
                 </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {accountsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+              {discoverMutation.isPending ? (
+                <div className="text-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mx-auto mb-4" />
+                  <p className="text-sm font-medium text-gray-700">Deep research in progress...</p>
+                  <p className="text-xs text-gray-500 mt-1">Using {process.env.INTENT_MODEL || 'o1-pro'} for advanced reasoning</p>
                 </div>
-              ) : Array.isArray(accounts) && accounts.length > 0 ? (
+              ) : currentResearchResults.length > 0 ? (
                 <div className="space-y-3">
-                  {accounts.map((account: Account) => (
+                  {currentResearchResults.map((account: Account) => (
                     <motion.div
                       key={account.id}
                       initial={{ opacity: 0, x: -20 }}
@@ -278,11 +296,44 @@ export default function IntentDiscovery() {
                     </motion.div>
                   ))}
                 </div>
+              ) : discoverMutation.error ? (
+                <div className="text-center py-8 text-red-600">
+                  <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-300" />
+                  <p className="font-medium">Research Failed</p>
+                  <p className="text-sm">{discoverMutation.error.message}</p>
+                  <p className="text-xs text-gray-500 mt-2">Check API keys and try again</p>
+                </div>
+              ) : accountsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                </div>
+              ) : Array.isArray(accounts) && accounts.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded mb-3">
+                    ⚠️ Showing historical results - Run fresh research for current data
+                  </div>
+                  {accounts.map((account: Account) => (
+                    <motion.div
+                      key={account.id}
+                      initial={{ opacity: 0.6 }}
+                      animate={{ opacity: 0.8 }}
+                      className="p-4 bg-gray-50 rounded-lg border border-gray-200"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-gray-700">{account.companyName}</h4>
+                        <Badge className="bg-gray-100 text-gray-600">
+                          Historical
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-500">Run new research to see fresh results</p>
+                    </motion.div>
+                  ))}
+                </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <Target className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p>No accounts discovered yet</p>
-                  <p className="text-sm">Use the discovery panel to start research</p>
+                  <p>No research completed yet</p>
+                  <p className="text-sm">Select target systems and start research</p>
                 </div>
               )}
             </CardContent>

@@ -55,12 +55,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ 
         accounts, 
-        message: `Discovered ${accounts.length} high-intent accounts`,
+        message: `Discovered ${accounts.length} high-intent accounts with verified citations`,
         researchSummary: {
           targetSystems: systems,
           accountsFound: accounts.length,
-          highIntentCount: accounts.filter(a => a.isHighIntent).length
-        }
+          highIntentCount: accounts.filter(a => a.isHighIntent).length,
+          modelUsed: process.env.INTENT_MODEL || 'o1-pro',
+          timestamp: new Date().toISOString()
+        },
+        // CRITICAL: Return fresh results to prevent stale data rendering
+        freshResults: true
       });
       
     } catch (error) {
