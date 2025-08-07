@@ -1,0 +1,75 @@
+- This ensures the latest run is shown right away, with a background refresh.
+
+---
+
+### C) Add Research Session Scoping
+- Create a `researchSessions` table with `id`, `createdAt`.
+- At the start of `/api/discover-intent`:
+- Create a new session and attach `researchSessionId` to each saved account.
+- Modify `/api/accounts` to accept a `sessionId` query param and filter results.
+- Store `sessionId` in the client when a run starts and use it for fetching accounts.
+
+---
+
+### D) Enforce Schema & Citation Requirements
+- Define a JSON schema (e.g., with Zod) for intent results:
+- `companyName` (string)
+- `industry` (string)
+- `intentScore` (number)
+- `isHighIntent` (boolean)
+- `targetSystems` (array of strings)
+- `initiatives` (array, each with `title`, `summary`, `signals`, `citations[]`)
+- Reject any initiative with zero citations.
+- If schema fails or citations missing → return `{ accounts: [] }` and `message: "INSUFFICIENT_EVIDENCE"` without saving to DB.
+
+---
+
+### E) Backend Flow Update
+1. Build `facts[]` from source fetchers (or leave empty for now).
+2. Prompt the model to use **only** the provided `facts[]`.
+3. Parse and validate against schema.
+4. Reject and skip persistence if invalid or insufficient.
+
+---
+
+### F) Frontend Empty/Error States
+- **Loading**: show spinner.
+- **Error**: show “Discovery failed — please retry.”
+- **Empty**: show “No verified results found for these systems.”
+- Never fall back to demo data in production.
+
+---
+
+### G) Identify Contacts Improvements
+- Already gated on `account.domain`. Keep that.
+- Use `onSuccess: (_data, accountId) => queryClient.invalidateQueries({ queryKey: ['/api/contacts', accountId] })` to refresh only the affected account’s contacts.
+
+---
+
+### H) Add Diagnostics Routes
+- `GET /api/intent/_health` — returns `{ ok: true, model, tokensUsed }` for a test query.
+- `POST /api/intent/_echo` — returns the exact prompt, model, and raw response for debugging.
+
+---
+
+## Implementation Order
+1. Add `INTENT_MODEL` env, update backend call to use it, log the model.
+2. Change frontend mutation to setQueryData with returned accounts.
+3. Add researchSessions table and filter GET `/api/accounts` by `sessionId`.
+4. Add schema validation & citation enforcement before saving accounts.
+5. Remove any placeholder/demo data paths.
+6. Implement empty/error states in UI.
+7. Add diagnostics routes for model/prompt inspection.
+
+---
+
+## Acceptance Criteria
+- After clicking “Start Deep Research” with `o3-pro` configured, the list shows only accounts from that run.
+- No account is rendered without at least one citation.
+- The frontend never shows companies from prior runs unless intentionally loading that run’s `sessionId`.
+- `/api/intent/_health` and `/api/intent/_echo` return expected debug info.
+- Empty/error states show correctly instead of demo data.
+
+---
+
+Execute these changes now, preserving the existing UI and styling, but ensuring the data is **real, scoped, validated, and citation-backed** every time.
