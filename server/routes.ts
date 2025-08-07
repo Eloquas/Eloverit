@@ -112,10 +112,12 @@ CRITICAL: This is a debugging echo - return minimal JSON response.`;
       
       const researchSession = await storage.createResearchSession({
         id: sessionId,
-        sessionType: "account_discovery",
+        sessionType: "account_discovery", 
         targetSystems: systems,
         status: "running",
-        modelUsed: process.env.INTENT_MODEL || 'o1-pro'
+        modelUsed: process.env.INTENT_MODEL || 'o1-pro',
+        query: query || systems.join(', '),
+        isAutoMode: isAuto || false
       });
       
       console.log(`Starting deep research session ${sessionId} for target systems: ${systems.join(', ')}`);
