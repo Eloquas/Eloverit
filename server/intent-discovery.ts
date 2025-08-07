@@ -81,18 +81,24 @@ export class IntentDiscoveryService {
   // Build research prompt for account discovery
   private buildAccountResearchPrompt(query: string, targetSystems: string[]): string {
     return `
-Research high-intent B2B accounts based on this query: "${query}"
+You are conducting deep B2B intent research for companies showing signals related to: ${targetSystems.join(', ')}
 
-Focus on companies showing intent signals related to these systems: ${targetSystems.join(', ')}
+RESEARCH METHODOLOGY:
+1. Job Board Analysis: Search recent postings (last 90 days) for roles indicating system implementations
+2. 10-K Filing Analysis: Look for technology investment mentions in SEC filings
+3. Recent News Analysis: Search for digital transformation announcements, system upgrades, quality initiatives
+4. Leadership Changes: Track new hires in IT, Operations, Quality, Digital Transformation roles
 
-Look for these specific intent signals:
-1. Recent job postings for QA, SDLC, Enterprise Systems, or Digital Transformation roles
-2. Technology implementations or upgrades (especially MS Dynamics, Oracle, SAP)
-3. Financial reports mentioning IT investments or digital transformation
-4. Industry initiatives around quality assurance or process improvements
-5. Leadership changes in IT, Operations, or Quality departments
+TARGET INTENT SIGNALS:
+${targetSystems.includes('dynamics') ? '- Microsoft Dynamics 365 implementations, CRM upgrades, ERP modernization' : ''}
+${targetSystems.includes('oracle') ? '- Oracle system deployments, database migrations, enterprise software upgrades' : ''}
+${targetSystems.includes('sap') ? '- SAP implementations, S/4HANA migrations, enterprise resource planning projects' : ''}
+${targetSystems.includes('salesforce') ? '- Salesforce implementations, CRM migrations, sales automation projects' : ''}
+- QA automation initiatives, testing infrastructure upgrades  
+- SDLC improvements, DevOps transformations
+- Enterprise systems consolidation projects
 
-For each company found, provide ONLY verified information in this JSON format:
+Find 5-10 companies with VERIFIED high-intent signals. Provide ONLY factual information in this JSON format:
 {
   "accounts": [
     {

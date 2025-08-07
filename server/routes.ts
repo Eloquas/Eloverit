@@ -39,26 +39,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { query, systems, isAuto } = req.body;
       
-      if (!query || !systems || !Array.isArray(systems)) {
+      if (!systems || !Array.isArray(systems) || systems.length === 0) {
         return res.status(400).json({ 
-          message: "Missing required fields: query and systems array" 
+          message: "At least one target system must be selected" 
         });
       }
       
-      console.log(`Starting intent discovery for: ${query}`);
+      console.log(`Starting deep research for target systems: ${systems.join(', ')}`);
       
       const accounts = await intentDiscoveryService.discoverHighIntentAccounts(
-        query, 
+        query || systems.join(', '), 
         systems, 
         isAuto || false
       );
       
-      res.json({ accounts, message: `Discovered ${accounts.length} accounts` });
+      res.json({ 
+        accounts, 
+        message: `Discovered ${accounts.length} high-intent accounts`,
+        researchSummary: {
+          targetSystems: systems,
+          accountsFound: accounts.length,
+          highIntentCount: accounts.filter(a => a.isHighIntent).length
+        }
+      });
       
     } catch (error) {
       console.error("Intent discovery error:", error);
       res.status(500).json({ 
-        message: error.message || "Intent discovery failed" 
+        message: (error instanceof Error ? error.message : 'Intent discovery failed')
       });
     }
   });
@@ -98,7 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Contact identification error:", error);
       res.status(500).json({ 
-        message: error.message || "Contact identification failed" 
+        message: (error instanceof Error ? error.message : 'Contact identification failed')
       });
     }
   });

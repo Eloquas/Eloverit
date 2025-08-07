@@ -23,7 +23,9 @@ The platform is built with a **React + Vite + TypeScript + Tailwind CSS** fronte
 1. **Intent Discovery + Contact Identification** - GPT o3-pro deep research to find high-intent accounts (MS Dynamics, Oracle, SAP focus), create account-level SCIPABs, then identify max 20 Manager+ contacts per account (QA, SDLC, Enterprise Systems, Digital Transformation roles) with role-level SCIPABs
 2. **Messaging Generator + Trust/Story Builder** - Unified messaging engine with Trust/Story Builder toggle functionality, supporting 3 output types: 6-step email cadence, 3-step LinkedIn messaging (<250 chars), and video messaging scripts (2 options)
 
-**User Workflow:** Account/Intent Discovery → Contact Identification → Messaging Generation
+**User Workflow:** Target System Selection → GPT o3-pro Deep Research → Account SCIPABs → Contact Identification → Role SCIPABs → Messaging Generation
+
+**Intent Discovery Focus:** Input only target systems (MS Dynamics, Oracle, SAP) → GPT o3-pro researches via job boards, 10-K filings, recent news → Generate account-level SCIPABs for high-intent companies
 
 **UI Preservation:**
 *   **Color Scheme:** Maintains Avo's signature blue (#3B82F6) and purple accents

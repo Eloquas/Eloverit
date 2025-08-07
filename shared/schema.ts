@@ -38,6 +38,7 @@ export const accounts = pgTable("accounts", {
     job_postings?: any[];
     financial_reports?: string[];
     industry_analysis?: string;
+    rawData?: any;
   }>().default({}),
   
   // Account-level SCIPAB

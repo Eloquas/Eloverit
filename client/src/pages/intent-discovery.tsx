@@ -25,7 +25,6 @@ import { apiRequest } from "@/lib/apiRequest";
 import type { Account, Contact } from "@shared/schema";
 
 export default function IntentDiscovery() {
-  const [searchQuery, setSearchQuery] = useState("");
   const [isAutoMode, setIsAutoMode] = useState(false);
   const [selectedSystems, setSelectedSystems] = useState<string[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
@@ -61,10 +60,13 @@ export default function IntentDiscovery() {
   // Intent discovery mutation
   const discoverMutation = useMutation({
     mutationFn: async (data: { query: string; systems: string[]; isAuto: boolean }) => {
-      return apiRequest('/api/discover-intent', {
+      const response = await fetch('/api/discover-intent', {
         method: 'POST',
-        body: data,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
       });
+      if (!response.ok) throw new Error('Discovery failed');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/accounts'] });
@@ -74,9 +76,12 @@ export default function IntentDiscovery() {
   // Contact identification mutation
   const identifyContactsMutation = useMutation({
     mutationFn: async (accountId: number) => {
-      return apiRequest(`/api/accounts/${accountId}/identify-contacts`, {
+      const response = await fetch(`/api/accounts/${accountId}/identify-contacts`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
       });
+      if (!response.ok) throw new Error('Contact identification failed');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/contacts', selectedAccount?.id] });
@@ -92,10 +97,10 @@ export default function IntentDiscovery() {
   };
 
   const handleDiscover = () => {
-    if (!searchQuery.trim()) return;
+    if (selectedSystems.length === 0) return;
     
     discoverMutation.mutate({
-      query: searchQuery,
+      query: selectedSystems.join(', '), // Use selected systems as the query
       systems: selectedSystems,
       isAuto: isAutoMode,
     });
@@ -136,27 +141,16 @@ export default function IntentDiscovery() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Search Query */}
+              {/* Target Systems Selection */}
               <div>
-                <Label className="text-sm font-medium mb-2 block">Company or Industry</Label>
-                <Input
-                  placeholder="e.g., Fortune 500 manufacturing, Acme Corp..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-
-              {/* Target Systems */}
-              <div>
-                <Label className="text-sm font-medium mb-3 block">Target Systems</Label>
-                <div className="grid grid-cols-2 gap-2">
+                <Label className="text-sm font-medium mb-3 block">Select Target Systems for Research</Label>
+                <div className="grid grid-cols-1 gap-2">
                   {targetSystems.map((system) => (
                     <Badge
                       key={system.id}
-                      className={`cursor-pointer transition-all ${
+                      className={`cursor-pointer transition-all p-3 text-center ${
                         selectedSystems.includes(system.id)
-                          ? system.color
+                          ? system.color + ' border-2 border-current'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                       onClick={() => handleSystemToggle(system.id)}
@@ -165,6 +159,9 @@ export default function IntentDiscovery() {
                     </Badge>
                   ))}
                 </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  GPT o3-pro will research job boards, 10-K filings, and recent news for high-intent accounts
+                </p>
               </div>
 
               {/* Auto Mode */}
@@ -183,21 +180,30 @@ export default function IntentDiscovery() {
               <Button
                 className="w-full bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-600 hover:to-indigo-700"
                 onClick={handleDiscover}
-                disabled={!searchQuery.trim() || discoverMutation.isPending}
+                disabled={selectedSystems.length === 0 || discoverMutation.isPending}
               >
                 {discoverMutation.isPending ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <Search className="h-4 w-4 mr-2" />
                 )}
-                Discover High-Intent Accounts
+                Start Deep Research
               </Button>
+              
+              {selectedSystems.length === 0 && (
+                <p className="text-sm text-amber-600 bg-amber-50 p-2 rounded">
+                  Select at least one target system to begin research
+                </p>
+              )}
 
               {/* Status */}
               {discoverMutation.isPending && (
                 <div className="bg-blue-50 p-3 rounded-lg">
-                  <p className="text-sm text-blue-700">
-                    GPT o3-pro researching accounts with zero hallucinations...
+                  <p className="text-sm text-blue-700 font-medium">
+                    🔍 GPT o3-pro researching high-intent accounts...
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Analyzing job boards, 10-K filings, recent news for {selectedSystems.join(', ')} implementations
                   </p>
                 </div>
               )}
@@ -215,7 +221,7 @@ export default function IntentDiscovery() {
                   High-Intent Accounts
                 </div>
                 <Badge className="bg-green-100 text-green-800">
-                  {accounts?.length || 0} Found
+                  {Array.isArray(accounts) ? accounts.length : 0} Found
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -224,7 +230,7 @@ export default function IntentDiscovery() {
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                 </div>
-              ) : accounts?.length ? (
+              ) : Array.isArray(accounts) && accounts.length > 0 ? (
                 <div className="space-y-3">
                   {accounts.map((account: Account) => (
                     <motion.div
@@ -292,7 +298,7 @@ export default function IntentDiscovery() {
                   <Users className="h-5 w-5 mr-2 text-purple-600" />
                   Manager+ Contacts
                 </div>
-                {contacts?.length && (
+                {Array.isArray(contacts) && contacts.length > 0 && (
                   <Badge className="bg-purple-100 text-purple-800">
                     {contacts.length}/20 Max
                   </Badge>
@@ -310,7 +316,7 @@ export default function IntentDiscovery() {
                   <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                   <span className="ml-2 text-gray-600">Identifying contacts...</span>
                 </div>
-              ) : contacts?.length ? (
+              ) : Array.isArray(contacts) && contacts.length > 0 ? (
                 <div className="space-y-3">
                   {contacts.map((contact: Contact) => (
                     <motion.div
