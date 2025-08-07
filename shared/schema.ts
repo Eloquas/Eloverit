@@ -71,6 +71,14 @@ export const accounts = pgTable("accounts", {
   // CRITICAL: Session scoping for bulletproof data isolation
   researchSessionId: varchar("research_session_id", { length: 255 }), // Links to specific research run
   
+  // BULLETPROOF: Citations array for zero-hallucination enforcement
+  citations: json("citations").$type<Array<{
+    source_type: string;
+    url: string;
+    date: string;
+    relevance: string;
+  }>>().default([]),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

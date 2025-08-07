@@ -1,0 +1,190 @@
+You are an expert full‑stack engineer + QA lead working inside my Replit project. You will fix the Intent Discovery → SCIPAB → Contact Identification flow so it is accurate, grounded, and reliable. I am a no‑code user; follow these instructions exactly, ask clarifying questions only if required, and proceed to implement.
+
+0) Guardrails & Constraints
+Do not change the visual styling or UX flow except for necessary loading/disabled/error/empty states.
+
+Never display placeholder/demo companies in production.
+
+Do not expose server secrets in the browser.
+
+Every company claim must have a stored source citation or it must not appear.
+
+If evidence is insufficient, return an empty result with a clear message and do not save anything.
+
+1) Primary Bugs to Fix
+Model mismatch & grounding
+The backend is calling the wrong LLM and has no retrieval/grounding guardrails. UI says “o3‑pro/5‑pro” but server calls a different model.
+
+Stale data in UI
+The client renders whatever is already in the database. When research fails/returns nothing, old rows appear and look “incorrect.”
+
+Frontend discards POST results
+After /api/discover-intent, the client ignores the returned accounts and only refetches /api/accounts, which returns stale/global data.
+
+process.env used in the browser
+The React code attempts to access process.env.* which is undefined in the browser.
+
+No schema/citation enforcement
+Model output is saved without validating structure or requiring citations.
+
+2) Outcomes You Must Achieve
+Backend actually uses the configured intent model (default: o3-pro) and enforces grounded‑only rules.
+
+Client immediately renders the fresh research results returned by the POST, then optionally refreshes.
+
+Research results are scoped to a “research session” so each run shows only its own accounts.
+
+No citations → no claim. Invalid/missing fields are rejected before database save.
+
+The Identify Contacts (PDL) action works reliably and refreshes the right cache/key.
+
+The process.env error in the browser is eliminated by moving model display to a server health endpoint.
+
+Clear, user‑friendly loading, error, and empty states. No silent fallbacks.
+
+3) Implementation Plan (Do In This Order)
+A) Server: Centralize model selection and grounding
+Introduce a server‑side configuration for the intent model name with this behavior:
+
+Default to o3-pro.
+
+Allow override by environment variable.
+
+Log the chosen model for each run.
+
+Enforce a grounded‑only policy in the intent pipeline:
+
+The model must answer only from compiled facts (snippets + metadata) that the server passes in context.
+
+If facts are insufficient, the service returns “INSUFFICIENT_EVIDENCE” with an empty account list and does not save to the database.
+
+B) Server: Add diagnostics endpoints
+Create a health endpoint that returns { ok: true, chosenModel, timestamp }.
+
+This is used by the UI to display the model name without touching process.env in the browser.
+
+Create an echo endpoint for debugging that returns the exact prompt + model + raw response (redact secrets).
+
+This is only for internal diagnostics and can be hidden behind a flag.
+
+C) Client: Render fresh results from the mutation
+After a successful POST to discover intent, immediately set the account list from the returned payload.
+
+Optionally perform a background refresh afterward.
+
+If POST fails, show an error state and do not render old accounts.
+
+D) Session scoping (prevents old data bleed‑through)
+On each discover run, create a research session on the server and tag every saved account with that sessionId.
+
+The accounts GET endpoint must accept sessionId and only return rows for that session.
+
+The client stores the latest sessionId and uses it when fetching accounts.
+
+If no sessionId is provided, show an empty state with guidance.
+
+E) Validation & citation enforcement (server)
+Define a strict validation contract for accounts and initiatives (describe it; do not code in the UI):
+
+Required account fields: company name, domain (if available), industry, intent score (0–100), high‑intent flag, target systems list.
+
+Each initiative must include: title, summary, signals, and at least one citation with URL, title, and published/updated date.
+
+On the server, reject any payload that violates the contract or has initiatives without citations.
+
+On rejection, return a non‑error response with { accounts: [], message: "INSUFFICIENT_EVIDENCE" } and do not persist.
+
+F) UI states (no silent fallbacks)
+Loading: show spinner and “Deep research in progress…”.
+
+Error: show “Discovery failed. Please retry or adjust target systems.”
+
+Empty: show “No verified results. Try a different selection.”
+
+Never render prior/demo companies as a fallback.
+
+G) Fix the process.env issue in the browser
+Remove all usages of process.env.* from React components.
+
+Display the model name by calling the health endpoint you created in step B and showing the chosenModel returned.
+
+Keep all real configuration and secrets server‑side only.
+
+H) Identify Contacts reliability
+Keep the button disabled until the account has a valid domain.
+
+On success, update only the selected account’s contacts cache and show a success toast/state.
+
+On error, show a clear error reason: invalid key, rate‑limited with retry timing, or no results for the filters.
+
+I) Logging & observability
+Generate a traceId at the start of each research run.
+
+Log the full path with traceId: UI click → POST body → chosen model → token usage → number of facts → number of initiatives → save results.
+
+Redact PII and secrets from logs.
+
+4) Acceptance Tests (the work is done when ALL pass)
+Model parity
+
+The health endpoint shows the expected model (default o3-pro or overridden via environment).
+
+A sample run uses that model (verified in logs/echo endpoint).
+
+No stale data
+
+After clicking “Start Deep Research,” the list shows only the POST’s returned accounts.
+
+If POST fails or returns insufficient evidence, the list is empty with a helpful message. No old companies appear.
+
+Session isolation
+
+Running research twice creates two session IDs.
+
+Switching session IDs in the UI changes the account list accordingly.
+
+Without a valid session ID, the list is empty.
+
+Citation enforcement
+
+No initiative renders without at least one stored citation.
+
+Attempting to save data with missing/empty citations is rejected and not persisted.
+
+Identify Contacts
+
+The button enables only when a domain is present.
+
+On click, contacts fetch and display; on errors, the correct user‑friendly message appears.
+
+Only the selected account’s contacts are refreshed.
+
+process.env fixed
+
+There is no runtime error about process in the browser.
+
+The UI displays the model name via the health endpoint, not via process.env.
+
+UX states
+
+Loading, error, and empty states appear exactly as described; there is no silent fallback to demo data.
+
+5) Deployment Checklist
+Environment variable for the server model name is present and documented.
+
+Health and echo endpoints are deployed and reachable.
+
+Database migrations for research sessions are applied.
+
+Logs confirm grounded‑only behavior and citation counts.
+
+Frontend bundles with no references to process.env in browser code.
+
+A full end‑to‑end test run meets all acceptance tests above.
+
+6) If Anything Is Ambiguous, Ask These Questions (then proceed)
+Confirm the exact database layer in use (Drizzle/Prisma/etc.) for the research session field.
+
+Confirm the People Data Labs endpoint/filters licensed for QA, Product, Engineering/SDLC, Enterprise Apps, Business Systems roles.
+
+Confirm the exact account field names the UI expects (company name, domain, industry, target systems, intent score, isHighIntent).

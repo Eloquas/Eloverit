@@ -96,10 +96,16 @@ export class DatabaseStorage implements IStorage {
     return session;
   }
 
-  async updateResearchSession(id: string, updates: Partial<InsertResearchSession>): Promise<ResearchSession> {
+  async updateResearchSession(id: string, updates: any): Promise<ResearchSession> {
+    const validUpdates: any = {};
+    if (updates.status) validUpdates.status = updates.status;
+    if (updates.totalAccounts !== undefined) validUpdates.totalAccounts = updates.totalAccounts;
+    if (updates.validatedAccounts !== undefined) validUpdates.validatedAccounts = updates.validatedAccounts;
+    if (updates.citationCount !== undefined) validUpdates.citationCount = updates.citationCount;
+    
     const [session] = await db
       .update(researchSessions)
-      .set(updates)
+      .set(validUpdates)
       .where(eq(researchSessions.id, id))
       .returning();
     return session;

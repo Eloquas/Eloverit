@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/apiRequest";
+import { useToast } from "@/hooks/use-toast";
 import type { Account, Contact } from "@shared/schema";
 
 export default function IntentDiscovery() {
@@ -32,8 +33,10 @@ export default function IntentDiscovery() {
   const [currentResearchResults, setCurrentResearchResults] = useState<Account[]>([]);
   const [lastResearchRun, setLastResearchRun] = useState<string | null>(null);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [modelInfo, setModelInfo] = useState<{ chosenModel: string; ok: boolean } | null>(null);
 
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const targetSystems = [
     { id: "dynamics", name: "MS Dynamics 365", color: "bg-blue-100 text-blue-800" },
@@ -42,10 +45,16 @@ export default function IntentDiscovery() {
     { id: "salesforce", name: "Salesforce", color: "bg-cyan-100 text-cyan-800" }
   ];
 
-  // Fetch discovered accounts with session scoping (fallback for historical data)
+  // STEP G: Query model info from health endpoint instead of process.env
+  const { data: healthData } = useQuery({
+    queryKey: ['/api/intent/_health'],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // STEP D: Fetch discovered accounts with session scoping (fallback for historical data)
   const { data: accounts, isLoading: accountsLoading } = useQuery({
     queryKey: ['/api/accounts', currentSessionId],
-    enabled: !currentResearchResults.length, // Only fetch if no fresh results
+    enabled: !currentResearchResults.length && !!currentSessionId, // Only fetch if no fresh results and have session
     queryFn: async () => {
       const url = currentSessionId 
         ? `/api/accounts?sessionId=${currentSessionId}` 
@@ -277,7 +286,9 @@ export default function IntentDiscovery() {
                 <div className="text-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mx-auto mb-4" />
                   <p className="text-sm font-medium text-gray-700">Deep research in progress...</p>
-                  <p className="text-xs text-gray-500 mt-1">Using {process.env.INTENT_MODEL || 'o1-pro'} for advanced reasoning</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Using {healthData?.chosenModel || 'o1-pro'} for bulletproof validation
+                  </p>
                 </div>
               ) : hasError ? (
                 <div className="text-center py-8">

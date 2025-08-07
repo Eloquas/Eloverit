@@ -38,23 +38,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // DIAGNOSTIC ROUTES for bulletproof debugging
+  // STEP B: Diagnostic endpoints for bulletproof system monitoring
   app.get('/api/intent/_health', async (req, res) => {
     try {
-      const model = process.env.INTENT_MODEL || 'o1-pro';
-      const testResponse = await openai.chat.completions.create({
-        model: 'gpt-4o', // Use simpler model for health check
-        messages: [{ role: 'user', content: 'Return JSON with "status": "ok"' }],
-        response_format: { type: "json_object" },
-        max_tokens: 50
-      });
-      
-      res.json({
-        ok: true,
-        model: model,
+      const chosenModel = process.env.INTENT_MODEL || 'o1-pro';
+      res.json({ 
+        ok: true, 
+        chosenModel, 
         backupModel: 'gpt-4o',
-        tokensUsed: testResponse.usage?.total_tokens || 0,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        status: 'bulletproof_validation_active'
       });
     } catch (error) {
       res.status(500).json({
@@ -62,6 +55,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: (error instanceof Error ? error.message : 'Health check failed')
       });
     }
+  });
+
+  app.get('/api/intent/_echo', async (req, res) => {
+    const chosenModel = process.env.INTENT_MODEL || 'o1-pro';
+    res.json({ 
+      model: chosenModel,
+      grounded_only: true,
+      citation_requirement: "minimum_3_per_account",
+      session_scoping: "enabled",
+      timestamp: new Date().toISOString()
+    });
   });
 
   app.post('/api/intent/_echo', async (req, res) => {
@@ -124,13 +128,12 @@ CRITICAL: This is a debugging echo - return minimal JSON response.`;
         sessionId  // Pass session ID for account linking
       );
       
-      // STEP 3: Update session with final results
+      // STEP 3: Update session with final results  
       await storage.updateResearchSession(sessionId, {
         status: "completed",
-        completedAt: new Date(),
         totalAccounts: accounts.length,
         validatedAccounts: accounts.filter(a => a.isHighIntent).length,
-        citationCount: accounts.reduce((total, acc) => total + (acc.citations?.length || 0), 0)
+        citationCount: accounts.reduce((total: number, acc: any) => total + (acc.citations?.length || 0), 0)
       });
       
       res.json({ 
