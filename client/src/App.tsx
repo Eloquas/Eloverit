@@ -1,4 +1,4 @@
-import { Route, Switch, Link } from "wouter";
+import { Route, Switch, Link, useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,83 +15,48 @@ import {
   ArrowRight
 } from "lucide-react";
 
+// Import pages  
+import IntentDiscovery from "@/pages/intent-discovery";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
+import { Toaster } from "@/components/ui/toaster";
+
 // Module selection component
 function ModuleSelector() {
   const modules = [
     {
-      id: "upload",
-      title: "Account Upload & Parsing",
-      description: "CSV/manual entry with PDL autofill",
-      icon: Upload,
-      status: "ready",
-      isPainkiller: true
-    },
-    {
-      id: "intent",
-      title: "Intent Discovery Agent", 
-      description: "Scan 10-Ks, job boards, tech usage databases",
+      id: "intent-discovery",
+      title: "Intent Discovery + Contact Identification",
+      description: "GPT o3-pro research for high-intent accounts (MS Dynamics, Oracle, SAP) → identify 20 max Manager+ contacts → create SCIPABs",
       icon: Target,
       status: "ready",
-      isPainkiller: true
+      isPainkiller: true,
+      workflow: "Step 1",
+      details: "Account-level SCIPABs → Role-level contact identification (QA, SDLC, Enterprise Systems, Digital Transformation)"
     },
     {
-      id: "contacts",
-      title: "Contact Identification",
-      description: "PDL API integration with role categorization", 
-      icon: Users,
-      status: "ready",
-      isPainkiller: true
-    },
-    {
-      id: "messaging",
-      title: "Messaging Generator",
-      description: "SCIPAB frameworks, email sequences, LinkedIn DMs",
+      id: "messaging-generator",
+      title: "Messaging Generator + Trust/Story Builder",
+      description: "Unified messaging with Trust/Story Builder toggle: 6-step email cadence, 3-step LinkedIn, video scripts",
       icon: MessageSquare,
-      status: "ready",
-      isPainkiller: true
-    },
-    {
-      id: "trust",
-      title: "Trust/Story Builder",
-      description: "GPT model selection with hallucination prevention",
-      icon: Heart,
-      status: "ready",
-      isPainkiller: false
-    },
-    {
-      id: "calls",
-      title: "Call Reflection Engine",
-      description: "Transcript processing for action items",
-      icon: Mic,
-      status: "ready",
-      isPainkiller: false
-    },
-    {
-      id: "dashboard",
-      title: "Rep Dashboard",
-      description: "Account tracking and meeting outcomes",
-      icon: BarChart3,
-      status: "ready",
-      isPainkiller: true
-    },
-    {
-      id: "slides",
-      title: "Slide Deck Builder",
-      description: "Template-based presentation generation",
-      icon: Presentation,
-      status: "ready",
-      isPainkiller: false
+      status: "ready", 
+      isPainkiller: true,
+      workflow: "Step 2",
+      details: "Trust/Story Builder integrated as toggle functionality with 3 output formats"
     }
   ];
+
+  const [, navigate] = useLocation();
 
   const handleModuleSelect = (module: any) => {
     console.log(`User selected module: ${module.title}`);
     
-    // Here we'll integrate with the actual implementation
-    const message = `Ready to build: ${module.title}\n\nThis will be the first painkiller module implemented.`;
-    alert(message);
-    
-    // TODO: Navigate to module implementation or trigger build process
+    // Navigate to the actual module implementation
+    if (module.id === "intent-discovery") {
+      navigate("/intent-discovery");
+    } else if (module.id === "messaging-generator") {
+      navigate("/messaging-generator");
+    }
   };
 
   return (
@@ -127,17 +92,17 @@ function ModuleSelector() {
             transition={{ duration: 0.6 }}
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Choose Your First Painkiller Module
+              Unified Workflow Modules
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Complete platform restart focusing on essential features. 
-              Select which core module to implement first for maximum impact.
+              Two core modules streamlined for maximum impact. 
+              Account/Intent Discovery → Contact Identification → Messaging Generation
             </p>
           </motion.div>
         </div>
 
         {/* Module Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {modules.map((module, index) => (
             <motion.div
               key={module.id}
@@ -145,38 +110,37 @@ function ModuleSelector() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
             >
-              <Card className={`h-full avo-card cursor-pointer transition-all duration-200 hover:scale-105 ${
-                module.isPainkiller ? 'ring-2 ring-cyan-200 bg-gradient-to-br from-cyan-50 to-blue-50' : ''
-              }`}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      module.isPainkiller 
-                        ? 'bg-gradient-to-br from-cyan-500 to-indigo-600' 
-                        : 'bg-gradient-to-br from-gray-400 to-gray-600'
-                    }`}>
-                      <module.icon className="h-5 w-5 text-white" />
-                    </div>
-                    {module.isPainkiller && (
-                      <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">
-                        Painkiller
+              <Card className="h-full avo-card cursor-pointer transition-all duration-200 hover:scale-105 ring-2 ring-cyan-200 bg-gradient-to-br from-cyan-50 to-blue-50">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                        <module.icon className="h-6 w-6 text-white" />
+                      </div>
+                      <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-sm">
+                        {module.workflow}
                       </Badge>
-                    )}
+                    </div>
+                    <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">
+                      Painkiller
+                    </Badge>
                   </div>
-                  <CardTitle className="text-lg font-semibold text-gray-900">
+                  <CardTitle className="text-xl font-bold text-gray-900 mb-2">
                     {module.title}
                   </CardTitle>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 mb-3">
                     {module.description}
+                  </p>
+                  <p className="text-xs text-gray-500 italic">
+                    {module.details}
                   </p>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <Button 
-                    variant={module.isPainkiller ? "default" : "outline"}
-                    className="w-full group"
+                    className="w-full group bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-600 hover:to-indigo-700"
                     onClick={() => handleModuleSelect(module)}
                   >
-                    Build First
+                    Build This Module
                     <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </CardContent>
@@ -238,18 +202,22 @@ function ModuleSelector() {
 
 export default function App() {
   return (
-    <Switch>
-      <Route path="/" component={ModuleSelector} />
-      <Route component={() => (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Page Not Found</h1>
-            <Link href="/">
-              <Button>Return Home</Button>
-            </Link>
+    <QueryClientProvider client={queryClient}>
+      <Toaster />
+      <Switch>
+        <Route path="/" component={ModuleSelector} />
+        <Route path="/intent-discovery" component={IntentDiscovery} />
+        <Route component={() => (
+          <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">Page Not Found</h1>
+              <Link href="/">
+                <Button>Return Home</Button>
+              </Link>
+            </div>
           </div>
-        </div>
-      )} />
-    </Switch>
+        )} />
+      </Switch>
+    </QueryClientProvider>
   );
 }

@@ -19,15 +19,11 @@ Eloverit.ai is a precision sales intent engine purpose-built for outbound person
 
 The platform is built with a **React + Vite + TypeScript + Tailwind CSS** frontend, an **Express.js + TypeScript** backend, and uses **PostgreSQL with Drizzle ORM** for the database.
 
-**Core Functional Modules (To Be Built):**
-1. **Account Upload & Parsing** - CSV/manual entry with PDL autofill
-2. **Intent Discovery Agent** - Scan 10-Ks, job boards, tech usage databases  
-3. **Contact Identification** - PDL API integration with role categorization
-4. **Messaging Generator** - SCIPAB frameworks, email sequences, LinkedIn DMs
-5. **Trust/Story Builder** - GPT model selection with hallucination prevention
-6. **Call Reflection Engine** - Transcript processing for action items
-7. **Rep Dashboard** - Account tracking and meeting outcomes
-8. **Slide Deck Builder** - Template-based presentation generation
+**Core Unified Modules (To Be Built):**
+1. **Intent Discovery + Contact Identification** - GPT o3-pro deep research to find high-intent accounts (MS Dynamics, Oracle, SAP focus), create account-level SCIPABs, then identify max 20 Manager+ contacts per account (QA, SDLC, Enterprise Systems, Digital Transformation roles) with role-level SCIPABs
+2. **Messaging Generator + Trust/Story Builder** - Unified messaging engine with Trust/Story Builder toggle functionality, supporting 3 output types: 6-step email cadence, 3-step LinkedIn messaging (<250 chars), and video messaging scripts (2 options)
+
+**User Workflow:** Account/Intent Discovery → Contact Identification → Messaging Generation
 
 **UI Preservation:**
 *   **Color Scheme:** Maintains Avo's signature blue (#3B82F6) and purple accents
