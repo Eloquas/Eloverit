@@ -242,7 +242,7 @@ Base this on their actual intent signals. Do not invent details not supported by
           researchType: 'contact_identification',
           prompt: `Contact search attempted for ${account.companyName}`,
           response: { 
-            status: 'no_domain',
+            error: 'no_domain',
             message: 'Company domain required for People Data Labs API'
           },
           model: 'pdl_api',
@@ -265,7 +265,7 @@ Base this on their actual intent signals. Do not invent details not supported by
           researchType: 'contact_identification',
           prompt: `PDL API call for ${account.companyName} (${account.domain})`,
           response: { 
-            status: pdlResult.status, 
+            error: pdlResult.status, 
             message: pdlResult.message,
             retryAfter: pdlResult.retryAfter 
           },
@@ -294,7 +294,7 @@ Base this on their actual intent signals. Do not invent details not supported by
         researchType: 'contact_identification',
         prompt: `PDL API call for ${account.companyName} (${account.domain})`,
         response: { 
-          status: 'success', 
+          success: true, 
           contactsFound: savedContacts.length,
           source: 'people_data_labs',
           isRealData: true
