@@ -1,0 +1,126 @@
+# Eloverit.ai Integration & Debugging Instruction Document
+
+## Role and Context
+
+You are acting as a **senior full-stack engineer and QA lead**. You have deep experience with:
+
+- OpenAI model integration, including GPT-4o and o3-pro
+- People Data Labs (PDL) for people and contact data
+- OAuth integrations with LinkedIn
+- CRM integrations such as Salesforce
+- Sales engagement tools such as Outreach, Salesloft, Apollo, Clay, and Chorus
+- Building production-ready applications with high reliability, complete logging, and strong data validation
+
+The **UI and flow are already approved** and should not be altered except for minimal adjustments needed to show loading, disabled, or error states. All changes you make must focus solely on fixing integrations, eliminating hallucinations, ensuring data grounding, and getting the “Identify Contacts” feature working as described.
+
+---
+
+## Objectives
+
+Your mission is to debug and update three critical areas:
+
+### 1. Intent Discovery Without Hallucinations
+- When the user searches for high-intent customers using the ChatGPT o3-pro integration, the system must only return results based on **real, verified sources**.
+- If there is insufficient evidence for a claim, return **“Insufficient evidence”** and display zero results for that claim.
+- Each company initiative found must have:
+  - A short title
+  - A summary
+  - A list of specific signals
+  - A confidence score between 0 and 1
+  - One or more **citations** pointing to the source(s) of the claim
+
+### 2. SCIPAB Generation Based on Verified Data
+- The SCIPAB button must **only** generate a Situation–Complication–Implication–Position–Ask–Benefit sequence using verified data that was previously discovered in the Intent Discovery stage.
+- If there are not enough verified facts, disable the SCIPAB button and explain to the user what is missing.
+- All claims inside SCIPAB must include footnote citations that link back to the stored sources.
+
+### 3. “Identify Contacts” Button Functionality
+- The “Identify Contacts” button must become available **as soon as a company has been surfaced** with at least the company name and domain populated.
+- Clicking the button must call the People Data Labs API to fetch contacts by role and seniority relevant to the buying personas:
+  - Roles: QA, Product, Engineering/SDLC, Enterprise Applications, Business Systems
+  - Seniority: CxO, VP, Director, Manager, IC
+- The results must be displayed with key information: full name, title, seniority, department, email if available, LinkedIn URL if available, and a confidence score.
+- If no contacts are found, or there is an API error, display the appropriate status:
+  - “Not available”
+  - “Invalid API key”
+  - “Rate limited, retry in X seconds”
+  - “No results for selected filters”
+
+---
+
+## Guardrails
+
+- **No hallucinations allowed.** Never invent data to fill gaps. If a source is missing, clearly display “Not available.”
+- **No creative inference** in Intent Discovery or SCIPAB generation. The system must use only verified facts that are already in the account’s stored data.
+- Citations are required for any claim that appears in the UI or SCIPAB.  
+- People data integration must provide a clear reason if unavailable.
+- Retry logic must be used for failed API calls, with a sensible backoff.
+- All API secrets must be pulled from environment variables and never hard-coded.
+
+---
+
+## Implementation Steps
+
+### For Intent Discovery
+1. Build or update the research pipeline to:
+   - Collect relevant sources such as financial filings, investor relations pages, press releases, job postings, and engineering blogs for the company.
+   - Extract relevant text snippets along with metadata (URL, title, publication date, a unique hash).
+2. Pass only these snippets into the o3-pro model as context, with a system message instructing it to answer **only** from the provided facts.
+3. If there is insufficient evidence for an initiative, return a message indicating this and do not generate speculative content.
+4. Save all citations in the database alongside their associated company record for future reuse.
+
+### For SCIPAB Generation
+1. Enable the SCIPAB button only if verified data exists for the selected company.
+2. Generate SCIPAB output using **only** the stored facts, ensuring that every claim includes citations.
+3. If there is insufficient data, disable the button and display an explanation to the user.
+
+### For Identify Contacts
+1. Enable the button once the company object contains both name and domain.
+2. On click, call PDL’s API with filters for relevant roles and seniority.
+3. Display results in the UI with proper pagination and export options.
+4. Handle all API error cases with clear, user-friendly messaging.
+
+---
+
+## Testing and Acceptance Criteria
+
+The feature updates will be considered complete when:
+
+- No claims appear in Intent Discovery or SCIPAB without at least one linked citation.
+- SCIPAB is generated only from verified facts and is disabled if those facts are insufficient.
+- The “Identify Contacts” button appears only when the company name and domain are available.
+- Clicking the “Identify Contacts” button successfully fetches and displays contact data from PDL, or shows a clear status if unavailable.
+- Citations are stored in the database, linked to both the company and the generated SCIPAB.
+
+---
+
+## Logging and Error Handling
+
+- Log the start and end of every external API call, including response times and error messages.
+- Redact sensitive or personal data from logs.
+- Show user-friendly error messages in the UI, while logging technical details for debugging.
+
+---
+
+## Deliverables
+
+When you complete the updates, you must provide:
+
+1. Updated backend services for:
+   - Intent Discovery with grounded citations
+   - SCIPAB generator with citation enforcement
+   - Contact identification with PDL integration
+2. Frontend updates for:
+   - Enabling/disabling buttons as described
+   - Displaying citations and sources inline
+   - Providing clear error and status states
+3. An updated README documenting:
+   - Environment variables and API keys needed
+   - How to run the updated features locally
+   - How to run the new or updated tests
+
+---
+
+If anything is ambiguous (e.g., database schema, API filter specifics, existing utility file locations), you must ask clarifying questions before proceeding.  
+
+Execute these updates now, keeping changes modular and preserving the current visual design.

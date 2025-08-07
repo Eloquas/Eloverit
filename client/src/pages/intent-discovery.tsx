@@ -269,10 +269,10 @@ export default function IntentDiscovery() {
                         <Button
                           size="sm"
                           onClick={() => handleIdentifyContacts(account)}
-                          disabled={identifyContactsMutation.isPending}
+                          disabled={identifyContactsMutation.isPending || !account.domain}
                         >
                           <UserPlus className="h-3 w-3 mr-1" />
-                          Find Contacts
+                          {!account.domain ? 'No Domain' : 'Find Contacts (PDL)'}
                         </Button>
                       </div>
                     </motion.div>

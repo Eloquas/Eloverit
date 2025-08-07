@@ -1,46 +1,26 @@
-interface PDLCompanyData {
-  name: string;
-  industry: string;
-  size: string;
-  location: {
-    country: string;
-    region: string;
-    locality: string;
-  };
-  founded: number;
-  employee_count: number;
-  revenue: string;
-  technologies: string[];
-  recent_news: string[];
-  funding_rounds: Array<{
-    amount: string;
-    type: string;
-    date: string;
-  }>;
-  job_postings: Array<{
-    title: string;
-    department: string;
-    posted_date: string;
-    requirements: string[];
-  }>;
+// People Data Labs integration service
+interface PDLContact {
+  full_name?: string;
+  first_name?: string;
+  last_name?: string;
+  job_title?: string;
+  job_title_role?: string;
+  job_title_levels?: string[];
+  emails?: Array<{ address: string; type: string }>;
+  linkedin_url?: string;
+  work_email?: string;
+  job_company_name?: string;
+  job_company_website?: string;
+  industry?: string;
+  summary?: string;
 }
 
-interface PDLPersonData {
-  full_name: string;
-  job_title: string;
-  job_company_name: string;
-  experience: Array<{
-    company: string;
-    title: string;
-    start_date: string;
-    end_date: string;
-  }>;
-  skills: string[];
-  education: Array<{
-    school: string;
-    degree: string;
-    field_of_study: string;
-  }>;
+interface PDLSearchParams {
+  company?: string;
+  title?: string[];
+  seniority?: string[];
+  size?: number;
+  pretty?: boolean;
 }
 
 export class PDLService {
@@ -48,417 +28,228 @@ export class PDLService {
   private baseUrl = 'https://api.peopledatalabs.com/v5';
 
   constructor() {
-    this.apiKey = process.env.PDL_API_KEY || '';
+    this.apiKey = process.env.PDL_API_KEY!;
     if (!this.apiKey) {
-      throw new Error('PDL_API_KEY is required');
+      throw new Error('PDL_API_KEY environment variable is required');
     }
   }
 
-  async enrichCompany(companyName: string): Promise<PDLCompanyData | null> {
-    try {
-      const response = await fetch(`${this.baseUrl}/company/enrich`, {
-        method: 'POST',
-        headers: {
-          'X-Api-Key': this.apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: companyName,
-        }),
-      });
-
-      if (!response.ok) {
-        console.error(`PDL Company API error: ${response.status}`);
-        return null;
-      }
-
-      const data = await response.json();
-      return this.formatCompanyData(data);
-    } catch (error) {
-      console.error('PDL Company enrichment error:', error);
-      return null;
-    }
-  }
-
-  async enrichPerson(email: string): Promise<PDLPersonData | null> {
-    try {
-      const response = await fetch(`${this.baseUrl}/person/enrich`, {
-        method: 'POST',
-        headers: {
-          'X-Api-Key': this.apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email,
-        }),
-      });
-
-      if (!response.ok) {
-        console.error(`PDL Person API error: ${response.status}`);
-        return null;
-      }
-
-      const data = await response.json();
-      return this.formatPersonData(data);
-    } catch (error) {
-      console.error('PDL Person enrichment error:', error);
-      return null;
-    }
-  }
-
-  async getCompanyJobPostings(companyName: string): Promise<Array<{
-    title: string;
-    department: string;
-    posted_date: string;
-    requirements: string[];
-  }>> {
-    try {
-      const response = await fetch(`${this.baseUrl}/job/search`, {
-        method: 'POST',
-        headers: {
-          'X-Api-Key': this.apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: {
-            company_name: companyName,
-            posted_date: { gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString() }, // Last 90 days
-          },
-          size: 20,
-        }),
-      });
-
-      if (!response.ok) {
-        console.error(`PDL Job Search API error: ${response.status}`);
-        return [];
-      }
-
-      const data = await response.json();
-      return data.data?.map((job: any) => ({
-        title: job.title,
-        department: job.department,
-        posted_date: job.posted_date,
-        requirements: job.requirements || [],
-      })) || [];
-    } catch (error) {
-      console.error('PDL Job search error:', error);
-      return [];
-    }
-  }
-
-  private formatCompanyData(data: any): PDLCompanyData {
-    return {
-      name: data.name || '',
-      industry: data.industry || '',
-      size: data.size || '',
-      location: {
-        country: data.location?.country || '',
-        region: data.location?.region || '',
-        locality: data.location?.locality || '',
-      },
-      founded: data.founded || 0,
-      employee_count: data.employee_count || 0,
-      revenue: data.revenue || '',
-      technologies: data.technologies || [],
-      recent_news: data.recent_news || [],
-      funding_rounds: data.funding_rounds || [],
-      job_postings: [],
-    };
-  }
-
-  private formatPersonData(data: any): PDLPersonData {
-    return {
-      full_name: data.full_name || '',
-      job_title: data.job_title || '',
-      job_company_name: data.job_company_name || '',
-      experience: data.experience || [],
-      skills: data.skills || [],
-      education: data.education || [],
-    };
-  }
-
-  // Helper method to analyze company for SCIPAB research
-  async analyzeCompanyForSCIPAB(companyName: string): Promise<{
-    initiatives: string[];
-    systems: string[];
-    painPoints: string[];
-    hiringPatterns: string[];
-    industry: string;
-    companySize: string;
+  // Get targeted contact profiles for a company
+  async searchContacts(companyDomain: string, companyName: string): Promise<{
+    contacts: PDLContact[];
+    status: 'success' | 'no_results' | 'rate_limited' | 'invalid_key' | 'error';
+    retryAfter?: number;
+    message?: string;
   }> {
-    const [companyData, jobPostings] = await Promise.all([
-      this.enrichCompany(companyName),
-      this.getCompanyJobPostings(companyName),
-    ]);
-
-    const initiatives = this.extractInitiatives(companyData, jobPostings);
-    const systems = this.extractSystems(companyData, jobPostings);
-    const painPoints = this.inferPainPoints(companyData, jobPostings);
-    const hiringPatterns = this.analyzeHiringPatterns(jobPostings);
-
-    return {
-      initiatives,
-      systems,
-      painPoints,
-      hiringPatterns,
-      industry: companyData?.industry || 'Unknown',
-      companySize: companyData?.size || 'Unknown',
-    };
-  }
-
-  private extractInitiatives(companyData: PDLCompanyData | null, jobPostings: any[]): string[] {
-    const initiatives: string[] = [];
-    
-    // Extract from job postings with enhanced detection
-    const allJobText = jobPostings.map(job => 
-      `${job.title} ${job.requirements?.join(' ')} ${job.department || ''}`
-    ).join(' ').toLowerCase();
-    
-    // Digital transformation initiatives
-    if (allJobText.includes('digital') || allJobText.includes('transformation')) {
-      initiatives.push('Digital transformation and modernization');
-    }
-    
-    // QA and testing initiatives
-    if (allJobText.includes('qa') || allJobText.includes('quality') || allJobText.includes('testing') || allJobText.includes('automation test')) {
-      initiatives.push('Test automation and QA process improvement');
-    }
-    
-    // ERP initiatives with specific systems
-    if (allJobText.includes('sap') && (allJobText.includes('migration') || allJobText.includes('implementation') || allJobText.includes('upgrade'))) {
-      initiatives.push('SAP system migration/upgrade project');
-    }
-    if (allJobText.includes('oracle') && (allJobText.includes('fusion') || allJobText.includes('cloud') || allJobText.includes('migration'))) {
-      initiatives.push('Oracle Fusion Cloud migration');
-    }
-    if (allJobText.includes('d365') || allJobText.includes('dynamics')) {
-      initiatives.push('Microsoft Dynamics 365 implementation');
-    }
-    
-    // CRM initiatives
-    if (allJobText.includes('salesforce') && (allJobText.includes('implementation') || allJobText.includes('admin') || allJobText.includes('developer'))) {
-      initiatives.push('Salesforce CRM optimization and expansion');
-    }
-    
-    // Cloud initiatives
-    if (allJobText.includes('cloud') && (allJobText.includes('migration') || allJobText.includes('aws') || allJobText.includes('azure'))) {
-      initiatives.push('Enterprise cloud migration strategy');
-    }
-    
-    // DevOps and automation
-    if (allJobText.includes('devops') || allJobText.includes('ci/cd') || allJobText.includes('pipeline')) {
-      initiatives.push('DevOps pipeline automation and CI/CD implementation');
-    }
-    
-    // Data and analytics
-    if (allJobText.includes('data') && (allJobText.includes('analytics') || allJobText.includes('scientist') || allJobText.includes('engineer'))) {
-      initiatives.push('Data analytics and business intelligence modernization');
-    }
-    
-    // Cybersecurity
-    if (allJobText.includes('security') || allJobText.includes('cyber') || allJobText.includes('compliance')) {
-      initiatives.push('Cybersecurity and compliance enhancement');
-    }
-    
-    // Mobile and customer experience
-    if (allJobText.includes('mobile') || allJobText.includes('app') || allJobText.includes('customer experience')) {
-      initiatives.push('Mobile application and customer experience improvement');
-    }
-
-    // Industry-specific initiatives based on company data
-    if (companyData?.industry) {
-      const industry = companyData.industry.toLowerCase();
-      if (industry.includes('airline') || industry.includes('aviation') || industry.includes('transportation')) {
-        if (allJobText.includes('operational') || allJobText.includes('flight') || allJobText.includes('passenger')) {
-          initiatives.push('Operational efficiency and passenger experience technology');
-        }
-      }
-      if (industry.includes('healthcare') || industry.includes('medical')) {
-        if (allJobText.includes('electronic health') || allJobText.includes('ehr') || allJobText.includes('patient')) {
-          initiatives.push('Electronic health records and patient data systems');
-        }
-      }
-      if (industry.includes('financial') || industry.includes('banking')) {
-        if (allJobText.includes('regulatory') || allJobText.includes('compliance') || allJobText.includes('risk')) {
-          initiatives.push('Financial regulatory compliance and risk management systems');
-        }
-      }
-    }
-
-    return initiatives.length > 0 ? initiatives : ['Technology modernization', 'Process automation'];
-  }
-
-  private extractSystems(companyData: PDLCompanyData | null, jobPostings: any[]): string[] {
-    const systems: string[] = [];
-    
-    // From job postings - more comprehensive search
-    const allText = jobPostings.map(job => `${job.title} ${job.requirements?.join(' ')}`).join(' ').toLowerCase();
-    
-    // ERP Systems
-    if (allText.includes('sap')) systems.push('SAP ERP');
-    if (allText.includes('oracle') && (allText.includes('erp') || allText.includes('fusion'))) systems.push('Oracle ERP');
-    if (allText.includes('d365') || allText.includes('dynamics')) systems.push('Dynamics 365');
-    if (allText.includes('netsuite')) systems.push('NetSuite');
-    
-    // CRM Systems
-    if (allText.includes('salesforce')) systems.push('Salesforce CRM');
-    if (allText.includes('hubspot')) systems.push('HubSpot');
-    if (allText.includes('pipedrive')) systems.push('Pipedrive');
-    
-    // HR Systems
-    if (allText.includes('workday')) systems.push('Workday HCM');
-    if (allText.includes('successfactors')) systems.push('SAP SuccessFactors');
-    if (allText.includes('bamboohr')) systems.push('BambooHR');
-    
-    // Testing & QA
-    if (allText.includes('selenium')) systems.push('Selenium Testing');
-    if (allText.includes('testcomplete')) systems.push('TestComplete');
-    if (allText.includes('katalon')) systems.push('Katalon Studio');
-    if (allText.includes('cypress')) systems.push('Cypress Testing');
-    
-    // DevOps & Project Management
-    if (allText.includes('jira')) systems.push('Jira');
-    if (allText.includes('servicenow')) systems.push('ServiceNow');
-    if (allText.includes('jenkins')) systems.push('Jenkins CI/CD');
-    if (allText.includes('azure devops')) systems.push('Azure DevOps');
-    
-    // From company technologies
-    if (companyData?.technologies) {
-      const techs = companyData.technologies.map(t => t.toLowerCase());
+    try {
+      console.log(`Starting PDL contact search for ${companyName} (${companyDomain})`);
       
-      // Map technology names to business systems
-      const techMapping: Record<string, string> = {
-        'salesforce': 'Salesforce CRM',
-        'sap': 'SAP ERP',
-        'oracle': 'Oracle Database',
-        'workday': 'Workday HCM',
-        'servicenow': 'ServiceNow',
-        'jira': 'Jira',
-        'dynamics': 'Dynamics 365',
-        'netsuite': 'NetSuite ERP'
+      // Target roles for QA, SDLC, Enterprise Systems buyers
+      const targetTitles = [
+        'qa', 'quality assurance', 'quality engineer', 'test engineer', 'test manager',
+        'product manager', 'product owner', 'product director',
+        'engineering manager', 'engineering director', 'development manager', 'software engineering manager',
+        'enterprise systems', 'business systems', 'systems architect', 'enterprise architect',
+        'devops', 'platform engineer', 'reliability engineer', 'infrastructure'
+      ];
+
+      const targetSeniority = ['c_suite', 'vp', 'director', 'manager', 'senior'];
+
+      const searchParams: PDLSearchParams = {
+        company: companyDomain,
+        title: targetTitles,
+        seniority: targetSeniority,
+        size: 20, // Max 20 contacts as per requirements
+        pretty: true
       };
+
+      const searchQuery = this.buildSearchQuery(searchParams);
+      console.log(`PDL search query: ${searchQuery}`);
       
-      techs.forEach(tech => {
-        Object.entries(techMapping).forEach(([key, value]) => {
-          if (tech.includes(key) && !systems.includes(value)) {
-            systems.push(value);
-          }
-        });
+      const response = await fetch(`${this.baseUrl}/person/search`, {
+        method: 'POST',
+        headers: {
+          'X-Api-Key': this.apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query: searchQuery,
+          size: searchParams.size,
+          pretty: searchParams.pretty
+        })
+      });
+
+      if (response.status === 401) {
+        return { contacts: [], status: 'invalid_key', message: 'Invalid PDL API key' };
+      }
+
+      if (response.status === 429) {
+        const retryAfter = parseInt(response.headers.get('retry-after') || '60');
+        return { contacts: [], status: 'rate_limited', retryAfter, message: `Rate limited, retry in ${retryAfter} seconds` };
+      }
+
+      if (!response.ok) {
+        console.error(`PDL API error: ${response.status} ${response.statusText}`);
+        return { contacts: [], status: 'error', message: `API error: ${response.status}` };
+      }
+
+      const data = await response.json();
+      
+      if (!data.data || data.data.length === 0) {
+        return { contacts: [], status: 'no_results', message: 'No contacts found for selected filters' };
+      }
+
+      console.log(`PDL found ${data.data.length} contacts for ${companyName}`);
+      
+      return {
+        contacts: data.data,
+        status: 'success'
+      };
+
+    } catch (error) {
+      console.error('PDL search error:', error);
+      return { 
+        contacts: [], 
+        status: 'error', 
+        message: `Search failed: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      };
+    }
+  }
+
+  // Build Elasticsearch-style query for PDL
+  private buildSearchQuery(params: PDLSearchParams): any {
+    const must = [];
+
+    if (params.company) {
+      must.push({
+        term: { "job_company_website": params.company }
       });
     }
 
-    // Remove generic "Systems" entries and return specific systems only
-    const specificSystems = systems.filter(system => 
-      !system.toLowerCase().includes('systems') || 
-      system.includes('ERP') || 
-      system.includes('CRM') || 
-      system.includes('HCM') ||
-      system.includes('Testing') ||
-      system.includes('CI/CD')
-    );
-
-    return specificSystems.length > 0 ? [...new Set(specificSystems)] : [];
-  }
-
-  private inferPainPoints(companyData: PDLCompanyData | null, jobPostings: any[]): string[] {
-    const painPoints: string[] = [];
-    
-    // Analyze job postings for pain point indicators
-    const urgentKeywords = ['urgent', 'immediate', 'asap', 'critical', 'bottleneck'];
-    const hasUrgentHiring = jobPostings.some(job => 
-      urgentKeywords.some(keyword => job.title.toLowerCase().includes(keyword))
-    );
-    
-    if (hasUrgentHiring) {
-      painPoints.push('Urgent need for skilled technical talent');
+    if (params.title && params.title.length > 0) {
+      must.push({
+        bool: {
+          should: params.title.map(title => ({
+            wildcard: { "job_title": `*${title}*` }
+          }))
+        }
+      });
     }
 
-    // QA and testing related pain points
-    const qaJobs = jobPostings.filter(job => 
-      job.title.toLowerCase().includes('qa') || 
-      job.title.toLowerCase().includes('test') ||
-      job.title.toLowerCase().includes('quality')
-    );
-    
-    if (qaJobs.length > 0) {
-      painPoints.push('Manual testing bottlenecks slowing releases');
-      painPoints.push('Need for automated testing frameworks');
+    if (params.seniority && params.seniority.length > 0) {
+      must.push({
+        terms: { "job_title_levels": params.seniority }
+      });
     }
 
-    // System integration pain points
-    const systemJobs = jobPostings.filter(job => 
-      job.title.toLowerCase().includes('integration') ||
-      job.title.toLowerCase().includes('system') ||
-      job.title.toLowerCase().includes('migration')
-    );
-    
-    if (systemJobs.length > 0) {
-      painPoints.push('Complex system integrations causing delays');
-      painPoints.push('Legacy system modernization challenges');
-    }
-
-    // Default pain points based on company size
-    if (companyData?.employee_count) {
-      if (companyData.employee_count > 1000) {
-        painPoints.push('Scaling testing processes across multiple teams');
-        painPoints.push('Maintaining quality while accelerating delivery');
-      } else {
-        painPoints.push('Limited resources for comprehensive testing');
-        painPoints.push('Balancing speed and quality in releases');
+    return {
+      query: {
+        bool: { must }
       }
-    }
-
-    return painPoints.length > 0 ? painPoints : [
-      'Manual testing bottlenecks',
-      'System integration challenges',
-      'Quality assurance scalability'
-    ];
+    };
   }
 
-  private analyzeHiringPatterns(jobPostings: any[]): string[] {
-    const patterns: string[] = [];
+  // Calculate confidence score for contact relevance
+  calculateContactConfidence(contact: PDLContact, targetRoles: string[]): number {
+    let confidence = 0.5; // Base confidence
+
+    // Boost for matching job titles
+    if (contact.job_title) {
+      const title = contact.job_title.toLowerCase();
+      const matchingRoles = targetRoles.filter(role => 
+        title.includes(role.toLowerCase())
+      );
+      confidence += matchingRoles.length * 0.2;
+    }
+
+    // Boost for seniority
+    if (contact.job_title_levels?.some(level => 
+      ['c_suite', 'vp', 'director'].includes(level)
+    )) {
+      confidence += 0.2;
+    }
+
+    // Boost for complete profile
+    if (contact.emails?.length && contact.linkedin_url) {
+      confidence += 0.1;
+    }
+
+    return Math.min(1.0, confidence);
+  }
+
+  // Convert PDL contact to our Contact schema
+  convertToContact(pdlContact: PDLContact, accountId: number, targetRoles: string[]): any {
+    const confidence = this.calculateContactConfidence(pdlContact, targetRoles);
     
-    // Group jobs by department
-    const departments = jobPostings.reduce((acc, job) => {
-      const dept = job.department || 'Unknown';
-      acc[dept] = (acc[dept] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    return {
+      accountId,
+      firstName: pdlContact.first_name || '',
+      lastName: pdlContact.last_name || '',
+      email: pdlContact.work_email || pdlContact.emails?.[0]?.address || null,
+      linkedinUrl: pdlContact.linkedin_url || null,
+      title: pdlContact.job_title || '',
+      department: this.extractDepartment(pdlContact.job_title || ''),
+      seniority: this.extractSeniority(pdlContact.job_title_levels || []),
+      focusAreas: this.extractFocusAreas(pdlContact.job_title || ''),
+      roleCategory: this.categorizeRole(pdlContact.job_title || ''),
+      confidence: Math.round(confidence * 100),
+      dataSource: 'people_data_labs'
+    };
+  }
 
-    // Find top hiring departments
-    const topDepts = Object.entries(departments)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 3)
-      .map(([dept, count]) => `${dept} (${count} roles)`);
+  private extractDepartment(title: string): string {
+    const titleLower = title.toLowerCase();
+    if (titleLower.includes('qa') || titleLower.includes('quality')) return 'Quality Assurance';
+    if (titleLower.includes('product')) return 'Product';
+    if (titleLower.includes('engineering') || titleLower.includes('development')) return 'Engineering';
+    if (titleLower.includes('enterprise') || titleLower.includes('systems')) return 'Enterprise Systems';
+    if (titleLower.includes('devops') || titleLower.includes('platform')) return 'Platform/DevOps';
+    return 'Technology';
+  }
 
-    if (topDepts.length > 0) {
-      patterns.push(`Active hiring in: ${topDepts.join(', ')}`);
+  private extractSeniority(levels: string[]): string {
+    if (levels.includes('c_suite')) return 'C-Suite';
+    if (levels.includes('vp')) return 'VP';
+    if (levels.includes('director')) return 'Director';
+    if (levels.includes('manager')) return 'Manager';
+    return 'IC';
+  }
+
+  private extractFocusAreas(title: string): string[] {
+    const areas = [];
+    const titleLower = title.toLowerCase();
+    
+    if (titleLower.includes('qa') || titleLower.includes('quality') || titleLower.includes('test')) {
+      areas.push('Quality Assurance', 'Testing');
     }
-
-    // Analyze recent posting frequency
-    const recentJobs = jobPostings.filter(job => {
-      const postDate = new Date(job.posted_date);
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      return postDate > thirtyDaysAgo;
-    });
-
-    if (recentJobs.length > 5) {
-      patterns.push('Rapid hiring pace - 5+ roles in last 30 days');
+    if (titleLower.includes('product')) {
+      areas.push('Product Management');
     }
-
-    // Look for technical roles
-    const techRoles = jobPostings.filter(job => 
-      job.title.toLowerCase().includes('engineer') ||
-      job.title.toLowerCase().includes('developer') ||
-      job.title.toLowerCase().includes('qa') ||
-      job.title.toLowerCase().includes('architect')
-    );
-
-    if (techRoles.length > 0) {
-      patterns.push(`${techRoles.length} technical roles - likely scaling development`);
+    if (titleLower.includes('devops') || titleLower.includes('platform')) {
+      areas.push('DevOps', 'Platform Engineering');
     }
+    if (titleLower.includes('enterprise') || titleLower.includes('systems')) {
+      areas.push('Enterprise Systems', 'System Integration');
+    }
+    
+    return areas;
+  }
 
-    return patterns.length > 0 ? patterns : ['Standard hiring patterns'];
+  private categorizeRole(title: string): string {
+    const titleLower = title.toLowerCase();
+    if (titleLower.includes('qa') || titleLower.includes('quality') || titleLower.includes('test')) {
+      return 'QA/Testing';
+    }
+    if (titleLower.includes('product')) {
+      return 'Product';
+    }
+    if (titleLower.includes('engineering') || titleLower.includes('development')) {
+      return 'Engineering/SDLC';
+    }
+    if (titleLower.includes('enterprise') || titleLower.includes('systems')) {
+      return 'Enterprise Applications';
+    }
+    return 'Business Systems';
   }
 }
 

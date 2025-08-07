@@ -32,16 +32,27 @@ export const accounts = pgTable("accounts", {
   }>().default({}),
   intentScore: integer("intent_score").default(0), // 0-100
   
-  // Research data
+  // Research data with citations
   researchData: json("research_data").$type<{
-    tenK_data?: string;
-    job_postings?: any[];
-    financial_reports?: string[];
-    industry_analysis?: string;
-    rawData?: any;
+    sources?: Array<{
+      id: string;
+      url: string;
+      title: string;
+      content: string;
+      sourceType: 'financial_filing' | 'press_release' | 'job_posting' | 'blog_post' | 'news_article';
+      publishedDate?: string;
+      hash: string;
+    }>;
+    initiatives?: Array<{
+      title: string;
+      summary: string;
+      signals: string[];
+      confidence: number; // 0-1
+      citationIds: string[];
+    }>;
   }>().default({}),
   
-  // Account-level SCIPAB
+  // Account-level SCIPAB with citations
   scipab: json("scipab").$type<{
     situation?: string;
     complication?: string;
@@ -49,6 +60,8 @@ export const accounts = pgTable("accounts", {
     position?: string;
     ask?: string;
     benefit?: string;
+    citations?: string[]; // Citation IDs linking back to sources
+    hasVerifiedData?: boolean;
   }>(),
   
   // Status tracking
@@ -77,7 +90,7 @@ export const contacts = pgTable("contacts", {
   focusAreas: json("focus_areas").$type<string[]>().default([]), // QA, SDLC, Enterprise Systems, Digital Transformation
   roleCategory: varchar("role_category", { length: 100 }), // Primary role grouping
   
-  // Role-level SCIPAB
+  // Role-level SCIPAB with citations
   roleSCIPAB: json("role_scipab").$type<{
     situation?: string;
     complication?: string;
@@ -86,6 +99,8 @@ export const contacts = pgTable("contacts", {
     ask?: string;
     benefit?: string;
     role_specific_pains?: string[];
+    citations?: string[]; // Citation IDs linking back to sources
+    hasVerifiedData?: boolean;
   }>(),
   
   // Contact quality

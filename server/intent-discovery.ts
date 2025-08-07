@@ -1,5 +1,7 @@
 import OpenAI from "openai";
 import { storage } from "./storage";
+import { dataSourcesService } from "./data-sources-service";
+import { pdlService } from "./pdl-service";
 import type { InsertAccount, InsertContact } from "@shared/schema";
 
 // Initialize OpenAI client
@@ -158,7 +160,8 @@ CRITICAL RULES:
         intentSignals: accountData.intentSignals || {},
         intentScore: Math.min(100, Math.max(0, accountData.intentScore || 0)),
         researchData: {
-          rawData: accountData
+          sources: [],
+          initiatives: []
         },
         status: 'discovered',
         isHighIntent: accountData.intentScore >= 70, // High intent threshold
@@ -220,7 +223,7 @@ Base this on their actual intent signals. Do not invent details not supported by
     }
   }
 
-  // Identify contacts for an account
+  // Identify contacts using REAL People Data Labs API - NO HALLUCINATIONS
   async identifyContacts(accountId: number): Promise<any[]> {
     try {
       const account = await storage.getAccountById(accountId);
@@ -228,59 +231,80 @@ Base this on their actual intent signals. Do not invent details not supported by
         throw new Error('Account not found');
       }
 
-      console.log(`Starting contact identification for: ${account.companyName}`);
+      console.log(`Starting REAL contact identification for: ${account.companyName}`);
       
-      // Step 1: Generate contact research prompt
-      const contactPrompt = this.buildContactResearchPrompt(account);
-      
-      // Step 2: Use GPT to identify relevant contacts
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          {
-            role: "system",
-            content: "You are a contact research specialist. Identify Manager+ level contacts at companies who are involved in QA, SDLC, Enterprise Systems, or Digital Transformation. NEVER generate fake contact information. Only return contacts you can verify from LinkedIn, company websites, or other public sources."
+      // Check if we have company domain - REQUIRED for PDL
+      if (!account.domain) {
+        console.log('No company domain available - cannot identify contacts via PDL');
+        
+        await storage.createResearchSession({
+          accountId: accountId,
+          researchType: 'contact_identification',
+          prompt: `Contact search attempted for ${account.companyName}`,
+          response: { 
+            status: 'no_domain',
+            message: 'Company domain required for People Data Labs API'
           },
-          {
-            role: "user",
-            content: contactPrompt
-          }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.1,
-      });
-
-      const contactData = JSON.parse(response.choices[0].message.content || '{}');
-      
-      // Step 3: Process and save contacts
-      const contacts = await this.processContactData(contactData, accountId);
-      
-      // Step 4: Generate role-level SCIPABs for high-confidence contacts
-      for (const contactData of contacts) {
-        if ((contactData.confidence || 0) >= 80) {
-          contactData.roleSCIPAB = await this.generateRoleSCIPAB(account, contactData);
-        }
+          model: 'pdl_api',
+          hasHallucinations: false,
+          qualityScore: 0,
+        });
+        
+        return [];
       }
+
+      // Use REAL People Data Labs API
+      const pdlResult = await pdlService.searchContacts(account.domain, account.companyName);
       
-      // Step 5: Save contacts to database
+      if (pdlResult.status !== 'success') {
+        console.log(`PDL search failed: ${pdlResult.status} - ${pdlResult.message}`);
+        
+        // Log the failed attempt with clear status
+        await storage.createResearchSession({
+          accountId: accountId,
+          researchType: 'contact_identification',
+          prompt: `PDL API call for ${account.companyName} (${account.domain})`,
+          response: { 
+            status: pdlResult.status, 
+            message: pdlResult.message,
+            retryAfter: pdlResult.retryAfter 
+          },
+          model: 'pdl_api',
+          hasHallucinations: false,
+          qualityScore: 0,
+        });
+        
+        return []; // Return empty array instead of fake data
+      }
+
+      // Convert REAL PDL contacts to our schema
+      const targetRoles = ['qa', 'quality', 'product', 'engineering', 'systems', 'devops'];
       const savedContacts = [];
-      for (const contactData of contacts) {
+      
+      // Limit to max 20 contacts as per requirements
+      for (const pdlContact of pdlResult.contacts.slice(0, 20)) {
+        const contactData = pdlService.convertToContact(pdlContact, accountId, targetRoles);
         const saved = await storage.createContact(contactData);
         savedContacts.push(saved);
       }
       
-      // Step 6: Log research session
+      // Log successful REAL contact identification
       await storage.createResearchSession({
         accountId: accountId,
         researchType: 'contact_identification',
-        prompt: contactPrompt,
-        response: contactData,
-        model: 'gpt-4o',
+        prompt: `PDL API call for ${account.companyName} (${account.domain})`,
+        response: { 
+          status: 'success', 
+          contactsFound: savedContacts.length,
+          source: 'people_data_labs',
+          isRealData: true
+        },
+        model: 'pdl_api',
         hasHallucinations: false,
-        qualityScore: savedContacts.length > 0 ? 90 : 50,
+        qualityScore: 100, // Real data from PDL API
       });
       
-      console.log(`Identified ${savedContacts.length} contacts for ${account.companyName}`);
+      console.log(`Successfully identified ${savedContacts.length} REAL contacts for ${account.companyName} using People Data Labs`);
       
       return savedContacts;
       
