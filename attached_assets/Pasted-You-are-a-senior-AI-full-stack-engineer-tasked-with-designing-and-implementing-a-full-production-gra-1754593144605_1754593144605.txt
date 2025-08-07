@@ -1,0 +1,182 @@
+You are a senior AI full-stack engineer tasked with designing and implementing a full production-grade web platform named **Eloverit.ai** — a precision sales intent engine purpose-built for outbound personalization, trust scoring, and AI-enhanced outreach.
+
+---
+
+### 🔷 OBJECTIVE
+
+Build a fully functioning, scalable web platform that helps B2B sales reps:
+
+1. **Identify high-intent accounts** by scanning public + proprietary datasets for companies with key signals related to:
+   - SDLC or testing initiatives
+   - ERP/CRM/Digital Transformation efforts
+   - Usage of SAP, Oracle, Dynamics 365
+   - Hiring data from job boards
+   - Financial reports or IT investment signals
+
+2. **Generate personalized messaging** using role-based storytelling frameworks (SCIPAB, etc) with zero hallucination. Support multiple output formats:
+   - Email sequences
+   - LinkedIn messages
+   - Video scripts
+   - Slide decks
+
+3. **Score trust and story fit** between reps and buyers using a StoryBuilder/TrustBuilder engine powered by context-specific GPT models.
+
+4. **Support post-call reflection and CRM sync** using transcript ingestion (e.g. via Plaud) to pull action items, update Salesforce, and draft follow-up messages.
+
+---
+
+### 🔷 CORE FUNCTIONAL MODULES TO BUILD
+
+#### 1. **Authentication**
+- LinkedIn OAuth and/or email + password login
+- RBAC: users can only see/edit accounts they uploaded
+- Admin role to view all
+
+#### 2. **Account Upload & Parsing**
+- Allow CSV or manual entry of accounts
+- Parse company name, LinkedIn, tech stack, and other fields
+- Autofill key fields using PDL + OpenAI
+  - If data is missing → display “Not found,” not fake values
+  - Track hallucination risk per field (flag risky values)
+
+#### 3. **Intent Discovery Agent**
+- Use internal `o3pro` prompt format (you’ll be trained on this)
+- Scan:
+  - Company 10-Ks
+  - Job boards
+  - Tech usage databases
+  - IR/financial reports
+  - LinkedIn hiring signals
+- Output: Company Summary + Initiative Evidence + Confidence Score
+
+#### 4. **Contact Identification**
+- Fetch contacts via PDL API
+- Categorize by role and seniority:
+  - CxO, VP, Director, Manager, IC
+  - Org type: QA, Product, Business Systems, App Dev, Enterprise Systems
+- Exportable to JSON or CSV
+
+#### 5. **Messaging Generator**
+- Uses preset prompt frameworks:
+  - SCIPAB
+  - Problem → Impact → Ask → Benefit
+  - Metaphor hook → Pain → CTA
+- Personalizes to:
+  - Persona (based on title/org/seniority)
+  - Industry (using loaded industry insights)
+  - Tech stack (from account data)
+- Output:
+  - 3-email outbound sequence
+  - LinkedIn DM
+  - Video script
+  - Role-based trust story
+- Toggle:
+  - “Tone”: Consultative | Challenger | Narrative
+  - “Length”: Short | Medium | Long
+
+#### 6. **Trust/Story Builder**
+- Dynamically chooses best GPT model (GPT-4o, Claude, fine-tuned version) per task
+- Avoids hallucinations using:
+  - Only uploaded data
+  - Model constraints: no creative inference unless user-specified
+  - Flag any assumptions made in content
+- Adds:
+  - Trust Score (logic: rep history + vertical match + story type)
+  - Story Score (does the story match ICP needs?)
+
+#### 7. **Call Reflection Engine (Plaud/Motion/Chorus integration)**
+- Ingest transcript (.md, .txt, .rtf)
+- Extract:
+  - Action Items
+  - CRM Updates
+  - Demos to schedule
+  - Buyer intent cues (tonality, urgency)
+  - Sales behavior grading (trust, discovery, storytelling, closing)
+- Automatically:
+  - Drafts follow-up email (can be sent via Outlook/Gmail)
+  - Adds notes to Salesforce
+  - Links to scheduling or docs
+
+#### 8. **Rep Dashboard**
+- View by rep:
+  - Accounts uploaded
+  - Emails generated/sent
+  - Trust score avg
+  - Meeting outcomes (toggle: Positive, Neutral, Negative, No Show)
+- Daily feed: Recommended next 3 actions
+
+#### 9. **Slide Deck Builder (v2)**
+- User uploads outline → auto-generates standardized deck using:
+  - Demo, Intro, PG Tuesday, PG Race templates
+  - Fonts: Poppins / Roboto
+  - Logo watermark
+  - Export: .pptx, .pdf, in-app viewer
+
+---
+
+### 🔷 UI / FRONTEND SPECS
+
+- Framework: React
+- Styling: Tailwind or modern component lib
+- Menu:
+  - Home: "John’s Territory – Strategic US"
+  - Prospecting Tracker
+  - Account Details
+  - Report Summary
+- Clean, whitespace-driven UI
+- Every page should:
+  - Auto-save inputs
+  - Allow link-out to LinkedIn profiles
+  - Provide AI-generated summaries
+- Include meeting calendar selector
+- Toggle outcome and next step dropdowns:
+  - Positive, Neutral, Negative, No Show
+  - Demo, Technical Validation, Exec Alignment, Negotiation, Champion Connect, Scoping
+
+---
+
+### 🔷 DATA & INTEGRATIONS
+
+- **APIs to Use**:
+  - PDL (People Data Labs)
+  - OpenAI (gpt-4o default, but model selection logic required)
+  - Zapier (Plaud > Zapier > Webhook ingestion)
+  - Salesforce (CRM update links)
+  - LinkedIn OAuth (auth)
+  - IR APIs or public financial sites (for 10-K scraping)
+
+- **Data Sources**:
+  - Uploaded CSVs
+  - Public company data
+  - PDL people info
+  - User-generated notes
+  - Call transcripts
+
+---
+
+### 🔷 EDGE CASE RULES
+
+- ❗ Never invent data if a source is missing — display: “Not available”
+- ❗ Flag hallucinations in summaries/messages
+- 🛑 Don’t attempt to write for personas unless confidence > 70%
+- 🧠 Include inline notes on why each message/story is relevant
+
+---
+
+### 🔷 NEXT STEPS FOR AGENT
+
+1. Ask user which module to implement first
+2. Set up required dependencies and frameworks
+3. Test each module with sample inputs from user
+4. Auto-suggest what to build next if not prompted
+5. Present results in clean UI + exportable format
+6. Include fallback instructions for anything broken
+
+---
+
+### 🛠 DEBUGGING/MAINTENANCE
+
+- Log all failed API calls with reasons
+- Add retry logic where needed
+- Auto-generate report for modules that failed to return high-confidence outputs
+- Check for outdated contact/company info and prompt user for refresh

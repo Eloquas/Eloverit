@@ -84,16 +84,6 @@ function ModuleSelector() {
     }
   ];
 
-  const handleModuleSelect = (module: any) => {
-    console.log(`User selected module: ${module.title}`);
-    
-    // Here we'll integrate with the actual implementation
-    const message = `Ready to build: ${module.title}\n\nThis will be the first painkiller module implemented.`;
-    alert(message);
-    
-    // TODO: Navigate to module implementation or trigger build process
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
       {/* Header */}
@@ -174,7 +164,10 @@ function ModuleSelector() {
                   <Button 
                     variant={module.isPainkiller ? "default" : "outline"}
                     className="w-full group"
-                    onClick={() => handleModuleSelect(module)}
+                    onClick={() => {
+                      console.log(`Selected module: ${module.title}`);
+                      alert(`Ready to build: ${module.title}`);
+                    }}
                   >
                     Build First
                     <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
