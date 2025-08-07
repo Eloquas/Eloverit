@@ -31,6 +31,7 @@ export default function IntentDiscovery() {
   const [showContacts, setShowContacts] = useState(false);
   const [currentResearchResults, setCurrentResearchResults] = useState<Account[]>([]);
   const [lastResearchRun, setLastResearchRun] = useState<string | null>(null);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -41,10 +42,18 @@ export default function IntentDiscovery() {
     { id: "salesforce", name: "Salesforce", color: "bg-cyan-100 text-cyan-800" }
   ];
 
-  // Fetch discovered accounts
+  // Fetch discovered accounts with session scoping (fallback for historical data)
   const { data: accounts, isLoading: accountsLoading } = useQuery({
-    queryKey: ['/api/accounts'],
-    enabled: true,
+    queryKey: ['/api/accounts', currentSessionId],
+    enabled: !currentResearchResults.length, // Only fetch if no fresh results
+    queryFn: async () => {
+      const url = currentSessionId 
+        ? `/api/accounts?sessionId=${currentSessionId}` 
+        : '/api/accounts';
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch accounts');
+      return response.json();
+    }
   });
 
   // Fetch contacts for selected account
@@ -74,13 +83,16 @@ export default function IntentDiscovery() {
       return response.json();
     },
     onSuccess: (data) => {
-      // CRITICAL: Use fresh results immediately instead of relying on stale DB query
+      // CRITICAL: Use fresh results with session scoping for bulletproof isolation
       console.log(`Fresh research completed: ${data.accounts.length} accounts with ${data.researchSummary.modelUsed}`);
+      console.log(`Session ID: ${data.sessionId} for scoped data access`);
+      
       setCurrentResearchResults(data.accounts || []);
       setLastResearchRun(data.researchSummary.timestamp);
+      setCurrentSessionId(data.sessionId); // Store session ID for scoped queries
       
-      // Invalidate cache as secondary action
-      queryClient.invalidateQueries({ queryKey: ['/api/accounts'] });
+      // Invalidate cache with session scoping
+      queryClient.invalidateQueries({ queryKey: ['/api/accounts', data.sessionId] });
     },
     onError: (error) => {
       console.error('Discovery failed:', error);
@@ -99,9 +111,16 @@ export default function IntentDiscovery() {
       if (!response.ok) throw new Error('Contact identification failed');
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/contacts', selectedAccount?.id] });
+    onSuccess: (_data, accountId) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/contacts', accountId] });
     },
+    onError: (error) => {
+      toast({
+        title: "Contact identification failed", 
+        description: error instanceof Error ? error.message : "Please try again",
+        variant: "destructive",
+      });
+    }
   });
 
   const handleSystemToggle = (systemId: string) => {
@@ -128,6 +147,15 @@ export default function IntentDiscovery() {
     identifyContactsMutation.mutate(account.id);
   };
 
+  // Primary data source: Use fresh results from mutation, fallback to query
+  const displayAccounts = currentResearchResults.length > 0 ? currentResearchResults : (accounts || []);
+  const isLoadingAccounts = discoverMutation.isPending || (accountsLoading && !currentResearchResults.length);
+  const hasError = discoverMutation.isError;
+  const isEmpty = !isLoadingAccounts && displayAccounts.length === 0;
+
+  const totalAccounts = displayAccounts.length;
+  const highIntentCount = displayAccounts.filter(account => account.isHighIntent).length;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6">
       {/* Header */}
@@ -141,8 +169,11 @@ export default function IntentDiscovery() {
             Intent Discovery + Contact Identification
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            GPT o3-pro research for high-intent accounts → Account SCIPABs → Manager+ contact identification → Role SCIPABs
+            Bulletproof validation with GPT o1-pro deep research - zero hallucination policy
           </p>
+          {currentSessionId && (
+            <p className="text-sm text-blue-600 font-mono mt-2">Session: {currentSessionId}</p>
+          )}
         </motion.div>
       </div>
 
@@ -247,6 +278,20 @@ export default function IntentDiscovery() {
                   <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mx-auto mb-4" />
                   <p className="text-sm font-medium text-gray-700">Deep research in progress...</p>
                   <p className="text-xs text-gray-500 mt-1">Using {process.env.INTENT_MODEL || 'o1-pro'} for advanced reasoning</p>
+                </div>
+              ) : hasError ? (
+                <div className="text-center py-8">
+                  <div className="p-4 bg-red-50 text-red-700 rounded-lg">
+                    <p className="font-medium">Discovery failed</p>
+                    <p className="text-sm mt-1">Please retry with different systems</p>
+                  </div>
+                </div>
+              ) : isEmpty ? (
+                <div className="text-center py-8">
+                  <div className="p-4 bg-yellow-50 text-yellow-700 rounded-lg">
+                    <p className="font-medium">No verified results found</p>
+                    <p className="text-sm mt-1">Zero-hallucination policy - insufficient evidence</p>
+                  </div>
                 </div>
               ) : currentResearchResults.length > 0 ? (
                 <div className="space-y-3">

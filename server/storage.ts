@@ -1,11 +1,11 @@
-import { accounts, contacts, researchSessions, type Account, type Contact, type InsertAccount, type InsertContact, type InsertResearchSession } from "@shared/schema";
+import { accounts, contacts, researchSessions, sessionLogs, type Account, type Contact, type InsertAccount, type InsertContact, type InsertResearchSession, type ResearchSession, type InsertSessionLog } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
 
-// Interface for storage operations
+// BULLETPROOF STORAGE INTERFACE with session scoping
 export interface IStorage {
-  // Account operations
-  getAccounts(): Promise<Account[]>;
+  // Account operations with session scoping
+  getAccounts(sessionId?: string): Promise<Account[]>;
   getAccountById(id: number): Promise<Account | undefined>;
   createAccount(account: InsertAccount): Promise<Account>;
   updateAccount(id: number, updates: Partial<InsertAccount>): Promise<Account>;
@@ -15,14 +15,26 @@ export interface IStorage {
   createContact(contact: InsertContact): Promise<Contact>;
   updateContact(id: number, updates: Partial<InsertContact>): Promise<Contact>;
   
-  // Research session operations
-  createResearchSession(session: InsertResearchSession): Promise<any>;
-  getResearchSessionsByAccountId(accountId: number): Promise<any[]>;
+  // SCOPED Research session operations
+  createResearchSession(session: InsertResearchSession): Promise<ResearchSession>;
+  getResearchSessionById(id: string): Promise<ResearchSession | undefined>;
+  updateResearchSession(id: string, updates: Partial<InsertResearchSession>): Promise<ResearchSession>;
+  
+  // Session logs for detailed tracking
+  createSessionLog(log: InsertSessionLog): Promise<any>;
+  getSessionLogsBySessionId(sessionId: string): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
-  // Account operations
-  async getAccounts(): Promise<Account[]> {
+  // Account operations with SESSION SCOPING for bulletproof isolation
+  async getAccounts(sessionId?: string): Promise<Account[]> {
+    if (sessionId) {
+      // Return only accounts from specific research session
+      return await db.select().from(accounts)
+        .where(eq(accounts.researchSessionId, sessionId))
+        .orderBy(desc(accounts.createdAt));
+    }
+    // Return all accounts if no session specified (fallback for historical data)
     return await db.select().from(accounts).orderBy(desc(accounts.createdAt));
   }
 
@@ -70,17 +82,40 @@ export class DatabaseStorage implements IStorage {
     return contact;
   }
 
-  // Research session operations
-  async createResearchSession(sessionData: InsertResearchSession): Promise<any> {
+  // SCOPED Research session operations
+  async createResearchSession(sessionData: InsertResearchSession): Promise<ResearchSession> {
     const [session] = await db
       .insert(researchSessions)
-      .values(sessionData)
+      .values([sessionData])
       .returning();
     return session;
   }
 
-  async getResearchSessionsByAccountId(accountId: number): Promise<any[]> {
-    return await db.select().from(researchSessions).where(eq(researchSessions.accountId, accountId));
+  async getResearchSessionById(id: string): Promise<ResearchSession | undefined> {
+    const [session] = await db.select().from(researchSessions).where(eq(researchSessions.id, id));
+    return session;
+  }
+
+  async updateResearchSession(id: string, updates: Partial<InsertResearchSession>): Promise<ResearchSession> {
+    const [session] = await db
+      .update(researchSessions)
+      .set(updates)
+      .where(eq(researchSessions.id, id))
+      .returning();
+    return session;
+  }
+
+  // Session logs for detailed tracking
+  async createSessionLog(logData: InsertSessionLog): Promise<any> {
+    const [log] = await db
+      .insert(sessionLogs)
+      .values([logData])
+      .returning();
+    return log;
+  }
+
+  async getSessionLogsBySessionId(sessionId: string): Promise<any[]> {
+    return await db.select().from(sessionLogs).where(eq(sessionLogs.sessionId, sessionId));
   }
 }
 

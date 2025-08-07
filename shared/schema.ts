@@ -68,6 +68,9 @@ export const accounts = pgTable("accounts", {
   status: varchar("status", { length: 50 }).default("discovered"), // discovered, researched, contacts_identified
   isHighIntent: boolean("is_high_intent").default(false),
   
+  // CRITICAL: Session scoping for bulletproof data isolation
+  researchSessionId: varchar("research_session_id", { length: 255 }), // Links to specific research run
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -111,20 +114,31 @@ export const contacts = pgTable("contacts", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Research sessions for tracking GPT o3-pro research
+// SCOPED Research sessions for bulletproof data isolation
 export const researchSessions = pgTable("research_sessions", {
+  id: varchar("id").primaryKey(), // UUID for session scoping
+  sessionType: varchar("session_type", { length: 50 }).default("account_discovery"), 
+  targetSystems: json("target_systems").$type<string[]>().default([]),
+  status: varchar("status", { length: 50 }).default("running"), // 'running' | 'completed' | 'failed'
+  totalAccounts: integer("total_accounts").default(0),
+  validatedAccounts: integer("validated_accounts").default(0),
+  citationCount: integer("citation_count").default(0),
+  modelUsed: varchar("model_used", { length: 50 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
+// Individual research session logs (detailed tracking)  
+export const sessionLogs = pgTable("session_logs", {
   id: serial("id").primaryKey(),
+  sessionId: varchar("session_id").references(() => researchSessions.id),
   accountId: integer("account_id").references(() => accounts.id),
-  
-  researchType: varchar("research_type", { length: 50 }).notNull(), // account_discovery, contact_identification
+  researchType: varchar("research_type", { length: 100 }),
   prompt: text("prompt"),
-  response: json("response").$type<any>(),
-  model: varchar("model", { length: 50 }).default("gpt-4o"), // For now, will upgrade to o3-pro
-  
-  // Quality control
+  response: json("response").$type<any>().default({}),
+  model: varchar("model", { length: 50 }),
   hasHallucinations: boolean("has_hallucinations").default(false),
   qualityScore: integer("quality_score").default(0),
-  
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -148,9 +162,43 @@ export const selectContactSchema = createSelectSchema(contacts);
 export const insertResearchSessionSchema = createInsertSchema(researchSessions).omit({
   id: true,
   createdAt: true,
+  completedAt: true,
 });
 
 export const selectResearchSessionSchema = createSelectSchema(researchSessions);
+export const insertSessionLogSchema = createInsertSchema(sessionLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+// BULLETPROOF VALIDATION SCHEMAS for zero-hallucination policy
+export const intentResultValidationSchema = z.object({
+  accounts: z.array(z.object({
+    companyName: z.string().min(1, "Company name required"),
+    domain: z.string().optional(),
+    industry: z.string().min(1, "Industry required"),
+    intentScore: z.number().int().min(0).max(100),
+    isHighIntent: z.boolean(),
+    targetSystems: z.array(z.string()).min(1, "At least one target system required"),
+    initiatives: z.array(z.object({
+      title: z.string().min(1, "Initiative title required"),
+      summary: z.string().min(1, "Initiative summary required"),
+      signals: z.array(z.string()).min(1, "At least one signal required"),
+      citations: z.array(z.object({
+        source_type: z.string(),
+        url: z.string().url("Valid URL required for citation"),
+        date: z.string(),
+        relevance: z.string().min(1, "Citation relevance required")
+      })).min(3, "CRITICAL: Minimum 3 citations required per initiative")
+    })).min(1, "At least one initiative with citations required"),
+    citations: z.array(z.object({
+      source_type: z.string(),
+      url: z.string().url("Valid URL required"),
+      date: z.string(),
+      relevance: z.string()
+    })).min(3, "CRITICAL: Minimum 3 citations required per account")
+  }))
+});
 
 // Types
 export type Account = typeof accounts.$inferSelect;
@@ -159,6 +207,9 @@ export type Contact = typeof contacts.$inferSelect;
 export type InsertContact = z.infer<typeof insertContactSchema>;
 export type ResearchSession = typeof researchSessions.$inferSelect;
 export type InsertResearchSession = z.infer<typeof insertResearchSessionSchema>;
+export type SessionLog = typeof sessionLogs.$inferSelect;
+export type InsertSessionLog = z.infer<typeof insertSessionLogSchema>;
+export type IntentResultValidation = z.infer<typeof intentResultValidationSchema>;
 
 // SCIPAB type for reuse
 export type SCIPAB = {

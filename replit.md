@@ -51,10 +51,14 @@ The platform is built with a **React + Vite + TypeScript + Tailwind CSS** fronte
 **BULLETPROOF HARDENING COMPLETED:**
 1. **Model Upgrade**: Backend now uses `INTENT_MODEL` environment variable (defaults to o1-pro) instead of hardcoded gpt-4o
 2. **Citation Enforcement**: Added strict validation requiring minimum 3 verified sources per account with complete source information
-3. **Fresh Data Pipeline**: Frontend now uses discovery response results immediately instead of stale database queries
-4. **Zero Hallucination Policy**: Comprehensive validation rejects accounts without sufficient evidence - no fake data can reach UI
-5. **Quality Validation**: Added bulletproof validation methods checking citation quality, evidence strength, and domain availability
-6. **Proper Error States**: Added explicit loading, error, and empty states instead of silent fallbacks
-7. **Research Session Tracking**: Each discovery run creates isolated results with model tracking and quality metrics
+3. **Session Scoping**: Added UUID-based research sessions for complete data isolation between discovery runs
+4. **Schema Validation**: Implemented comprehensive Zod schema validation with bulletproof data contracts
+5. **Fresh Data Pipeline**: Frontend now uses discovery response results immediately with session-scoped queries
+6. **Zero Hallucination Policy**: Comprehensive validation rejects accounts without sufficient evidence - no fake data can reach UI
+7. **Quality Validation**: Added bulletproof validation methods checking citation quality, evidence strength, and domain availability
+8. **Proper Error States**: Added explicit loading, error, and empty states instead of silent fallbacks
+9. **Research Session Tracking**: Each discovery run creates isolated results with model tracking and quality metrics
+10. **Database Schema Updates**: Added researchSessions and sessionLogs tables with proper relationships
+11. **Diagnostic Routes**: Added /api/intent/_health and /api/intent/_echo for system debugging
 
-**Current Status:** Intent Discovery → SCIPAB → Contact Identification flow is now bulletproof with zero-hallucination enforcement.
+**Current Status:** Complete bulletproof hardening implemented with session scoping, schema validation, and zero-hallucination enforcement.

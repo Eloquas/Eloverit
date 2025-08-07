@@ -16,11 +16,12 @@ const BACKUP_MODEL = 'gpt-4o'; // Fallback if o1-pro unavailable
 // Intent discovery service
 export class IntentDiscoveryService {
   
-  // Main intent discovery function
+  // Main intent discovery function with SESSION SCOPING and VALIDATION
   async discoverHighIntentAccounts(
     query: string, 
     targetSystems: string[], 
-    isAutoMode: boolean = false
+    isAutoMode: boolean = false,
+    sessionId?: string
   ) {
     try {
       console.log(`Starting intent discovery for: ${query}, systems: ${targetSystems.join(', ')}`);
@@ -73,8 +74,15 @@ export class IntentDiscoveryService {
       // CRITICAL: Validate citations and evidence quality
       const validatedData = this.validateResearchQuality(researchData, modelToUse);
       
+      // BULLETPROOF SCHEMA VALIDATION before processing
+      const validationResult = this.enforceSchemaValidation(validatedData);
+      if (!validationResult.isValid) {
+        console.warn('Schema validation failed:', validationResult.errors);
+        return []; // Return empty array for insufficient evidence
+      }
+      
       // Step 2: Process and validate research data with strict citation requirements
-      const accounts = await this.processResearchData(validatedData, targetSystems);
+      const accounts = await this.processResearchData(validatedData, targetSystems, sessionId);
       
       // Step 3: Create account-level SCIPABs for high-intent accounts
       for (const accountData of accounts) {
@@ -266,8 +274,23 @@ CRITICAL RULES - ZERO HALLUCINATION POLICY:
 `;
   }
 
-  // Process and validate research data
-  private async processResearchData(researchData: any, targetSystems: string[]): Promise<InsertAccount[]> {
+  // BULLETPROOF schema validation before processing  
+  private enforceSchemaValidation(data: any): { isValid: boolean; errors?: string[] } {
+    try {
+      const { intentResultValidationSchema } = require("@shared/schema");
+      intentResultValidationSchema.parse(data);
+      return { isValid: true };
+    } catch (error: any) {
+      console.error('VALIDATION FAILED - Insufficient evidence:', error.message);
+      return { 
+        isValid: false, 
+        errors: error.errors?.map((e: any) => e.message) || [error.message] 
+      };
+    }
+  }
+
+  // Process and validate research data with session scoping
+  private async processResearchData(researchData: any, targetSystems: string[], sessionId?: string): Promise<InsertAccount[]> {
     const accounts: InsertAccount[] = [];
     
     if (!researchData.accounts || !Array.isArray(researchData.accounts)) {
@@ -282,7 +305,14 @@ CRITICAL RULES - ZERO HALLUCINATION POLICY:
         continue;
       }
       
-      // Process and clean the data
+      // BULLETPROOF VALIDATION: Enforce 3+ citations requirement
+      const citationCount = accountData.citations?.length || 0;
+      if (citationCount < 3) {
+        console.warn(`Skipping account ${accountData.companyName}: only ${citationCount} citations (minimum 3 required)`);
+        continue;
+      }
+
+      // Process and clean the data with session scoping
       const account: InsertAccount = {
         companyName: accountData.companyName,
         domain: accountData.domain === 'Not available' ? null : accountData.domain,
@@ -293,12 +323,14 @@ CRITICAL RULES - ZERO HALLUCINATION POLICY:
         targetSystems: targetSystems,
         intentSignals: accountData.intentSignals || {},
         intentScore: Math.min(100, Math.max(0, accountData.intentScore || 0)),
+        citations: accountData.citations || [],
         researchData: {
           sources: [],
-          initiatives: []
+          initiatives: accountData.initiatives || []
         },
         status: 'discovered',
         isHighIntent: accountData.intentScore >= 70, // High intent threshold
+        researchSessionId: sessionId, // CRITICAL: Link to research session for scoping
       };
       
       accounts.push(account);
