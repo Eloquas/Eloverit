@@ -48,6 +48,14 @@ export class DatabaseStorage implements IStorage {
     return account;
   }
 
+  async createContact(contactData: InsertContact): Promise<Contact> {
+    const [contact] = await db
+      .insert(contacts)
+      .values(contactData)
+      .returning();
+    return contact;
+  }
+
   async createAccount(accountData: InsertAccount): Promise<Account> {
     const [account] = await db
       .insert(accounts)

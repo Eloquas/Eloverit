@@ -231,6 +231,9 @@ CRITICAL: This is a debugging echo - return minimal JSON response.`;
   // Diagnostic echo endpoint for system debugging
   app.get('/api/intent/_echo', async (req, res) => {
     try {
+      const { peopleDataLabs } = await import('./people-data-labs');
+      const pdlStatus = peopleDataLabs.getStatus();
+      
       // Return diagnostic information about the research pipeline
       res.json({
         searchQueries: "Dynamic queries based on company + target systems",
@@ -239,11 +242,33 @@ CRITICAL: This is a debugging echo - return minimal JSON response.`;
         modelUsed: process.env.INTENT_MODEL || 'o3-pro',
         searchProvider: process.env.SEARCH_PROVIDER || 'tavily',
         maxResults: parseInt(process.env.MAX_RESULTS || '8'),
-        hasApiKey: !!process.env.SEARCH_API_KEY,
+        hasSearchApiKey: !!process.env.SEARCH_API_KEY,
+        hasPdlApiKey: pdlStatus.hasApiKey,
+        pdlStatus: pdlStatus.status,
+        maxContactsPerAccount: pdlStatus.maxContactsPerAccount,
         timestamp: new Date().toISOString()
       });
     } catch (error) {
       res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // PDL connectivity test endpoint
+  app.get('/api/pdl/_test', async (req, res) => {
+    try {
+      const { peopleDataLabs } = await import('./people-data-labs');
+      const testResult = await peopleDataLabs.testConnection();
+      
+      res.json({
+        ...testResult,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
     }
   });
 

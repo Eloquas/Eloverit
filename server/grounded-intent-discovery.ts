@@ -311,10 +311,40 @@ REMEMBER: If evidence is weak or unclear, return INSUFFICIENT_EVIDENCE. Quality 
     return 'Web Source';
   }
   
-  // Contact identification (stub for now - to be implemented with PDL)
+  // Contact identification using People Data Labs
   async identifyContacts(accountId: number): Promise<any[]> {
-    console.log(`Contact identification not yet implemented for account ${accountId}`);
-    return [];
+    try {
+      // Get account details from storage
+      const account = await storage.getAccountById(accountId);
+      if (!account) {
+        throw new Error(`Account ${accountId} not found`);
+      }
+
+      console.log(`Identifying contacts for ${account.companyName} (Domain: ${account.domain})`);
+      
+      // Use PDL to find contacts
+      const { peopleDataLabs } = await import('./people-data-labs');
+      const contacts = await peopleDataLabs.identifyContactsForAccount(
+        account.companyName,
+        account.domain !== 'Not available' ? account.domain : undefined,
+        account.targetSystems
+      );
+
+      // Save contacts to database
+      const savedContacts = [];
+      for (const contactData of contacts) {
+        const contactWithAccount = { ...contactData, accountId: accountId };
+        const savedContact = await storage.createContact(contactWithAccount);
+        savedContacts.push(savedContact);
+      }
+
+      console.log(`Successfully identified and saved ${savedContacts.length} contacts for ${account.companyName}`);
+      return savedContacts;
+
+    } catch (error) {
+      console.error(`Contact identification failed for account ${accountId}:`, error);
+      throw error;
+    }
   }
 
   // Get service status for diagnostics
