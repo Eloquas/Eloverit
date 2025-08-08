@@ -1,4 +1,4 @@
-import { accounts, contacts, researchSessions, sessionLogs, type Account, type Contact, type InsertAccount, type InsertContact, type InsertResearchSession, type ResearchSession, type InsertSessionLog } from "@shared/schema";
+import { accounts, contacts, researchSessions, sessionLogs, companyFacts, type Account, type Contact, type InsertAccount, type InsertContact, type InsertResearchSession, type ResearchSession, type InsertSessionLog, type CompanyFact, type InsertCompanyFact } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
 
@@ -23,6 +23,11 @@ export interface IStorage {
   // Session logs for detailed tracking
   createSessionLog(log: InsertSessionLog): Promise<any>;
   getSessionLogsBySessionId(sessionId: string): Promise<any[]>;
+  
+  // Company facts for web research
+  createCompanyFact(fact: InsertCompanyFact): Promise<CompanyFact>;
+  getFactsBySessionId(sessionId: string): Promise<CompanyFact[]>;
+  getFactsByCompany(companyName: string, sessionId?: string): Promise<CompanyFact[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -46,7 +51,7 @@ export class DatabaseStorage implements IStorage {
   async createAccount(accountData: InsertAccount): Promise<Account> {
     const [account] = await db
       .insert(accounts)
-      .values([accountData])
+      .values(accountData)
       .returning();
     return account;
   }
@@ -122,6 +127,32 @@ export class DatabaseStorage implements IStorage {
 
   async getSessionLogsBySessionId(sessionId: string): Promise<any[]> {
     return await db.select().from(sessionLogs).where(eq(sessionLogs.sessionId, sessionId));
+  }
+
+  // Company facts operations for web research
+  async createCompanyFact(factData: InsertCompanyFact): Promise<CompanyFact> {
+    const [fact] = await db
+      .insert(companyFacts)
+      .values(factData)
+      .onConflictDoNothing() // Skip duplicate snippets
+      .returning();
+    return fact;
+  }
+
+  async getFactsBySessionId(sessionId: string): Promise<CompanyFact[]> {
+    return await db.select().from(companyFacts)
+      .where(eq(companyFacts.sessionId, sessionId))
+      .orderBy(desc(companyFacts.relevanceScore));
+  }
+
+  async getFactsByCompany(companyName: string, sessionId?: string): Promise<CompanyFact[]> {
+    let query = db.select().from(companyFacts).where(eq(companyFacts.companyName, companyName));
+    
+    if (sessionId) {
+      query = query.where(eq(companyFacts.sessionId, sessionId));
+    }
+    
+    return await query.orderBy(desc(companyFacts.relevanceScore));
   }
 }
 

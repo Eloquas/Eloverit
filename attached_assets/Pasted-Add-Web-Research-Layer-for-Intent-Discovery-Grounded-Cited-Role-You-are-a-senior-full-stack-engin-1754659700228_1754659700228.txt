@@ -1,0 +1,102 @@
+Add Web Research Layer for Intent Discovery (Grounded, Cited)
+Role
+You are a senior full‑stack engineer/QA working in my Replit project. Implement a web research pipeline so the model (o3‑pro) never invents data and always cites sources.
+
+Outcome
+Intent Discovery uses real web sources gathered by our backend (not the model).
+
+Model generates initiatives only from those sources.
+
+Every claim in the UI has at least one citation (URL, title, date).
+
+If evidence is insufficient → return empty results with a clear message. Never show placeholders.
+
+High‑Level Design
+Search API: integrate one of:
+
+Tavily (simple, research‑focused) preferred
+
+Bing Web Search (Azure)
+
+SerpAPI (Google/Bing wrapper)
+
+Fetcher/Parser: for each result URL, fetch HTML server‑side and extract readable text (Readability/boilerplate removal). Store:
+
+companyId, url, title, publishedAt (if detectable), snippetText (1–3 short excerpts), snippetHash.
+
+Facts Store: persist extracted snippets as facts[] linked to the research session.
+
+Model Call (o3‑pro): pass only facts[] as context; system rule: “Use ONLY provided facts. If insufficient, return INSUFFICIENT_EVIDENCE.” Temperature low.
+
+Validation: before saving:
+
+Each initiative must include title, summary, signals[], citations[] ≥ 1 (by snippetHash/URL).
+
+Reject on missing/empty/invalid; return {accounts: [], message: "INSUFFICIENT_EVIDENCE"}.
+
+UI: render initiatives with footnote links; show Sources panel. Empty/error states replace any demo data.
+
+What to Build (step‑by‑step)
+Config
+
+Add env vars: INTENT_MODEL=o3-pro, SEARCH_PROVIDER=tavily|bing|serpapi, SEARCH_API_KEY, MAX_RESULTS=8.
+
+Keep secrets server‑side only.
+
+Search Service
+
+Create a service that, given {companyName, targetSystems[]}, constructs 2–4 precise queries (include site: investor relations, job posts, press, engineering blog).
+
+Call the chosen search API; dedupe by domain; keep top N.
+
+Fetch & Parse
+
+For each URL: HTTP GET (server‑side), strip boilerplate, keep ~1–3 concise snippets (300–800 chars total), detect publishedAt if possible, compute snippetHash.
+
+Store to company_facts.
+
+Synthesis (o3‑pro)
+
+System: “Use ONLY facts[]. Cite via snippetHashes. If insufficient, return INSUFFICIENT_EVIDENCE. Output JSON contract.”
+
+Provide facts[] (snippets + metadata). No browsing by the model.
+
+Contract Enforcement
+
+Validate output. Require ≥1 citation per initiative. Reject otherwise.
+
+Persist only validated accounts/initiatives/citations linked to the current researchSessionId.
+
+Frontend Wiring
+
+After POST /api/discover-intent, immediately render data.accounts (no stale DB fallback).
+
+Add “Sources” section per account; superscript footnotes in text.
+
+Empty state when {accounts: []}.
+
+“Find Contacts (PDL)” enabled once domain exists.
+
+Diagnostics
+
+/api/intent/_health: { ok:true, model: INTENT_MODEL, provider: SEARCH_PROVIDER }.
+
+/api/intent/_echo: returns search queries used, URLs gathered, counts of facts/initiatives (redact content).
+
+Acceptance Tests (must pass)
+A run with valid targets returns only accounts with real citations; no placeholders appear.
+
+Removing SEARCH_API_KEY yields {accounts: []} + message, not fake data.
+
+“View SCIPAB” output includes footnotes that link to the saved sources.
+
+Health endpoint shows o3-pro (or override) and the active search provider.
+
+Contacts button gated by domain; on click, PDL results display or clear error (“invalid key”, “rate limited”, “no results”).
+
+Notes
+Do not expose keys to the browser.
+
+Keep temperature ≤ 0.2 for synthesis.
+
+If pages block fetch, skip them gracefully and continue; success requires ≥2 distinct sources per initiative (else mark LOW CONFIDENCE or skip).

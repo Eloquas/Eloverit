@@ -150,6 +150,21 @@ export const sessionLogs = pgTable("session_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Facts storage for web research content
+export const companyFacts = pgTable("company_facts", {
+  id: serial("id").primaryKey(),
+  sessionId: varchar("session_id").references(() => researchSessions.id),
+  companyName: varchar("company_name", { length: 255 }),
+  snippetText: text("snippet_text"),
+  snippetHash: varchar("snippet_hash", { length: 32 }).unique(),
+  url: varchar("url", { length: 1000 }),
+  title: varchar("title", { length: 500 }),
+  publishedAt: varchar("published_at", { length: 20 }), // YYYY-MM-DD format
+  relevanceScore: integer("relevance_score").default(0),
+  extractedAt: timestamp("extracted_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Zod schemas for validation
 export const insertAccountSchema = createInsertSchema(accounts).omit({
   id: true,
@@ -177,6 +192,12 @@ export const selectResearchSessionSchema = createSelectSchema(researchSessions);
 export const insertSessionLogSchema = createInsertSchema(sessionLogs).omit({
   id: true,
   createdAt: true,
+});
+
+export const insertCompanyFactSchema = createInsertSchema(companyFacts).omit({
+  id: true,
+  createdAt: true,
+  extractedAt: true,
 });
 
 // BULLETPROOF VALIDATION SCHEMAS for zero-hallucination policy
@@ -217,6 +238,8 @@ export type ResearchSession = typeof researchSessions.$inferSelect;
 export type InsertResearchSession = z.infer<typeof insertResearchSessionSchema>;
 export type SessionLog = typeof sessionLogs.$inferSelect;
 export type InsertSessionLog = z.infer<typeof insertSessionLogSchema>;
+export type CompanyFact = typeof companyFacts.$inferSelect;
+export type InsertCompanyFact = z.infer<typeof insertCompanyFactSchema>;
 export type IntentResultValidation = z.infer<typeof intentResultValidationSchema>;
 
 // SCIPAB type for reuse

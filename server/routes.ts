@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import OpenAI from "openai";
 import { storage } from "./storage";
-import { intentDiscoveryService } from "./intent-discovery";
+import { groundedIntentDiscovery } from "./grounded-intent-discovery";
 import { insertAccountSchema, insertContactSchema } from "@shared/schema";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -122,8 +122,8 @@ CRITICAL: This is a debugging echo - return minimal JSON response.`;
       
       console.log(`Starting deep research session ${sessionId} for target systems: ${systems.join(', ')}`);
       
-      // STEP 2: Run discovery with session scoping
-      const accounts = await intentDiscoveryService.discoverHighIntentAccounts(
+      // STEP 2: Execute grounded discovery with real web research
+      const accounts = await groundedIntentDiscovery.discoverHighIntentAccounts(
         query || systems.join(', '), 
         systems, 
         isAuto || false,
@@ -186,7 +186,7 @@ CRITICAL: This is a debugging echo - return minimal JSON response.`;
       
       console.log(`Starting contact identification for account ${accountId}`);
       
-      const contacts = await intentDiscoveryService.identifyContacts(accountId);
+      const contacts = await groundedIntentDiscovery.identifyContacts(accountId);
       
       res.json({ 
         contacts, 
@@ -208,6 +208,43 @@ CRITICAL: This is a debugging echo - return minimal JSON response.`;
       service: 'Eloverit.ai Intent Discovery',
       timestamp: new Date().toISOString()
     });
+  });
+
+  // Health endpoint for grounded research system
+  app.get('/api/intent/_health', async (req, res) => {
+    try {
+      const status = groundedIntentDiscovery.getStatus();
+      res.json({
+        ok: true,
+        model: status.model,
+        backupModel: status.backupModel,
+        searchProvider: status.searchProvider,
+        contentFetcher: status.contentFetcher,
+        timestamp: new Date().toISOString(),
+        status: status.status
+      });
+    } catch (error) {
+      res.status(500).json({ ok: false, error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Diagnostic echo endpoint for system debugging
+  app.get('/api/intent/_echo', async (req, res) => {
+    try {
+      // Return diagnostic information about the research pipeline
+      res.json({
+        searchQueries: "Dynamic queries based on company + target systems",
+        urlsGathered: "Varies by search results (max 8 per company)",
+        factsExtracted: "Depends on content quality",
+        modelUsed: process.env.INTENT_MODEL || 'o3-pro',
+        searchProvider: process.env.SEARCH_PROVIDER || 'tavily',
+        maxResults: parseInt(process.env.MAX_RESULTS || '8'),
+        hasApiKey: !!process.env.SEARCH_API_KEY,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    }
   });
 
   const httpServer = createServer(app);
