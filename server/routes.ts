@@ -272,6 +272,65 @@ CRITICAL: This is a debugging echo - return minimal JSON response.`;
     }
   });
 
+  // Contact identification endpoint for discovered accounts
+  app.post('/api/identify-contacts', async (req, res) => {
+    try {
+      const { accountId } = req.body;
+      
+      if (!accountId) {
+        return res.status(400).json({ 
+          error: "Account ID is required" 
+        });
+      }
+
+      console.log(`Starting contact identification for account ${accountId}`);
+      
+      // Use grounded intent discovery service to identify contacts
+      const contacts = await groundedIntentDiscovery.identifyContacts(accountId);
+      
+      res.json({
+        accountId: accountId,
+        contacts: contacts,
+        contactCount: contacts.length,
+        message: `Identified ${contacts.length} Manager+ level contacts`,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('Contact identification failed:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Contact identification failed',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Get contacts for a specific account
+  app.get('/api/accounts/:accountId/contacts', async (req, res) => {
+    try {
+      const accountId = parseInt(req.params.accountId);
+      
+      if (isNaN(accountId)) {
+        return res.status(400).json({ error: "Invalid account ID" });
+      }
+
+      const contacts = await storage.getContactsByAccountId(accountId);
+      
+      res.json({
+        accountId: accountId,
+        contacts: contacts,
+        contactCount: contacts.length,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to get contacts',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

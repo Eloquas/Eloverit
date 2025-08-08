@@ -229,7 +229,7 @@ export class GroundedIntentDiscoveryService {
         intentScore: Math.min(100, Math.max(0, account.intentScore || 0)),
         isHighIntent: account.intentScore >= 70,
         researchSessionId: sessionId,
-        initiatives: validInitiatives,
+        // initiatives: validInitiatives, // Removed - not in schema
         scipab: null, // Will be generated later if needed
         targetSystems: targetSystems,
         intentSignals: account.intentSignals || {},
@@ -326,7 +326,7 @@ REMEMBER: If evidence is weak or unclear, return INSUFFICIENT_EVIDENCE. Quality 
       const { peopleDataLabs } = await import('./people-data-labs');
       const contacts = await peopleDataLabs.identifyContactsForAccount(
         account.companyName,
-        account.domain !== 'Not available' ? account.domain : undefined,
+        account.domain && account.domain !== 'Not available' ? account.domain : undefined,
         account.targetSystems
       );
 

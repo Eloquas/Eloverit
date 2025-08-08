@@ -138,13 +138,13 @@ export class PeopleDataLabsService {
       }
 
       return [];
-    } catch (error) {
+    } catch (error: any) {
       if (error.response?.status === 401) {
         throw new Error('PDL API key invalid or expired');
       } else if (error.response?.status === 429) {
         throw new Error('PDL rate limit exceeded - upgrade plan or retry later');
       } else {
-        throw new Error(`PDL API error: ${error.message}`);
+        throw new Error(`PDL API error: ${error.message || 'Unknown error'}`);
       }
     }
   }
@@ -341,7 +341,7 @@ export class PeopleDataLabsService {
     } catch (error) {
       return { 
         success: false, 
-        message: `PDL API test failed: ${error.response?.data?.error || error.message}` 
+        message: `PDL API test failed: ${(error as any).response?.data?.error || (error as any).message || 'Unknown error'}` 
       };
     }
   }

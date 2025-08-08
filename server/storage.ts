@@ -56,6 +56,14 @@ export class DatabaseStorage implements IStorage {
     return contact;
   }
 
+  async getContactsByAccountId(accountId: number): Promise<Contact[]> {
+    return await db
+      .select()
+      .from(contacts)
+      .where(eq(contacts.accountId, accountId))
+      .orderBy(desc(contacts.confidence));
+  }
+
   async createAccount(accountData: InsertAccount): Promise<Account> {
     const [account] = await db
       .insert(accounts)
