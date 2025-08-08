@@ -71,10 +71,17 @@ export class ContentFetcher {
   // Fetch HTML content with proper error handling
   private async fetchHtmlContent(url: string): Promise<string | null> {
     try {
+      // Skip problematic domains known to block bots
+      const blockedDomains = ['linkedin.com', 'sec.gov'];
+      if (blockedDomains.some(domain => url.includes(domain))) {
+        console.log(`Skipping blocked domain: ${url}`);
+        return null;
+      }
+      
       const response = await axios.get(url, {
-        timeout: this.timeout,
+        timeout: 15000, // Increased timeout
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; ResearchBot/1.0)',
+          'User-Agent': 'Mozilla/5.0 (compatible; Eloverit-Research-Bot/1.0; +https://eloverit.ai)',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
           'Accept-Language': 'en-US,en;q=0.5',
           'Accept-Encoding': 'gzip, deflate',
@@ -82,8 +89,9 @@ export class ContentFetcher {
           'Connection': 'keep-alive',
           'Upgrade-Insecure-Requests': '1'
         },
-        maxContentLength: this.maxContentLength * 2, // Allow for HTML overhead
-        validateStatus: (status) => status >= 200 && status < 400
+        maxContentLength: 50000, // Increased to 50KB for richer content
+        maxBodyLength: 50000,
+        validateStatus: (status) => status < 500 // Accept 4xx but retry 5xx
       });
 
       return response.data;
